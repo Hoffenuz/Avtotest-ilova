@@ -1,0 +1,63 @@
+name: avtotest_app
+description: "AvtoSmart - Driver examination preparation app"
+publish_to: 'none'
+# versionName + versionCode.
+# Play'dagi oxirgi (Expo/EAS) chiqarilgan versiya — 1.0.5, versionCode 5.
+# 1.0.6 / 6 — Flutter'ga o'tilgan birinchi qurilma, faqat sinovda ishlatildi.
+# 1.0.7 / 7 — birinchi Flutter build (AvtoSmart rebrend'dan oldin).
+# 1.0.8 / 8 — AvtoSmart rebrend, yangi ikonka, 63-variant 20-savol bilan.
+#
+# DIQQAT: lib/config/app_version.dart shu bilan mos bo'lishi shart —
+# test/app_version_test.dart mos kelmasa qurilishni to'xtatadi.
+version: 1.0.8+8
+
+environment:
+
+  sdk: ^3.10.7
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  shared_preferences: ^2.3.4
+  provider: ^6.1.2
+  supabase_flutter: ^2.12.4
+  url_launcher: ^6.3.2
+  webview_flutter: ^4.14.0
+  connectivity_plus: ^6.1.0
+  in_app_update: ^5.0.0
+  in_app_review: ^2.0.0
+  timezone: ^0.11.1
+  flutter_local_notifications: ^22.3.0
+  flutter_svg: ^2.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: assets/branding/app_icon.png
+  adaptive_icon_background: assets/branding/adaptive_background.png
+  adaptive_icon_foreground: assets/branding/icon_foreground.png
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/logo.png
+    - assets/branding/logo_notag.svg
+    - assets/branding/logo_white_notag.svg
+    - assets/tests-json/barcha.json
+    - assets/tests-json/belgilar.json
+    - assets/tests-json/free_ids.json
+    - assets/tests-json/image-sizes.json
+    - assets/tests-json/themes/
+    - assets/tests-json/variants/
+    - assets/tests-json/images/
+    - assets/tests-json/belgilar_images/
+    - assets/data/yodlash.json
+    - assets/data/avtodrom.json

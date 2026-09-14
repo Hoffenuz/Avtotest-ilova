@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(echo \"=== variant-vision-quiz-main \\(website\\) ===\" && ls -la \"/c/Users/Vosster PC/Desktop/variant-vision-quiz-main\" 2>&1 | head -80)",
+      "Read(//c/Users/Vosster PC/Desktop/variant-vision-quiz-main/**)"
+    ]
+  }
+}

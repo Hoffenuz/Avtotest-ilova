@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find . -type d -not -path '*/\\\\.*' -not -path '*/build/*' -not -path '*/.dart_tool/*')"
+    ]
+  }
+}

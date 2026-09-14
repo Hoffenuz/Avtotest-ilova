@@ -1,0 +1,8 @@
+# Expo/EAS dan yuklab olingan kalit ma'lumotlari.
+# Bu faylni nusxalab key.properties nomiga saqlang va parollarni to'ldiring.
+# key.properties gitga kirmaydi.
+
+storePassword=EXPO_KEYSTORE_PASSWORD
+keyPassword=EXPO_KEY_PASSWORD
+keyAlias=EXPO_KEY_ALIAS
+storeFile=upload-keystore.jks
