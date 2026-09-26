@@ -55,6 +55,6 @@ void main() {
     },
     skip: siteFile.existsSync()
         ? false
-        : 'sayt nusxasi topilmadi ($sitePublic) — solishtirish o‘tkazib yuborildi',
+        : 'saytda questions-version.json topilmadi ($sitePublic) — solishtirish o‘tkazib yuborildi',
   );
 }
