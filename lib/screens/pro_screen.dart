@@ -9,6 +9,7 @@ import '../providers/subscription_provider.dart';
 import '../services/app_strings.dart';
 import '../services/click_service.dart';
 import '../services/payme_service.dart';
+import '../services/provider_app_launcher.dart';
 import '../services/subscription_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/brand.dart';
@@ -24,6 +25,12 @@ class ProScreen extends StatefulWidget {
 
   const ProScreen({super.key, this.tabIndex});
 
+  /// Where the tariffs come from. Tests and screenshots swap in a fixed list;
+  /// the app always reads `payme_plans`.
+  @visibleForTesting
+  static Future<List<PaymePlan>> Function() plansLoader =
+      PaymeService.fetchPlans;
+
   @override
   State<ProScreen> createState() => _ProScreenState();
 }
@@ -35,6 +42,16 @@ class _ProScreenState extends State<ProScreen> with WidgetsBindingObserver {
   bool _purchasing = false;
 
   PayVia _via = PayVia.payme;
+
+  /// The plan the single "buy" button pays for; monthly until chosen.
+  String? _selectedPlan;
+
+  /// The payment went to the provider's own app; its result is checked when
+  /// the user comes back.
+  bool _awaitingProviderApp = false;
+
+  /// A payment is on its way; the moment PRO lands, congratulate once.
+  bool _expectingActivation = false;
 
   bool _isVisible(BuildContext context) {
     if (widget.tabIndex == null) return true;
@@ -51,13 +68,13 @@ class _ProScreenState extends State<ProScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    _plansFuture = PaymeService.fetchPlans();
+    _plansFuture = ProScreen.plansLoader();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) => _refreshIfVisible());
   }
 
   void _reloadPlans() {
-    setState(() => _plansFuture = PaymeService.fetchPlans());
+    setState(() => _plansFuture = ProScreen.plansLoader());
   }
 
   /// Full purchase flow: sign-in check → Payme or Click checkout →
@@ -148,6 +165,14 @@ class _ProScreenState extends State<ProScreen> with WidgetsBindingObserver {
         );
         returnUrl = SupabaseConfig.paymeReturnUrl;
       }
+
+      // The provider's own app first, when the phone has one that takes the
+      // link; otherwise the in-app checkout below, as before.
+      if (await ProviderAppLauncher.tryOpen(url)) {
+        _awaitingProviderApp = true;
+        return;
+      }
+      if (!mounted) return;
 
       final completed = await Navigator.push<bool>(
         context,
@@ -282,9 +307,30 @@ class _ProScreenState extends State<ProScreen> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _refreshIfVisible();
+    if (state != AppLifecycleState.resumed) return;
+    if (_awaitingProviderApp) {
+      _awaitingProviderApp = false;
+      _checkAfterProviderApp();
+      return;
     }
+    _refreshIfVisible();
+  }
+
+  /// Back from the Payme / Click app: paid or not, only the server knows.
+  /// A live subscription is congratulated at once; otherwise the callback may
+  /// still be on its way (or it was a cancel), so keep watching quietly and
+  /// congratulate if it lands.
+  Future<void> _checkAfterProviderApp() async {
+    final lang = context.read<LanguageProvider>().lang;
+    final sub = context.read<SubscriptionProvider>();
+    await sub.refresh(force: true);
+    if (!mounted) return;
+    if (sub.isPro) {
+      await _showActivatedDialog(lang);
+      return;
+    }
+    _expectingActivation = true;
+    sub.watchForActivation(budget: const Duration(seconds: 90));
   }
 
   @override
@@ -316,6 +362,13 @@ class _ProScreenState extends State<ProScreen> with WidgetsBindingObserver {
     final sub = context.watch<SubscriptionProvider>();
     final lang = context.watch<LanguageProvider>().lang;
     String s(String k) => AppStrings.get(k, lang);
+
+    if (_expectingActivation && sub.isPro) {
+      _expectingActivation = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _showActivatedDialog(lang);
+      });
+    }
 
     return Scaffold(
       appBar: AppBar(title: Text(s('pro_title')), centerTitle: true),
@@ -353,12 +406,6 @@ class _ProScreenState extends State<ProScreen> with WidgetsBindingObserver {
                 const SizedBox(height: 24),
                 _ChoosePlanHeader(lang: lang),
                 const SizedBox(height: 12),
-                _ProviderPicker(
-                  label: s('pay_method'),
-                  selected: _via,
-                  onChanged: (v) => setState(() => _via = v),
-                ),
-                const SizedBox(height: 16),
 
                 // Prices come from `payme_plans`, never from the app: Payme
                 // rejects any amount its server didn't authorise (-31001), and
@@ -377,8 +424,13 @@ class _ProScreenState extends State<ProScreen> with WidgetsBindingObserver {
                     if (plans.isEmpty) {
                       return _PlansError(lang: lang, onRetry: _reloadPlans);
                     }
+                    final chosen = plans.firstWhere(
+                      (p) => p.planName == (_selectedPlan ?? 'monthly'),
+                      orElse: () => plans.first,
+                    );
 
                     return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         for (final plan in plans) ...[
                           _PlanCard(
@@ -386,15 +438,30 @@ class _ProScreenState extends State<ProScreen> with WidgetsBindingObserver {
                             subtitle: _planSubtitle(plan, lang),
                             price: plan.formattedSom,
                             currency: s('pro_currency_som'),
-                            buttonLabel: _planButton(plan, lang),
                             badge: plan.planName == 'monthly'
                                 ? s('plan_monthly_badge')
                                 : null,
-                            isPrimary: plan.planName == 'monthly',
-                            onTap: () => _startPurchase(plan, lang),
+                            selected: plan.planName == chosen.planName,
+                            onTap: () =>
+                                setState(() => _selectedPlan = plan.planName),
                           ),
                           const SizedBox(height: 12),
                         ],
+                        const SizedBox(height: 8),
+                        _ProviderPicker(
+                          label: s('pay_method'),
+                          selected: _via,
+                          onChanged: (v) => setState(() => _via = v),
+                        ),
+                        const SizedBox(height: 20),
+                        BrandButton(
+                          label:
+                              '${_planButton(chosen, lang)} · '
+                              '${chosen.formattedSom} ${s('pro_currency_som')}',
+                          icon: const CrownIcon(size: 22, color: Colors.white),
+                          minHeight: 58,
+                          onPressed: () => _startPurchase(chosen, lang),
+                        ),
                       ],
                     );
                   },
@@ -534,7 +601,7 @@ class _PlansPlaceholder extends StatelessWidget {
       children: List.generate(
         3,
         (_) => Container(
-          height: 138,
+          height: 80,
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
             color: AppTheme.card(context),
@@ -624,26 +691,14 @@ class _PaymeNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(
-          Icons.lock_outline_rounded,
-          size: 18,
-          color: AppTheme.mutedText(context),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            AppStrings.get('payme_secure_note', lang),
-            style: TextStyle(
-              fontSize: 12.5,
-              height: 1.4,
-              color: AppTheme.mutedText(context),
-            ),
-          ),
-        ),
-      ],
+    return Text(
+      AppStrings.get('payme_secure_note', lang),
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        fontSize: 12.5,
+        height: 1.4,
+        color: AppTheme.mutedText(context),
+      ),
     );
   }
 }
@@ -764,6 +819,8 @@ class _ProviderPicker extends StatelessWidget {
   }
 }
 
+/// The offer, on a deep-blue card with a gold crown — the one place in the
+/// app that is allowed to look like a treat.
 class _ProHeader extends StatelessWidget {
   final bool loading;
   final String lang;
@@ -772,14 +829,22 @@ class _ProHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String s(String k) => AppStrings.get(k, lang);
-    final dark = AppTheme.isDark(context);
-    final gold = dark ? AppTheme.proTextDark : AppTheme.proText;
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 22),
       decoration: BoxDecoration(
-        color: AppTheme.card(context),
-        border: Border.all(color: AppTheme.hairline(context)),
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1E3A8A), AppTheme.blueDark],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.blueDark.withValues(alpha: 0.3),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -787,62 +852,44 @@ class _ProHeader extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
+                width: 52,
+                height: 52,
+                decoration: const BoxDecoration(
+                  gradient: AppTheme.goldGradient,
+                  shape: BoxShape.circle,
                 ),
-                decoration: BoxDecoration(
-                  color: dark ? AppTheme.proBgDark : AppTheme.proBg,
-                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                  border: Border.all(
-                    color: AppTheme.proBorder.withValues(
-                      alpha: dark ? 0.3 : 0.8,
-                    ),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CrownIcon(size: 14, color: gold),
-                    const SizedBox(width: 6),
-                    Text(
-                      s('pro_header_badge'),
-                      style: TextStyle(
-                        color: gold,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
+                alignment: Alignment.center,
+                child: const CrownIcon(size: 26, color: Color(0xFF78350F)),
               ),
               const Spacer(),
               if (loading)
                 const SizedBox(
                   width: 18,
                   height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
                 ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           Text(
             s('pro_header_title'),
-            style: TextStyle(
-              fontSize: 22,
+            style: const TextStyle(
+              fontSize: 24,
               fontWeight: FontWeight.w800,
-              color: dark ? AppTheme.textPrimary : AppTheme.ink,
-              height: 1.25,
+              color: Colors.white,
+              height: 1.2,
               letterSpacing: -0.3,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             s('pro_header_subtitle'),
             style: TextStyle(
-              fontSize: 13.5,
-              color: AppTheme.mutedText(context),
+              fontSize: 14.5,
+              color: Colors.white.withValues(alpha: 0.88),
               height: 1.5,
             ),
           ),
@@ -858,29 +905,26 @@ class _ChoosePlanHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text(
-          AppStrings.get('pro_choose_plan', lang),
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.bold,
-            color: AppTheme.textP(context),
-          ),
-        ),
-      ],
+    return Text(
+      AppStrings.get('pro_choose_plan', lang),
+      style: TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.w800,
+        color: AppTheme.textP(context),
+      ),
     );
   }
 }
 
+/// One tariff: a radio, its name and what it gives, the price on the right.
+/// Tapping only chooses it — the one button below pays.
 class _PlanCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final String price;
   final String currency;
-  final String buttonLabel;
   final String? badge;
-  final bool isPrimary;
+  final bool selected;
   final VoidCallback onTap;
 
   const _PlanCard({
@@ -888,85 +932,98 @@ class _PlanCard extends StatelessWidget {
     required this.subtitle,
     required this.price,
     required this.currency,
-    required this.buttonLabel,
     this.badge,
-    this.isPrimary = false,
+    required this.selected,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = isPrimary
-        ? AppTheme.brandAccent(context)
-        : AppTheme.hairline(context);
-    final bg = AppTheme.card(context);
     final dark = AppTheme.isDark(context);
+    final accent = AppTheme.brandAccent(context);
+    final radius = BorderRadius.circular(AppTheme.radiusLg);
 
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Container(
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
-          decoration: BoxDecoration(
-            color: bg,
-            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-            border: Border.all(color: borderColor, width: isPrimary ? 2 : 1),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textP(context),
-                ),
+        Semantics(
+          button: true,
+          selected: selected,
+          child: Material(
+            color: selected
+                ? accent.withValues(alpha: dark ? 0.16 : 0.06)
+                : AppTheme.card(context),
+            shape: RoundedRectangleBorder(
+              borderRadius: radius,
+              side: BorderSide(
+                color: selected ? accent : AppTheme.hairline(context),
+                width: selected ? 2 : 1,
               ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: 12.5,
-                  color: AppTheme.textM(context),
-                ),
-              ),
-              const SizedBox(height: 14),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    price,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                      color: AppTheme.textP(context),
-                      letterSpacing: -0.5,
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: onTap,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 18, 16, 16),
+                child: Row(
+                  children: [
+                    Icon(
+                      selected
+                          ? Icons.radio_button_checked_rounded
+                          : Icons.radio_button_off_rounded,
+                      size: 24,
+                      color: selected ? accent : AppTheme.mutedText(context),
                     ),
-                  ),
-                  const SizedBox(width: 6),
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 4),
-                    child: Text(
-                      currency,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.textM(context),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.textP(context),
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            subtitle,
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppTheme.mutedText(context),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              SizedBox(
-                width: double.infinity,
-                child: _PlanButton(
-                  label: buttonLabel,
-                  isPrimary: isPrimary,
-                  onTap: onTap,
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          price,
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w800,
+                            color: selected ? accent : AppTheme.textP(context),
+                            letterSpacing: -0.3,
+                          ),
+                        ),
+                        Text(
+                          currency,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.mutedText(context),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
         if (badge != null)
@@ -974,48 +1031,23 @@ class _PlanCard extends StatelessWidget {
             top: -10,
             right: 16,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: dark ? AppTheme.proBgDark : AppTheme.proBg,
-                borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                border: Border.all(
-                  color: AppTheme.proBorder.withValues(alpha: dark ? 0.4 : 1),
-                ),
+                gradient: AppTheme.goldGradient,
+                borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 badge!,
-                style: TextStyle(
-                  color: dark ? AppTheme.proTextDark : AppTheme.proText,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.6,
+                style: const TextStyle(
+                  color: Color(0xFF78350F),
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.5,
                 ),
               ),
             ),
           ),
       ],
-    );
-  }
-}
-
-class _PlanButton extends StatelessWidget {
-  final String label;
-  final bool isPrimary;
-  final VoidCallback onTap;
-
-  const _PlanButton({
-    required this.label,
-    required this.isPrimary,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return BrandButton(
-      label: label,
-      icon: const Icon(Icons.lock_open_rounded),
-      kind: isPrimary ? BrandButtonKind.primary : BrandButtonKind.secondary,
-      onPressed: onTap,
     );
   }
 }

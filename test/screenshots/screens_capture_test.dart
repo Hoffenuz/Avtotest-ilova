@@ -37,6 +37,7 @@ import 'package:avtotest_app/screens/topic_stats_screen.dart';
 import 'package:avtotest_app/screens/variant_list_screen.dart';
 import 'package:avtotest_app/services/question_service.dart';
 import 'package:avtotest_app/theme/app_theme.dart';
+import 'package:avtotest_app/services/payme_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -45,7 +46,10 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const String _phase = String.fromEnvironment('SHOT_PHASE');
-const String _scaleArg = String.fromEnvironment('SHOT_TEXT_SCALE', defaultValue: '1.0');
+const String _scaleArg = String.fromEnvironment(
+  'SHOT_TEXT_SCALE',
+  defaultValue: '1.0',
+);
 const String _only = String.fromEnvironment('SHOT_ONLY');
 
 /// Whole scroll length in one picture (light theme only), for review.
@@ -53,7 +57,9 @@ const bool _tall = bool.fromEnvironment('SHOT_TALL');
 final double _textScale = double.parse(_scaleArg);
 const String _scaleTag = _scaleArg == '1.0' ? '' : '_scale$_scaleArg';
 
-const List<Size> _sizes = _tall ? [Size(360, 2200)] : [Size(360, 800), Size(320, 640)];
+const List<Size> _sizes = _tall
+    ? [Size(360, 2200)]
+    : [Size(360, 800), Size(320, 640)];
 const String _fontDir = r'C:\src\flutter\bin\cache\artifacts\material_fonts';
 
 final Directory _out = Directory('build/screenshots/$_phase');
@@ -77,7 +83,8 @@ Future<void> _loadFonts() async {
     loader.addFont(read(f));
   }
   await loader.load();
-  final icons = FontLoader('MaterialIcons')..addFont(read('materialicons-regular.otf'));
+  final icons = FontLoader('MaterialIcons')
+    ..addFont(read('materialicons-regular.otf'));
   await icons.load();
 }
 
@@ -93,7 +100,13 @@ class _Shot {
 
   /// SharedPreferences the screen starts with (e.g. finished tests).
   final Map<String, Object> prefs;
-  const _Shot(this.name, this.build, {this.after, this.pro = false, this.prefs = const {}});
+  const _Shot(
+    this.name,
+    this.build, {
+    this.after,
+    this.pro = false,
+    this.prefs = const {},
+  });
 }
 
 /// Decided subscription state — no network (as in pro_visibility_test).
@@ -140,61 +153,74 @@ final Map<String, Object> _sampleResults = {
 final GlobalKey<MainShellState> _shellKey = GlobalKey<MainShellState>();
 
 Future<void> Function(WidgetTester) _tab(int index) => (tester) async {
-      _shellKey.currentState?.switchTab(index);
-      await tester.pump();
-    };
+  _shellKey.currentState?.switchTab(index);
+  await tester.pump();
+};
 
 List<_Shot> _shots() => [
-      _Shot('01_home', () => MainShell(key: _shellKey)),
-      _Shot('01b_home_pro_results', () => MainShell(key: _shellKey), pro: true, prefs: _sampleResults),
-      _Shot('02_sections', () => MainShell(key: _shellKey), after: _tab(1)),
-      _Shot('03_practice_setup', () => MainShell(key: _shellKey), after: _tab(2)),
-      _Shot('04_profile', () => MainShell(key: _shellKey), after: _tab(3)),
-      _Shot('05_variant_list', () => const VariantListScreen()),
-      _Shot('06_topic_list', () => const TopicListScreen()),
-      _Shot(
-        '07_test',
-        () => TestScreen(
-          title: '1-variant',
-          loadQuestions: () async => _variant,
-          testType: 'variant',
-          testLabel: '1-variant',
-          testKey: 'v1',
-          timeLimitMinutes: 25,
-        ),
+  _Shot('01_home', () => MainShell(key: _shellKey)),
+  _Shot(
+    '01b_home_pro_results',
+    () => MainShell(key: _shellKey),
+    pro: true,
+    prefs: _sampleResults,
+  ),
+  _Shot('02_sections', () => MainShell(key: _shellKey), after: _tab(1)),
+  _Shot('03_practice_setup', () => MainShell(key: _shellKey), after: _tab(2)),
+  _Shot('04_profile', () => MainShell(key: _shellKey), after: _tab(3)),
+  _Shot('05_variant_list', () => const VariantListScreen()),
+  _Shot('06_topic_list', () => const TopicListScreen()),
+  _Shot(
+    '07_test',
+    () => TestScreen(
+      title: '1-variant',
+      loadQuestions: () async => _variant,
+      testType: 'variant',
+      testLabel: '1-variant',
+      testKey: 'v1',
+      timeLimitMinutes: 25,
+    ),
+  ),
+  _Shot(
+    '08_result',
+    () => ResultScreen(
+      result: TestResult(
+        type: 'variant',
+        testKey: 'v1',
+        label: '1-variant',
+        totalQuestions: 20,
+        correctAnswers: 15,
+        timeSpentSeconds: 17 * 60 + 12,
+        date: DateTime(2026, 9, 26, 14, 30),
+        isCompleted: true,
       ),
-      _Shot(
-        '08_result',
-        () => ResultScreen(
-          result: TestResult(
-            type: 'variant',
-            testKey: 'v1',
-            label: '1-variant',
-            totalQuestions: 20,
-            correctAnswers: 15,
-            timeSpentSeconds: 17 * 60 + 12,
-            date: DateTime(2026, 9, 26, 14, 30),
-            isCompleted: true,
-          ),
-          questions: _variant,
-          selectedAnswers: {for (final q in _variant) q.globalId: 0},
-          incorrectIds: _variant.take(5).map((q) => q.globalId).toSet(),
-          testTitle: '1-variant',
-        ),
-      ),
-      _Shot('09_real_exam', () => const RealExamScreen()),
-      _Shot('10_errors', () => const ErrorsScreen()),
-      _Shot('11_saved_questions', () => const SavedQuestionsScreen()),
-      _Shot('12_difficult_questions', () => const DifficultQuestionsScreen()),
-      _Shot('13_road_signs', () => const RoadSignsScreen()),
-      _Shot('14_avtodrom', () => const AvtodromScreen()),
-      _Shot('15_memorize', () => const MemorizeScreen()),
-      _Shot('16_question_search', () => const QuestionSearchScreen()),
-      _Shot('17_pro', () => const ProScreen()),
-      _Shot('18_auth_login', () => const AuthScreen()),
-      _Shot('19_auth_signup', () => const AuthScreen(startOnSignUp: true)),
-      _Shot('20_topic_stats', () => const TopicStatsScreen()),
+      questions: _variant,
+      selectedAnswers: {for (final q in _variant) q.globalId: 0},
+      incorrectIds: _variant.take(5).map((q) => q.globalId).toSet(),
+      testTitle: '1-variant',
+    ),
+  ),
+  _Shot('09_real_exam', () => const RealExamScreen()),
+  _Shot('10_errors', () => const ErrorsScreen()),
+  _Shot('11_saved_questions', () => const SavedQuestionsScreen()),
+  _Shot('12_difficult_questions', () => const DifficultQuestionsScreen()),
+  _Shot('13_road_signs', () => const RoadSignsScreen()),
+  _Shot('14_avtodrom', () => const AvtodromScreen()),
+  _Shot('15_memorize', () => const MemorizeScreen()),
+  _Shot('16_question_search', () => const QuestionSearchScreen()),
+  _Shot('17_pro', () {
+    // The real tariffs (payme_plans), without the network.
+    ProScreen.plansLoader = () async => const [
+      PaymePlan(planName: 'weekly', amountTiyin: 1500000, tariffDays: 7),
+      PaymePlan(planName: 'monthly', amountTiyin: 3500000, tariffDays: 30),
+      PaymePlan(planName: 'quarterly', amountTiyin: 8300000, tariffDays: 90),
     ];
+    return const ProScreen();
+  }),
+  _Shot('18_auth_login', () => const AuthScreen()),
+  _Shot('19_auth_signup', () => const AuthScreen(startOnSignUp: true)),
+  _Shot('20_topic_stats', () => const TopicStatsScreen()),
+];
 
 /// A component TextStyle with no family (AppBar title, button labels) falls
 /// back to boxes under flutter_test; on a phone it falls back to Roboto.
@@ -202,19 +228,29 @@ ThemeData _withRoboto(ThemeData t) {
   TextStyle? f(TextStyle? s) => s?.copyWith(fontFamily: 'Roboto');
   ButtonStyle? b(ButtonStyle? s) {
     final style = s?.textStyle?.resolve(<WidgetState>{});
-    return style == null ? s : s!.copyWith(textStyle: WidgetStatePropertyAll(f(style)));
+    return style == null
+        ? s
+        : s!.copyWith(textStyle: WidgetStatePropertyAll(f(style)));
   }
 
   return t.copyWith(
-    appBarTheme: t.appBarTheme.copyWith(titleTextStyle: f(t.appBarTheme.titleTextStyle)),
-    elevatedButtonTheme: ElevatedButtonThemeData(style: b(t.elevatedButtonTheme.style)),
-    outlinedButtonTheme: OutlinedButtonThemeData(style: b(t.outlinedButtonTheme.style)),
+    appBarTheme: t.appBarTheme.copyWith(
+      titleTextStyle: f(t.appBarTheme.titleTextStyle),
+    ),
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: b(t.elevatedButtonTheme.style),
+    ),
+    outlinedButtonTheme: OutlinedButtonThemeData(
+      style: b(t.outlinedButtonTheme.style),
+    ),
     textButtonTheme: TextButtonThemeData(style: b(t.textButtonTheme.style)),
     dialogTheme: t.dialogTheme.copyWith(
       titleTextStyle: f(t.dialogTheme.titleTextStyle),
       contentTextStyle: f(t.dialogTheme.contentTextStyle),
     ),
-    snackBarTheme: t.snackBarTheme.copyWith(contentTextStyle: f(t.snackBarTheme.contentTextStyle)),
+    snackBarTheme: t.snackBarTheme.copyWith(
+      contentTextStyle: f(t.snackBarTheme.contentTextStyle),
+    ),
     inputDecorationTheme: t.inputDecorationTheme.copyWith(
       labelStyle: f(t.inputDecorationTheme.labelStyle),
       hintStyle: f(t.inputDecorationTheme.hintStyle),
@@ -232,7 +268,9 @@ Widget _host(Widget child, {required bool dark, bool pro = false}) {
       ChangeNotifierProvider(create: (_) => LanguageProvider()),
       ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ChangeNotifierProvider(create: (_) => SettingsProvider()),
-      ChangeNotifierProvider<AuthProvider>(create: (_) => pro ? _SignedIn() : AuthProvider()),
+      ChangeNotifierProvider<AuthProvider>(
+        create: (_) => pro ? _SignedIn() : AuthProvider(),
+      ),
       ChangeNotifierProvider<SubscriptionProvider>(
         create: (_) => pro ? _Sub(pro: true) : SubscriptionProvider(),
       ),
@@ -241,9 +279,9 @@ Widget _host(Widget child, {required bool dark, bool pro = false}) {
       debugShowCheckedModeBanner: false,
       theme: _withRoboto(dark ? AppTheme.darkTheme : AppTheme.lightTheme),
       builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(
-          textScaler: TextScaler.linear(_textScale),
-        ),
+        data: MediaQuery.of(
+          context,
+        ).copyWith(textScaler: TextScaler.linear(_textScale)),
         child: child!,
       ),
       home: child,
@@ -294,7 +332,9 @@ void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
   tearDownAll(() {
-    File('${_out.path}/overflow$_scaleTag${_tall ? '_tall' : ''}.txt').writeAsStringSync(
+    File(
+      '${_out.path}/overflow$_scaleTag${_tall ? '_tall' : ''}.txt',
+    ).writeAsStringSync(
       _overflows.isEmpty ? 'overflow yo‘q\n' : '${_overflows.join('\n')}\n',
     );
   });
@@ -304,7 +344,8 @@ void main() {
     for (final size in _sizes) {
       for (final dark in _tall ? const [false] : const [false, true]) {
         final theme = dark ? 'dark' : 'light';
-        final tag = '${shot.name}__${size.width.toInt()}x${size.height.toInt()}_$theme$_scaleTag';
+        final tag =
+            '${shot.name}__${size.width.toInt()}x${size.height.toInt()}_$theme$_scaleTag';
         testWidgets(tag, (tester) async {
           final errors = <String>[];
           final original = FlutterError.onError;
@@ -315,7 +356,9 @@ void main() {
           try {
             tester.view.physicalSize = size * 2;
             tester.view.devicePixelRatio = 2.0;
-            if (shot.prefs.isNotEmpty) SharedPreferences.setMockInitialValues(shot.prefs);
+            if (shot.prefs.isNotEmpty) {
+              SharedPreferences.setMockInitialValues(shot.prefs);
+            }
             await tester.pumpWidget(
               RepaintBoundary(
                 key: const ValueKey('shot'),
