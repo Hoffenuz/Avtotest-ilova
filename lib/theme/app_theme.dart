@@ -57,6 +57,10 @@ class AppTheme {
   static const Color warning = Color(0xFFF59E0B);
   static const Color info = Color(0xFF3B82F6);
 
+  // Bo'lim ikonkalari uchun qo'shimcha ranglar.
+  static const Color violet = Color(0xFF8B5CF6);
+  static const Color teal = Color(0xFF14B8A6);
+
   // Text
   static const Color textPrimary = Color(0xFFFFFFFF);
   static const Color textSecondary = Color(0xFFB0BFCF);
@@ -114,16 +118,33 @@ class AppTheme {
 
   static Color primary(BuildContext context) => blue;
 
-  /// To'la (asosiy) tugma foni.
-  static Color brandFill(BuildContext context) => isDark(context) ? indigo : ink;
+  /// To'la tugma / faol belgi foni — ko'k: rangli tugmalar mobil ilovaga
+  /// xos, avvalgi ilovadagi "Test ishlash" kartasi ham shu rangda edi.
+  static Color brandFill(BuildContext context) =>
+      isDark(context) ? blue : blueDark;
 
-  /// Siyoh urg'u: ikkilamchi tugma matni/chegarasi, faol ikonka, havola.
+  /// Urg'u: ikkilamchi tugma matni/chegarasi, faol ikonka, havola.
+  /// Oq fonda 5.2:1, qorong'ida 7:1 — ikkalasida ham WCAG AA.
   static Color brandAccent(BuildContext context) =>
-      isDark(context) ? indigoLight : ink;
+      isDark(context) ? blueLight : blueDark;
 
-  /// Ikkilamchi matn — ikkala temada ham WCAG AA.
+  /// Asosiy tugmaning gradienti.
+  static const LinearGradient primaryGradient = LinearGradient(
+    colors: [blue, blueDark],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  /// PRO — oltin (amber-300 → amber-500), jigarrang matn bilan 6:1.
+  static const LinearGradient goldGradient = LinearGradient(
+    colors: [Color(0xFFFCD34D), Color(0xFFF59E0B)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  /// Ikkilamchi matn — neytral kulrang (avvalgi uslub), WCAG AA: 4.8:1.
   static Color mutedText(BuildContext context) =>
-      isDark(context) ? darkMutedText : inkMutedText;
+      isDark(context) ? darkMutedText : const Color(0xFF6B7280);
 
   static Color hairline(BuildContext context) =>
       isDark(context) ? const Color(0xFF243044) : const Color(0xFFE5E7EB);

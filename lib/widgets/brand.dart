@@ -78,9 +78,9 @@ class ProTag extends StatelessWidget {
 
 enum BrandButtonKind { primary, secondary }
 
-/// Asosiy — to'la siyoh (qorong'ida indigo), ikkilamchi — fon + 2 dp siyoh
-/// chegara. Burchak 8 dp. Balandlik — minimal: katta shrift (textScale 1.3)
-/// matnni kesmaydi, tugma o'sadi.
+/// Asosiy — ko'k gradient, oq matn, yumshoq soya; ikkilamchi — oq fon, ko'k
+/// chegara va ko'k matn. Burchak 12 dp (saytdagi rounded-lg bilan bir xil).
+/// Balandlik — minimal: katta shrift (textScale 1.3) matnni kesmaydi.
 class BrandButton extends StatelessWidget {
   final String label;
   final Widget icon;
@@ -107,91 +107,91 @@ class BrandButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final dark = AppTheme.isDark(context);
     final primary = kind == BrandButtonKind.primary;
-    final fill = AppTheme.brandFill(context);
-    final foreground = primary || dark ? Colors.white : AppTheme.ink;
-    final radius = BorderRadius.circular(AppTheme.radiusSm);
+    final accent = AppTheme.brandAccent(context);
+    final foreground = primary ? Colors.white : accent;
+    final radius = BorderRadius.circular(AppTheme.radiusMd);
 
-    final button = DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: radius,
-        boxShadow: primary
-            ? [
-                BoxShadow(
-                  color: fill.withValues(alpha: dark ? 0.35 : 0.3),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
-                ),
-              ]
-            : null,
-      ),
-      child: Material(
-        color: primary
-            ? fill
-            : (dark ? Colors.transparent : AppTheme.lightCardBg),
-        shape: RoundedRectangleBorder(
-          borderRadius: radius,
-          side: primary
-              ? BorderSide.none
-              : BorderSide(
-                  color: dark ? AppTheme.indigo : AppTheme.ink,
-                  width: 2,
-                ),
+    final content = ConstrainedBox(
+      constraints: BoxConstraints(minHeight: minHeight),
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: dense ? 10 : 20,
+          vertical: dense ? 8 : 12,
         ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onPressed,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(minHeight: minHeight),
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: dense ? 10 : 20,
-                vertical: dense ? 8 : 12,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconTheme(
-                    data: IconThemeData(
-                      color: foreground,
-                      size: dense ? 20 : 22,
-                    ),
-                    child: icon,
-                  ),
-                  SizedBox(width: dense ? 8 : 10),
-                  Flexible(
-                    // Dense buttons sit two to a row: one word that does not
-                    // fit is shrunk, never broken as "Variantla / r".
-                    child: dense
-                        ? FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              label,
-                              maxLines: 1,
-                              style: TextStyle(
-                                color: foreground,
-                                fontSize: 15.5,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          )
-                        : Text(
-                            label,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: foreground,
-                              fontSize: 17,
-                              fontWeight: FontWeight.w600,
-                              height: 1.2,
-                            ),
-                          ),
-                  ),
-                ],
-              ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            IconTheme(
+              data: IconThemeData(color: foreground, size: dense ? 20 : 22),
+              child: icon,
             ),
-          ),
+            SizedBox(width: dense ? 8 : 10),
+            Flexible(
+              // Dense buttons sit two to a row: one word that does not fit is
+              // shrunk, never broken as "Variantla / r".
+              child: dense
+                  ? FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        style: TextStyle(
+                          color: foreground,
+                          fontSize: 15.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    )
+                  : Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: foreground,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
+                      ),
+                    ),
+            ),
+          ],
         ),
       ),
     );
+
+    final Widget button = primary
+        ? DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: radius,
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.blueDark.withValues(alpha: dark ? 0.4 : 0.28),
+                  blurRadius: 14,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: radius,
+              clipBehavior: Clip.antiAlias,
+              child: Ink(
+                decoration: BoxDecoration(
+                  gradient: AppTheme.primaryGradient,
+                  borderRadius: radius,
+                ),
+                child: InkWell(onTap: onPressed, child: content),
+              ),
+            ),
+          )
+        : Material(
+            color: dark ? Colors.transparent : AppTheme.lightCardBg,
+            shape: RoundedRectangleBorder(
+              borderRadius: radius,
+              side: BorderSide(color: accent, width: 1.5),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(onTap: onPressed, child: content),
+          );
 
     if (!proTag) return button;
     return Stack(
@@ -311,10 +311,14 @@ class SettingsRow extends StatelessWidget {
   final bool destructive;
   final VoidCallback? onTap;
 
+  /// The icon's colour (its square takes a light tint of it).
+  final Color? color;
+
   const SettingsRow({
     super.key,
     required this.icon,
     required this.title,
+    this.color,
     this.subtitle,
     this.trailing,
     this.showChevron = true,
@@ -327,7 +331,7 @@ class SettingsRow extends StatelessWidget {
     final dark = AppTheme.isDark(context);
     final iconFg = destructive
         ? AppTheme.error
-        : (dark ? Colors.white : AppTheme.ink);
+        : (color ?? AppTheme.brandAccent(context));
     return InkWell(
       onTap: onTap,
       child: ConstrainedBox(
@@ -340,11 +344,7 @@ class SettingsRow extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: destructive
-                      ? AppTheme.error.withValues(alpha: 0.1)
-                      : (dark
-                            ? Colors.white.withValues(alpha: 0.1)
-                            : AppTheme.ink.withValues(alpha: 0.07)),
+                  color: iconFg.withValues(alpha: dark ? 0.18 : 0.12),
                   borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                 ),
                 child: Icon(icon, size: 20, color: iconFg),
@@ -429,11 +429,15 @@ class SectionTile extends StatelessWidget {
   final VoidCallback onTap;
   final Widget? corner;
 
+  /// The icon's colour (its square takes a light tint of it).
+  final Color? color;
+
   const SectionTile({
     super.key,
     required this.icon,
     required this.title,
     required this.onTap,
+    this.color,
     this.subtitle,
     this.corner,
   });
@@ -442,6 +446,7 @@ class SectionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final dark = AppTheme.isDark(context);
     final radius = BorderRadius.circular(AppTheme.radiusMd);
+    final tint = color ?? AppTheme.brandAccent(context);
     final tile = DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: radius,
@@ -472,16 +477,10 @@ class SectionTile extends StatelessWidget {
                   width: 44,
                   height: 44,
                   decoration: BoxDecoration(
-                    color: dark
-                        ? Colors.white.withValues(alpha: 0.1)
-                        : AppTheme.ink.withValues(alpha: 0.07),
-                    borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                    color: tint.withValues(alpha: dark ? 0.18 : 0.12),
+                    borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                   ),
-                  child: Icon(
-                    icon,
-                    size: 22,
-                    color: dark ? Colors.white : AppTheme.ink,
-                  ),
+                  child: Icon(icon, size: 22, color: tint),
                 ),
                 const SizedBox(width: 14),
                 Expanded(
@@ -636,13 +635,14 @@ class ProUpsellCard extends StatelessWidget {
   }
 }
 
-/// Siyoh header — saytning tanish belgisi. Ikkala temada ham siyoh, shuning
-/// uchun status bar ikonkalari doim oq.
+/// Bosh ekran sarlavhasi — ilovadagi boshqa sahifalar bilan bir xil yorug'
+/// fonda (sayt kabi qora chiziq emas): chapda logotip, o'ngda til va PRO
+/// "tabletkalari". Status bar ikonkalari fonga mos.
 class BrandHeader extends StatelessWidget {
   final VoidCallback? onPro;
   final String proLabel;
 
-  /// Shown before the PRO chip (e.g. [LanguageMenu]), as on the site header.
+  /// Shown before the PRO chip (e.g. [LanguageMenu]).
   final List<Widget> actions;
 
   const BrandHeader({
@@ -657,62 +657,33 @@ class BrandHeader extends StatelessWidget {
     final dark = AppTheme.isDark(context);
     final top = MediaQuery.paddingOf(context).top;
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        statusBarBrightness: Brightness.dark,
+        statusBarIconBrightness: dark ? Brightness.light : Brightness.dark,
+        statusBarBrightness: dark ? Brightness.dark : Brightness.light,
       ),
       child: Container(
         padding: EdgeInsets.fromLTRB(16, top, 12, 0),
-        decoration: BoxDecoration(
-          color: dark ? AppTheme.inkHeaderDark : AppTheme.ink,
-          border: Border(
-            bottom: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-          ),
-        ),
+        color: dark ? AppTheme.scaffoldBg : AppTheme.lightScaffoldBg,
         child: SizedBox(
-          height: 56,
+          height: 60,
           child: Row(
             children: [
-              const AppHeaderLogo(height: 30, onBrand: true),
-              const Spacer(),
-              ...actions,
-              if (actions.isNotEmpty && onPro != null) const SizedBox(width: 6),
-              if (onPro != null)
-                Material(
-                  color: AppTheme.proBorder.withValues(alpha: 0.1),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                    side: BorderSide(
-                      color: AppTheme.proBorder.withValues(alpha: 0.4),
-                    ),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: InkWell(
-                    onTap: onPro,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 9,
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const CrownIcon(size: 16, color: AppTheme.proBorder),
-                          const SizedBox(width: 6),
-                          Text(
-                            proLabel,
-                            style: const TextStyle(
-                              color: Color(0xFFFEF3C7),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+              // The logo gives way first on a narrow phone or a wide font, so
+              // the language and PRO pills never overflow.
+              const Expanded(
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: AppHeaderLogo(height: 30),
                   ),
                 ),
+              ),
+              const SizedBox(width: 8),
+              ...actions,
+              if (actions.isNotEmpty && onPro != null) const SizedBox(width: 8),
+              if (onPro != null) _ProPill(label: proLabel, onTap: onPro!),
             ],
           ),
         ),
@@ -721,7 +692,68 @@ class BrandHeader extends StatelessWidget {
   }
 }
 
-/// "UZ ▾" — the site header's language switch, for the ink header bar.
+/// Oltin "PRO" tabletkasi — header'dagi yagona rangli dog'.
+class _ProPill extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  const _ProPill({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    const brown = Color(0xFF78350F);
+    final radius = BorderRadius.circular(20);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: radius,
+        clipBehavior: Clip.antiAlias,
+        child: Ink(
+          decoration: BoxDecoration(
+            gradient: AppTheme.goldGradient,
+            borderRadius: radius,
+          ),
+          child: InkWell(
+            onTap: onTap,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 40),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const CrownIcon(size: 16, color: brown),
+                    const SizedBox(width: 6),
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        color: brown,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "UZ ▾" — the site header's language switch, as a pill.
 class LanguageMenu extends StatelessWidget {
   const LanguageMenu({super.key});
 
@@ -760,29 +792,32 @@ class LanguageMenu extends StatelessWidget {
             ),
           ),
       ],
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 44, minWidth: 44),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                _short[provider.lang] ?? 'UZ',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 40, minWidth: 44),
+        padding: const EdgeInsets.only(left: 12, right: 8),
+        decoration: BoxDecoration(
+          color: AppTheme.card(context),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: AppTheme.hairline(context)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              _short[provider.lang] ?? 'UZ',
+              style: TextStyle(
+                color: AppTheme.textP(context),
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
               ),
-              const SizedBox(width: 2),
-              Icon(
-                Icons.expand_more_rounded,
-                size: 18,
-                color: Colors.white.withValues(alpha: 0.8),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 2),
+            Icon(
+              Icons.expand_more_rounded,
+              size: 18,
+              color: AppTheme.mutedText(context),
+            ),
+          ],
         ),
       ),
     );

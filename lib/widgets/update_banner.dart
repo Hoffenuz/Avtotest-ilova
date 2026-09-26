@@ -207,6 +207,7 @@ class _AboutGroupState extends State<AboutGroup> {
       children: [
         SettingsRow(
           icon: Icons.info_outline_rounded,
+          color: AppTheme.blueDark,
           title: s('section_about'),
           subtitle: '${s('version_label')} ${AppVersion.displayVersion}',
           showChevron: false,
@@ -223,6 +224,7 @@ class _AboutGroupState extends State<AboutGroup> {
         if (_expanded) ...[
           SettingsRow(
             icon: Icons.system_update_rounded,
+            color: AppTheme.blueDark,
             title: s('check_for_updates'),
             showChevron: !_checking,
             trailing: _checking
@@ -238,6 +240,7 @@ class _AboutGroupState extends State<AboutGroup> {
           // are also the only ones who will ever rate it unprompted.
           SettingsRow(
             icon: Icons.star_outline_rounded,
+            color: AppTheme.warning,
             title: s('rate_app'),
             subtitle: s('rate_app_sub'),
             showChevron: false,
@@ -246,6 +249,7 @@ class _AboutGroupState extends State<AboutGroup> {
           ),
           SettingsRow(
             icon: Icons.public_rounded,
+            color: AppTheme.success,
             title: s('visit_website'),
             showChevron: false,
             trailing: const _OutIcon(),
@@ -253,6 +257,7 @@ class _AboutGroupState extends State<AboutGroup> {
           ),
           SettingsRow(
             icon: Icons.telegram_rounded,
+            color: const Color(0xFF0088CC),
             title: s('telegram_group_title'),
             subtitle: s('telegram_group_body'),
             showChevron: false,

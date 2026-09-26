@@ -5,6 +5,7 @@ import '../providers/language_provider.dart';
 import '../services/app_strings.dart';
 import '../services/review_prompt_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/brand.dart';
 import 'test_screen.dart';
 
 class ResultScreen extends StatefulWidget {
@@ -191,10 +192,10 @@ class _ResultScreenState extends State<ResultScreen>
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.timer_outlined,
                         size: 20,
-                        color: AppTheme.blue,
+                        color: AppTheme.brandAccent(context),
                       ),
                       const SizedBox(width: 8),
                       // Flexible: "Sarflangan vaqt: 17 daqiqa 12 soniya" is
@@ -221,77 +222,45 @@ class _ResultScreenState extends State<ResultScreen>
                 // Retake button
                 if (widget.onRetake != null ||
                     widget.retakeLoadQuestions != null) ...[
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.orange,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppTheme.radiusMd,
-                          ),
-                        ),
-                      ),
-                      onPressed:
-                          widget.onRetake ??
-                          () {
-                            Navigator.pushReplacement(
-                              context,
-                              AppTheme.fadeRoute(
-                                TestScreen(
-                                  title:
-                                      widget.testTitle ?? widget.result.label,
-                                  loadQuestions: widget.retakeLoadQuestions!,
-                                  testType:
-                                      widget.retakeTestType ??
-                                      widget.result.type,
-                                  testLabel:
-                                      widget.retakeTestLabel ??
-                                      widget.result.label,
-                                  testKey:
-                                      widget.retakeTestKey ??
-                                      widget.result.testKey,
-                                  timeLimitMinutes:
-                                      widget.retakeTimeLimitMinutes ?? 60,
-                                  countUp: widget.retakeCountUp,
-                                  questionLang: widget.retakeQuestionLang,
-                                ),
+                  BrandButton(
+                    label: s('retake_test'),
+                    icon: const Icon(Icons.replay_rounded),
+                    onPressed:
+                        widget.onRetake ??
+                        () {
+                          Navigator.pushReplacement(
+                            context,
+                            AppTheme.fadeRoute(
+                              TestScreen(
+                                title: widget.testTitle ?? widget.result.label,
+                                loadQuestions: widget.retakeLoadQuestions!,
+                                testType:
+                                    widget.retakeTestType ?? widget.result.type,
+                                testLabel:
+                                    widget.retakeTestLabel ??
+                                    widget.result.label,
+                                testKey:
+                                    widget.retakeTestKey ??
+                                    widget.result.testKey,
+                                timeLimitMinutes:
+                                    widget.retakeTimeLimitMinutes ?? 60,
+                                countUp: widget.retakeCountUp,
+                                questionLang: widget.retakeQuestionLang,
                               ),
-                            );
-                          },
-                      icon: const Icon(Icons.replay_rounded),
-                      label: Text(
-                        s('retake_test'),
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    ),
+                            ),
+                          );
+                        },
                   ),
                   const SizedBox(height: 12),
                 ],
 
                 // Home button
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppTheme.blue),
-                      foregroundColor: AppTheme.blue,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                      ),
-                    ),
-                    onPressed: () => Navigator.of(
-                      context,
-                    ).popUntil((route) => route.isFirst),
-                    icon: const Icon(Icons.home_rounded),
-                    label: Text(
-                      s('go_home'),
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  ),
+                BrandButton(
+                  label: s('go_home'),
+                  icon: const Icon(Icons.home_rounded),
+                  kind: BrandButtonKind.secondary,
+                  onPressed: () =>
+                      Navigator.of(context).popUntil((route) => route.isFirst),
                 ),
                 const SizedBox(height: 16),
               ],

@@ -418,6 +418,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             children: [
               SettingsRow(
                 icon: Icons.skip_next_rounded,
+                color: AppTheme.violet,
                 title: s('auto_advance_setting'),
                 subtitle: s('auto_advance_sub'),
                 showChevron: false,
@@ -429,6 +430,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               ),
               SettingsRow(
                 icon: Icons.menu_book_rounded,
+                color: AppTheme.blueDark,
                 title: s('auto_explanation'),
                 subtitle: s('auto_explanation_sub'),
                 showChevron: false,
@@ -444,6 +446,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               // neighbours; the sheet is also where the live preview belongs.
               SettingsRow(
                 icon: Icons.format_size_rounded,
+                color: AppTheme.teal,
                 title: s('text_size'),
                 subtitle: settings.scaleLabel,
                 onTap: () => _showTextSizeSheet(lang),
@@ -457,11 +460,13 @@ class _ProfileScreenState extends State<ProfileScreen>
             children: [
               SettingsRow(
                 icon: Icons.language_rounded,
+                color: AppTheme.blueDark,
                 title: s('language'),
                 subtitle: context.watch<LanguageProvider>().langLabel,
                 onTap: () => _showLanguageSheet(lang),
               ),
               SettingsRow(
+                color: AppTheme.orange,
                 icon: isDark
                     ? Icons.dark_mode_rounded
                     : Icons.light_mode_rounded,
@@ -483,6 +488,7 @@ class _ProfileScreenState extends State<ProfileScreen>
             children: [
               SettingsRow(
                 icon: Icons.bar_chart_rounded,
+                color: AppTheme.blueDark,
                 title: s('my_results'),
                 subtitle: _resultsSummary(lang),
                 onTap: () => Navigator.push(
@@ -492,6 +498,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               ),
               SettingsRow(
                 icon: Icons.insights_rounded,
+                color: AppTheme.success,
                 title: s('topic_stats'),
                 subtitle: s('topic_stats_sub'),
                 onTap: () => Navigator.push(
@@ -709,6 +716,7 @@ class _DailyQuestionTileState extends State<_DailyQuestionTile> {
 
     return SettingsRow(
       icon: Icons.notifications_active_rounded,
+      color: AppTheme.orange,
       title: s('daily_question'),
       subtitle: _enabled
           ? '${s('daily_question_time')}: $hourLabel'
@@ -1827,6 +1835,7 @@ class _AccountSheetState extends State<_AccountSheet> {
         const SizedBox(height: 6),
         SettingsRow(
           icon: Icons.key_rounded,
+          color: AppTheme.blueDark,
           title: s('change_password'),
           onTap: () => Navigator.pop(context, _AccountAction.password),
         ),

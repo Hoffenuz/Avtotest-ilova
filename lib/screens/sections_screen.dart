@@ -42,7 +42,8 @@ class SectionsScreen extends StatelessWidget {
     Widget tile(
       IconData icon,
       String key,
-      Widget screen, {
+      Widget screen,
+      Color color, {
       bool pro = false,
       bool fade = false,
     }) {
@@ -50,6 +51,7 @@ class SectionsScreen extends StatelessWidget {
         padding: const EdgeInsets.only(bottom: 10),
         child: SectionTile(
           icon: icon,
+          color: color,
           title: s(key),
           subtitle: s('${key}_sub'),
           corner: pro && !hasPro ? const ProTag() : null,
@@ -72,34 +74,54 @@ class SectionsScreen extends StatelessWidget {
             Icons.timer_outlined,
             'real_exam',
             const RealExamScreen(),
+            AppTheme.error,
             fade: true,
           ),
           tile(
             Icons.cancel_outlined,
             'my_errors',
             const ErrorsScreen(),
+            AppTheme.orange,
             pro: true,
           ),
           tile(
             Icons.bookmark_border_rounded,
             'saved_tests',
             const SavedQuestionsScreen(),
+            AppTheme.blueDark,
           ),
           tile(
             Icons.warning_amber_rounded,
             'difficult_questions',
             const DifficultQuestionsScreen(),
+            AppTheme.violet,
             pro: true,
           ),
           const SizedBox(height: 14),
           _GroupLabel(text: s('section_reference')),
-          tile(Icons.signpost_outlined, 'road_signs', const RoadSignsScreen()),
-          tile(Icons.traffic_outlined, 'avtodrom', const AvtodromScreen()),
-          tile(Icons.tag_rounded, 'memorize', const MemorizeScreen()),
+          tile(
+            Icons.signpost_outlined,
+            'road_signs',
+            const RoadSignsScreen(),
+            AppTheme.success,
+          ),
+          tile(
+            Icons.traffic_outlined,
+            'avtodrom',
+            const AvtodromScreen(),
+            AppTheme.orange,
+          ),
+          tile(
+            Icons.tag_rounded,
+            'memorize',
+            const MemorizeScreen(),
+            AppTheme.teal,
+          ),
           tile(
             Icons.search_rounded,
             'question_search',
             const QuestionSearchScreen(),
+            AppTheme.blueDark,
             pro: true,
           ),
         ],

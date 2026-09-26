@@ -39,7 +39,6 @@ class HomeScreen extends StatelessWidget {
       (sub) => sub.isDeniedForSure,
     );
     final needsPro = !isLoggedIn || isDeniedForSure;
-    final dark = AppTheme.isDark(context);
 
     void push(Widget screen, {bool fade = false}) => Navigator.push(
       context,
@@ -79,7 +78,7 @@ class HomeScreen extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                     height: 1.2,
                     letterSpacing: -0.3,
-                    color: dark ? AppTheme.textPrimary : AppTheme.ink,
+                    color: AppTheme.textP(context),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -97,7 +96,9 @@ class HomeScreen extends StatelessWidget {
                     color: AppTheme.mutedText(context),
                   ),
                 ),
-                const SizedBox(height: 28),
+                // A little air above the buttons, so the eye finishes the
+                // heading before it reaches them.
+                const SizedBox(height: 40),
                 BrandButton(
                   label: s('home_btn_test'),
                   icon: const Icon(Icons.play_arrow_rounded),
@@ -127,12 +128,14 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 32),
                 SectionTile(
                   icon: Icons.timer_outlined,
+                  color: AppTheme.error,
                   title: s('real_exam'),
                   onTap: () => push(const RealExamScreen(), fade: true),
                 ),
                 const SizedBox(height: 10),
                 SectionTile(
                   icon: Icons.psychology_outlined,
+                  color: AppTheme.orange,
                   title: s('section_errors_drill'),
                   corner: needsPro ? const ProTag() : null,
                   onTap: () => push(const ErrorsScreen()),
@@ -140,6 +143,7 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 10),
                 SectionTile(
                   icon: Icons.warning_amber_rounded,
+                  color: AppTheme.violet,
                   title: s('difficult_questions'),
                   corner: needsPro ? const ProTag() : null,
                   onTap: () => push(const DifficultQuestionsScreen()),
