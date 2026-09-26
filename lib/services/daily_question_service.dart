@@ -46,9 +46,11 @@ class DailyQuestionService {
 
   static bool _initialized = false;
 
+  /// ON unless the user (or the OS, by refusing permission) said otherwise —
+  /// a question a day is what brings people back, so it is opt-out.
   static Future<bool> isEnabled() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_enabledKey) ?? false;
+    return prefs.getBool(_enabledKey) ?? true;
   }
 
   static Future<int> hour() async {
@@ -203,6 +205,15 @@ class DailyQuestionService {
   /// having to do anything.
   static Future<void> refreshOnLaunch({required String lang}) async {
     if (!isSupported) return;
+    // Nothing stored yet: a fresh install (or someone who never touched the
+    // switch). "On by default" on Android 13+ means asking for the
+    // notification permission once; the answer is stored either way, so a
+    // refusal is respected and never asked again.
+    final prefs = await SharedPreferences.getInstance();
+    if (!prefs.containsKey(_enabledKey)) {
+      await setEnabled(true, lang: lang);
+      return;
+    }
     if (!await isEnabled()) return;
     await schedule(lang: lang);
   }
