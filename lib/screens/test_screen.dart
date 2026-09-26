@@ -398,7 +398,10 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
                   ),
                   Row(
                     children: [
-                      const Icon(Icons.menu_book_rounded, color: AppTheme.blue),
+                      Icon(
+                        Icons.menu_book_rounded,
+                        color: AppTheme.brandAccent(ctx),
+                      ),
                       const SizedBox(width: 8),
                       Text(
                         s('explanation_title'),
@@ -463,7 +466,11 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.flag_rounded, size: 44, color: AppTheme.blue),
+              Icon(
+                Icons.flag_rounded,
+                size: 44,
+                color: AppTheme.brandAccent(ctx),
+              ),
               const SizedBox(height: 14),
               Text(
                 s('finish_test'),
@@ -482,19 +489,24 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
               _DialogStatRow(
                 label: s('unanswered'),
                 value: '$unanswered',
-                color: AppTheme.orange,
+                color: AppTheme.warning,
               ),
               _DialogStatRow(
                 label: s('total'),
                 value: '${_questions.length}',
-                color: AppTheme.blue,
+                color: AppTheme.brandAccent(ctx),
               ),
               if (unanswered > 0) ...[
                 const SizedBox(height: 10),
                 Text(
                   '$unanswered ${s('unanswered_warning')}',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppTheme.orange, fontSize: 13),
+                  style: TextStyle(
+                    color: AppTheme.isDark(ctx)
+                        ? AppTheme.warning
+                        : const Color(0xFFB45309),
+                    fontSize: 13,
+                  ),
                 ),
               ],
               const SizedBox(height: 20),
@@ -504,8 +516,8 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(ctx, false),
                       style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(0, 50),
-                        side: BorderSide(color: AppTheme.border(ctx)),
+                        minimumSize: const Size(0, 52),
+                        side: BorderSide(color: AppTheme.hairline(ctx)),
                       ),
                       child: Text(
                         s('no'),
@@ -521,8 +533,9 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
                     child: ElevatedButton(
                       onPressed: () => Navigator.pop(ctx, true),
                       style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(0, 50),
-                        backgroundColor: AppTheme.blue,
+                        minimumSize: const Size(0, 52),
+                        backgroundColor: AppTheme.brandFill(ctx),
+                        foregroundColor: Colors.white,
                       ),
                       child: Text(
                         s('yes'),
@@ -556,7 +569,7 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
                 width: 60,
                 height: 60,
                 child: CircularProgressIndicator(
-                  color: AppTheme.blue,
+                  color: AppTheme.brandAccent(context),
                   strokeWidth: 3,
                   backgroundColor: AppTheme.card(context),
                 ),
@@ -636,7 +649,7 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
                     _questions.isNotEmpty &&
                     _savedIds.contains(_questions[_currentIndex].globalId),
                 autoAdvanceTooltip: s('auto_advance'),
-                finishTooltip: s('finish'),
+                finishLabel: s('finish'),
                 exitTooltip: s('exit_test'),
                 saveTooltip:
                     _questions.isNotEmpty &&
@@ -720,8 +733,7 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
               : null,
           // A calm hint, not a pop-up: after a wrong answer, a free user sees
           // that the explanation is what PRO adds.
-          explanationIsPro:
-              !context.watch<SubscriptionProvider>().isPro,
+          explanationIsPro: !context.watch<SubscriptionProvider>().isPro,
           explanationHighlighted: _incorrectIds.contains(
             _questions[_currentIndex].globalId,
           ),
@@ -774,20 +786,11 @@ class _QuestionCard extends StatelessWidget {
           // only pushed the question itself further down the screen.
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: AppTheme.card(context),
-              borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-              border: Border.all(color: AppTheme.border(context)),
-              boxShadow: AppTheme.isDark(context)
-                  ? null
-                  : [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.04),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
+              borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+              border: Border.all(color: AppTheme.hairline(context)),
             ),
             child: Text(
               question.getText(questionLang),
@@ -811,7 +814,7 @@ class _QuestionCard extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           ...List.generate(options.length, (i) {
             final isSelected = selectedAnswer == options[i].id;
             return Padding(
@@ -880,27 +883,39 @@ class _AnswerOptionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dark = AppTheme.isDark(context);
     Color bgColor = AppTheme.card(context);
-    Color borderColor = AppTheme.border(context);
-    Color textColor = AppTheme.textP(context);
+    Color borderColor = AppTheme.hairline(context);
+    Color chipBg = dark
+        ? Colors.white.withValues(alpha: 0.1)
+        : AppTheme.ink.withValues(alpha: 0.07);
+    Color chipFg = dark ? Colors.white : AppTheme.ink;
+    double borderWidth = 1;
     IconData? trailingIcon;
     Color? iconColor;
 
     if (isAnswered) {
       if (isCorrect) {
-        bgColor = AppTheme.success.withValues(alpha: 0.12);
-        borderColor = AppTheme.success.withValues(alpha: 0.5);
-        textColor = AppTheme.success;
+        bgColor = AppTheme.success.withValues(alpha: dark ? 0.16 : 0.08);
+        borderColor = AppTheme.success;
+        chipBg = AppTheme.success;
+        chipFg = Colors.white;
+        borderWidth = 1.5;
         trailingIcon = Icons.check_circle_rounded;
         iconColor = AppTheme.success;
       } else if (isSelected) {
-        bgColor = AppTheme.error.withValues(alpha: 0.12);
-        borderColor = AppTheme.error.withValues(alpha: 0.5);
-        textColor = AppTheme.error;
+        bgColor = AppTheme.error.withValues(alpha: dark ? 0.16 : 0.07);
+        borderColor = AppTheme.error;
+        chipBg = AppTheme.error;
+        chipFg = Colors.white;
+        borderWidth = 1.5;
         trailingIcon = Icons.cancel_rounded;
         iconColor = AppTheme.error;
       }
     }
+    // Outcome is carried by the border, the chip and the icon; the answer
+    // text itself stays full-contrast (green-on-green was hard to read).
+    final textColor = AppTheme.textP(context);
 
     return Semantics(
       button: true,
@@ -913,13 +928,13 @@ class _AnswerOptionTile extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
           child: Ink(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             decoration: BoxDecoration(
               color: bgColor,
-              borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-              border: Border.all(color: borderColor, width: 1.5),
+              borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+              border: Border.all(color: borderColor, width: borderWidth),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -928,23 +943,16 @@ class _AnswerOptionTile extends StatelessWidget {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    gradient: isAnswered && isCorrect
-                        ? AppTheme.blueGradient
-                        : null,
-                    color: isAnswered && isCorrect
-                        ? null
-                        : AppTheme.blue.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
+                    color: chipBg,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                   ),
                   child: Center(
                     child: Text(
                       letter,
                       style: TextStyle(
-                        color: isAnswered && isCorrect
-                            ? Colors.white
-                            : AppTheme.blue,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 15,
+                        color: chipFg,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
                       ),
                     ),
                   ),
@@ -972,48 +980,58 @@ class _AnswerOptionTile extends StatelessWidget {
   }
 }
 
-/// Top bar: exit, timer, auto-advance, finish.
 /// One square control in the test toolbar.
 ///
-/// Every button up here is the same shape and size — a tinted rounded square
-/// with a matching border. Auto-advance and finish used to be bare
-/// `IconButton`s among four framed ones, which made them read as decoration
-/// rather than controls.
+/// Every icon control up here is the same 40 dp outlined square, as on the
+/// site. "On" (saved, auto-advance) is the brand colour with a light fill;
+/// "off" is a muted outline — state is shown by the control itself, not by a
+/// different colour per button.
 class _ToolbarButton extends StatelessWidget {
   final IconData icon;
-  final Color color;
   final String tooltip;
-  final bool filled;
+  final bool active;
   final VoidCallback onTap;
 
   const _ToolbarButton({
     required this.icon,
-    required this.color,
     required this.tooltip,
-    this.filled = false,
+    this.active = false,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final accent = AppTheme.brandAccent(context);
+    final radius = BorderRadius.circular(AppTheme.radiusSm);
     return Tooltip(
       message: tooltip,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(10),
-          child: Ink(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: filled ? 0.18 : 0.08),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(
-                color: color.withValues(alpha: filled ? 0.55 : 0.25),
+      child: Semantics(
+        button: true,
+        toggled: active,
+        child: Material(
+          color: active
+              ? accent.withValues(alpha: AppTheme.isDark(context) ? 0.18 : 0.08)
+              : Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: radius,
+            side: BorderSide(
+              color: active
+                  ? accent.withValues(alpha: 0.45)
+                  : AppTheme.hairline(context),
+            ),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: SizedBox(
+              width: 40,
+              height: 40,
+              child: Icon(
+                icon,
+                size: 21,
+                color: active ? accent : AppTheme.textS(context),
               ),
             ),
-            child: Icon(icon, color: color, size: 20),
           ),
         ),
       ),
@@ -1021,13 +1039,14 @@ class _ToolbarButton extends StatelessWidget {
   }
 }
 
+/// Exit · clock · save · auto-advance · Yakunlash.
 class _TestToolbar extends StatelessWidget {
   final ValueListenable<int> timeLeft;
   final bool countUp;
   final bool autoAdvance;
   final bool isCurrentSaved;
   final String autoAdvanceTooltip;
-  final String finishTooltip;
+  final String finishLabel;
   final String exitTooltip;
   final String saveTooltip;
   final VoidCallback onToggleAutoAdvance;
@@ -1041,7 +1060,7 @@ class _TestToolbar extends StatelessWidget {
     required this.autoAdvance,
     required this.isCurrentSaved,
     required this.autoAdvanceTooltip,
-    required this.finishTooltip,
+    required this.finishLabel,
     required this.exitTooltip,
     required this.saveTooltip,
     required this.onToggleAutoAdvance,
@@ -1058,87 +1077,109 @@ class _TestToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final dark = AppTheme.isDark(context);
+    final green = dark ? AppTheme.success : const Color(0xFF15803D);
     return Container(
-      padding: const EdgeInsets.fromLTRB(8, 5, 8, 5),
-      decoration: BoxDecoration(
-        color: AppTheme.card(context),
-        border: Border(bottom: BorderSide(color: AppTheme.border(context))),
-      ),
+      padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
+      color: AppTheme.card(context),
       child: Row(
         children: [
           _ToolbarButton(
             icon: Icons.close_rounded,
-            color: AppTheme.error,
             tooltip: exitTooltip,
-            filled: true,
             onTap: onExit,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           // The clock sits on the LEFT, next to the exit button. On the right
           // it was the thing a right-handed thumb covered, and glancing at the
           // time is the single most frequent look away from the question.
-          ValueListenableBuilder<int>(
-            valueListenable: timeLeft,
-            builder: (context, seconds, _) {
-              final timerColor = countUp
-                  ? AppTheme.blue
-                  : (seconds < 60
-                        ? AppTheme.error
-                        : (seconds < 300 ? AppTheme.orange : AppTheme.blue));
-              return Container(
-                height: 36,
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                decoration: BoxDecoration(
-                  color: timerColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: timerColor.withValues(alpha: 0.25)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.timer_outlined, size: 16, color: timerColor),
-                    const SizedBox(width: 5),
-                    Text(
-                      _formatTime(seconds),
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: timerColor,
-                        fontSize: 14.5,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
+          // Plain text as on the site; it only takes a colour when time is
+          // actually running short.
+          Expanded(
+            child: ValueListenableBuilder<int>(
+              valueListenable: timeLeft,
+              builder: (context, seconds, _) {
+                final color = countUp || seconds >= 300
+                    ? AppTheme.textP(context)
+                    : (seconds < 60
+                          ? AppTheme.error
+                          : (dark
+                                ? AppTheme.warning
+                                : const Color(0xFFB45309)));
+                return Align(
+                  alignment: Alignment.centerLeft,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.schedule_rounded, size: 18, color: color),
+                        const SizedBox(width: 5),
+                        Text(
+                          _formatTime(seconds),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: color,
+                            fontSize: 16,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              );
-            },
+                  ),
+                );
+              },
+            ),
           ),
-          const Spacer(),
           _ToolbarButton(
             icon: isCurrentSaved
                 ? Icons.bookmark_rounded
                 : Icons.bookmark_border_rounded,
-            color: isCurrentSaved ? AppTheme.orange : AppTheme.blue,
             tooltip: saveTooltip,
-            filled: isCurrentSaved,
+            active: isCurrentSaved,
             onTap: onToggleSave,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           _ToolbarButton(
-            icon: autoAdvance
-                ? Icons.play_circle_rounded
-                : Icons.play_circle_outline_rounded,
-            color: autoAdvance ? AppTheme.blue : AppTheme.textM(context),
+            icon: Icons.skip_next_rounded,
             tooltip: autoAdvanceTooltip,
-            filled: autoAdvance,
+            active: autoAdvance,
             onTap: onToggleAutoAdvance,
           ),
-          const SizedBox(width: 8),
-          _ToolbarButton(
-            icon: Icons.check_circle_rounded,
-            color: AppTheme.success,
-            tooltip: finishTooltip,
-            filled: true,
-            onTap: onFinish,
+          const SizedBox(width: 6),
+          // A word, not a bare tick: finishing ends the attempt, and an icon
+          // alone read as "check my answer".
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 104, minHeight: 40),
+            child: Material(
+              color: green.withValues(alpha: dark ? 0.16 : 0.08),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                side: BorderSide(color: green.withValues(alpha: 0.4)),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(
+                onTap: onFinish,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Center(
+                    widthFactor: 1,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        finishLabel,
+                        maxLines: 1,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: green,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -1389,8 +1430,8 @@ class _QuestionNumberStripState extends State<_QuestionNumberStrip> {
     return Container(
       height: 50,
       decoration: BoxDecoration(
-        color: AppTheme.surface(context),
-        border: Border(bottom: BorderSide(color: AppTheme.border(context))),
+        color: AppTheme.card(context),
+        border: Border(bottom: BorderSide(color: AppTheme.hairline(context))),
       ),
       child: ListView.builder(
         controller: _controller,
@@ -1408,7 +1449,7 @@ class _QuestionNumberStripState extends State<_QuestionNumberStrip> {
           Border? border;
 
           if (isCurrent) {
-            bgColor = AppTheme.blue;
+            bgColor = AppTheme.brandFill(context);
             textColor = Colors.white;
           } else if (isIncorrect) {
             bgColor = AppTheme.error.withValues(alpha: 0.15);
@@ -1419,9 +1460,11 @@ class _QuestionNumberStripState extends State<_QuestionNumberStrip> {
             textColor = AppTheme.success;
             border = Border.all(color: AppTheme.success.withValues(alpha: 0.4));
           } else {
-            bgColor = AppTheme.card(context);
-            textColor = AppTheme.textM(context);
-            border = Border.all(color: AppTheme.border(context));
+            bgColor = AppTheme.isDark(context)
+                ? Colors.white.withValues(alpha: 0.04)
+                : AppTheme.lightScaffoldBg;
+            textColor = AppTheme.mutedText(context);
+            border = Border.all(color: AppTheme.hairline(context));
           }
 
           return Padding(
@@ -1434,7 +1477,7 @@ class _QuestionNumberStripState extends State<_QuestionNumberStrip> {
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
                   color: bgColor,
-                  borderRadius: BorderRadius.circular(9),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                   border: border,
                 ),
                 child: Text(
