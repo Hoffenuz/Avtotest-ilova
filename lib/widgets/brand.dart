@@ -86,6 +86,9 @@ class BrandButton extends StatelessWidget {
   final double minHeight;
   final bool proTag;
 
+  /// Half-width buttons side by side: smaller text and padding.
+  final bool dense;
+
   const BrandButton({
     super.key,
     required this.label,
@@ -94,6 +97,7 @@ class BrandButton extends StatelessWidget {
     this.kind = BrandButtonKind.primary,
     this.minHeight = 52,
     this.proTag = false,
+    this.dense = false,
   });
 
   @override
@@ -133,26 +137,44 @@ class BrandButton extends StatelessWidget {
           child: ConstrainedBox(
             constraints: BoxConstraints(minHeight: minHeight),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              padding: EdgeInsets.symmetric(
+                horizontal: dense ? 10 : 20,
+                vertical: dense ? 8 : 12,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   IconTheme(
-                    data: IconThemeData(color: foreground, size: 22),
+                    data: IconThemeData(color: foreground, size: dense ? 20 : 22),
                     child: icon,
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: dense ? 8 : 10),
                   Flexible(
-                    child: Text(
-                      label,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: foreground,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                        height: 1.2,
-                      ),
-                    ),
+                    // Dense buttons sit two to a row: one word that does not
+                    // fit is shrunk, never broken as "Variantla / r".
+                    child: dense
+                        ? FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              label,
+                              maxLines: 1,
+                              style: TextStyle(
+                                color: foreground,
+                                fontSize: 15.5,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          )
+                        : Text(
+                            label,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: foreground,
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600,
+                              height: 1.2,
+                            ),
+                          ),
                   ),
                 ],
               ),

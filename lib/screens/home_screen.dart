@@ -9,7 +9,6 @@ import '../services/question_service.dart';
 import '../services/test_results_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/brand.dart';
-import '../widgets/telegram_group_banner.dart';
 import '../widgets/update_banner.dart';
 import 'difficult_questions_screen.dart';
 import 'errors_screen.dart';
@@ -19,14 +18,13 @@ import 'real_exam_screen.dart';
 import 'topic_list_screen.dart';
 import 'variant_list_screen.dart';
 
-/// Bosh ekran — saytning bosh sahifasi tuzilishida (src/pages/Home.tsx):
-/// siyoh header, sarlavha, uchta asosiy tugma, uchta tezkor bo'lim, oxirida
-/// bitta tinch PRO taklifi.
+/// Bosh ekran: yuqorida o'qiladigan qism (sarlavha, tayyorgarlik, tezkor
+/// bo'limlar, so'nggi natijalar), pastda — bosh barmoq yetadigan joyda —
+/// doim ko'rinadigan amallar.
 ///
-/// "Test ishlash" eng katta va to'la siyoh: ilovani ochgan odam ikki bosishda
-/// testni boshlaydi (shu tugma → "Testni boshlash"). Sozlamalar tishli
-/// g'ildiragi va "Saqlangan / Yo'l belgilari" plitkalari olib tashlandi —
-/// ular pastki menyuda va Bo'limlarda bor, bu yerda takror edi.
+/// "Test ishlash" — ekrandagi yagona to'la tugma: ilovani ochgan odamning
+/// ko'zi unga tushadi va ikki bosishda test boshlanadi (shu tugma →
+/// "Testni boshlash").
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -37,10 +35,14 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with AutomaticKeepAliveClientMixin {
   int _totalTests = 0;
-  int _passedTests = 0;
-  double _avgScore = 0;
   List<TestResult> _recentResults = [];
   bool _showAllResults = false;
+
+  /// Average of the last [_readinessWindow] finished tests — how the user is
+  /// doing now, not what they scored on day one.
+  double _readiness = 0;
+  int _readinessTests = 0;
+  static const _readinessWindow = 10;
 
   @override
   bool get wantKeepAlive => true;
@@ -65,14 +67,15 @@ class _HomeScreenState extends State<HomeScreen>
     final results = await TestResultsService.getPracticeResults();
     if (!mounted) return;
     final completed = results.where((r) => r.isCompleted).toList();
+    final recent = completed.take(_readinessWindow).toList();
     setState(() {
       _totalTests = completed.length;
-      _passedTests = completed.where((r) => r.isPassed).length;
-      _avgScore = _totalTests > 0
-          ? completed.fold<double>(0, (sum, r) => sum + r.percentage) /
-                _totalTests
-          : 0;
       _recentResults = results;
+      _readinessTests = recent.length;
+      _readiness = recent.isEmpty
+          ? 0
+          : recent.fold<double>(0, (sum, r) => sum + r.percentage) /
+                recent.length;
     });
   }
 
@@ -98,9 +101,6 @@ class _HomeScreenState extends State<HomeScreen>
       (sub) => sub.isDeniedForSure,
     );
     final needsPro = !isLoggedIn || isDeniedForSure;
-    final dark = AppTheme.isDark(context);
-
-    const crown = CrownIcon(size: 22, color: AppTheme.proBorder);
 
     return Scaffold(
       body: Column(
@@ -114,88 +114,45 @@ class _HomeScreenState extends State<HomeScreen>
                 physics: const BouncingScrollPhysics(
                   parent: AlwaysScrollableScrollPhysics(),
                 ),
-                padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
                 children: [
                   // A user who never opens Settings would otherwise keep
                   // practising on an outdated question bank forever.
                   const UpdateBanner(),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: _Badge(text: s('home_badge')),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    s('home_title'),
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                      height: 1.2,
-                      letterSpacing: -0.2,
-                      color: dark ? AppTheme.textPrimary : AppTheme.ink,
-                    ),
+                  _Hero(
+                    lang: lang,
+                    completedTests: _totalTests,
+                    readiness: _readiness,
+                    readinessTests: _readinessTests,
                   ),
                   const SizedBox(height: 20),
-                  BrandButton(
-                    label: s('home_btn_test'),
-                    icon: const Icon(Icons.play_arrow_rounded),
-                    minHeight: 60,
-                    // Switches to the practice tab rather than pushing a
-                    // second copy of the same screen on top of it.
-                    onPressed: () => context
-                        .findAncestorStateOfType<MainShellState>()
-                        ?.switchTab(MainShellState.practiceTab),
+                  _QuickRow(
+                    tiles: [
+                      _QuickTileData(
+                        icon: Icons.timer_outlined,
+                        title: s('real_exam'),
+                        onTap: () => _push(const RealExamScreen(), fade: true),
+                      ),
+                      _QuickTileData(
+                        icon: Icons.psychology_outlined,
+                        title: s('section_errors_drill'),
+                        pro: needsPro,
+                        onTap: () => _push(const ErrorsScreen()),
+                      ),
+                      _QuickTileData(
+                        icon: Icons.warning_amber_rounded,
+                        title: s('difficult_questions'),
+                        pro: needsPro,
+                        onTap: () => _push(const DifficultQuestionsScreen()),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 12),
-                  // PRO egasida bu ikkisi ham to'la siyoh, ikonka o'rnida
-                  // oltin toj — aynan shu imkoniyatlar uchun to'lagan.
-                  BrandButton(
-                    label: s('home_btn_variants'),
-                    icon: isPro ? crown : const Icon(Icons.grid_view_rounded),
-                    kind: isPro
-                        ? BrandButtonKind.primary
-                        : BrandButtonKind.secondary,
-                    minHeight: 60,
-                    onPressed: () => _push(const VariantListScreen()),
-                  ),
-                  const SizedBox(height: 12),
-                  BrandButton(
-                    label: s('home_btn_topics'),
-                    icon: isPro ? crown : const Icon(Icons.menu_book_rounded),
-                    kind: isPro
-                        ? BrandButtonKind.primary
-                        : BrandButtonKind.secondary,
-                    minHeight: 60,
-                    proTag: needsPro,
-                    onPressed: () => _push(const TopicListScreen()),
-                  ),
-                  const SizedBox(height: 28),
-                  SectionTile(
-                    icon: Icons.timer_outlined,
-                    title: s('real_exam'),
-                    onTap: () => _push(const RealExamScreen(), fade: true),
-                  ),
-                  const SizedBox(height: 10),
-                  SectionTile(
-                    icon: Icons.psychology_outlined,
-                    title: s('section_errors_drill'),
-                    corner: needsPro ? const ProTag() : null,
-                    onTap: () => _push(const ErrorsScreen()),
-                  ),
-                  const SizedBox(height: 10),
-                  SectionTile(
-                    icon: Icons.warning_amber_rounded,
-                    title: s('difficult_questions'),
-                    corner: needsPro ? const ProTag() : null,
-                    onTap: () => _push(const DifficultQuestionsScreen()),
-                  ),
-                  // Nothing to show before the first test — a row of zeros
-                  // only tells a new user what they have not done yet.
                   if (_recentResults.isNotEmpty) ...[
-                    const SizedBox(height: 28),
-                    _buildResults(lang),
+                    const SizedBox(height: 24),
+                    _buildRecentResults(lang),
                   ],
                   if (needsPro) ...[
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
                     ProUpsellCard(
                       title: s('pro_card_title'),
                       description: s('pro_card_desc').replaceAll(
@@ -209,51 +166,47 @@ class _HomeScreenState extends State<HomeScreen>
                       onTap: () => _push(const ProScreen()),
                     ),
                   ],
-                  const SizedBox(height: 20),
-                  const TelegramGroupBanner(),
                 ],
               ),
             ),
+          ),
+          // THE ACTIONS SIT WHERE THE THUMB IS. At the top of a tall phone the
+          // three buttons were a stretch to reach; here they are always on
+          // screen, right above the tab bar, and "Test ishlash" is the one
+          // filled button so the eye lands on it first — for PRO users too.
+          _ActionPanel(
+            testLabel: s('home_btn_test'),
+            variantsLabel: s('home_btn_variants'),
+            topicsLabel: s('home_btn_topics'),
+            isPro: isPro,
+            topicsNeedPro: needsPro,
+            // Switches to the practice tab rather than pushing a second copy
+            // of the same screen on top of it.
+            onTest: () => context
+                .findAncestorStateOfType<MainShellState>()
+                ?.switchTab(MainShellState.practiceTab),
+            onVariants: () => _push(const VariantListScreen()),
+            onTopics: () => _push(const TopicListScreen()),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildResults(String lang) {
+  Widget _buildRecentResults(String lang) {
     String s(String key) => AppStrings.get(key, lang);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          s('your_results'),
+          s('recent_results'),
           style: TextStyle(
-            fontSize: 17,
+            fontSize: 16,
             fontWeight: FontWeight.w700,
             color: AppTheme.textP(context),
           ),
         ),
-        const SizedBox(height: 12),
-        Container(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: BoxDecoration(
-            color: AppTheme.card(context),
-            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-            border: Border.all(color: AppTheme.hairline(context)),
-          ),
-          child: IntrinsicHeight(
-            child: Row(
-              children: [
-                _Stat(value: '${(_avgScore * 100).round()}%', label: s('avg_score')),
-                VerticalDivider(width: 1, color: AppTheme.hairline(context)),
-                _Stat(value: '$_passedTests', label: s('passed_tests')),
-                VerticalDivider(width: 1, color: AppTheme.hairline(context)),
-                _Stat(value: '$_totalTests', label: s('total_tests')),
-              ],
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         // Capped: the history holds up to 100 entries and they all sit in one
         // Column, so expanding used to build every one of them.
         for (final r in _recentResults.take(_showAllResults ? 20 : 3))
@@ -273,12 +226,351 @@ class _HomeScreenState extends State<HomeScreen>
                     : Icons.keyboard_arrow_down_rounded,
               ),
               label: Text(
-                '${s('recent_results')} (${_recentResults.length})',
+                _showAllResults
+                    ? s('show_less')
+                    : '${s('show_all')} (${_recentResults.length})',
                 style: const TextStyle(fontWeight: FontWeight.w600),
               ),
             ),
           ),
       ],
+    );
+  }
+}
+
+/// Sarlavha va tayyorgarlik — sodda: bitta sarlavha, bitta ko'rsatkich.
+/// Test ishlamagan foydalanuvchiga nol emas, imtihon qoidasi ko'rsatiladi.
+class _Hero extends StatelessWidget {
+  final String lang;
+  final int completedTests;
+  final double readiness;
+  final int readinessTests;
+
+  const _Hero({
+    required this.lang,
+    required this.completedTests,
+    required this.readiness,
+    required this.readinessTests,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    String s(String key) => AppStrings.get(key, lang);
+    final dark = AppTheme.isDark(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _Badge(text: s('home_badge')),
+        const SizedBox(height: 12),
+        Text(
+          s('hero_title'),
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w800,
+            height: 1.2,
+            letterSpacing: -0.2,
+            color: dark ? AppTheme.textPrimary : AppTheme.ink,
+          ),
+        ),
+        const SizedBox(height: 14),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+          decoration: BoxDecoration(
+            color: AppTheme.card(context),
+            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+            border: Border.all(color: AppTheme.hairline(context)),
+          ),
+          child: completedTests == 0
+              ? _ExamFormat(text: s('exam_format'))
+              : _Readiness(
+                  title: s('readiness_title'),
+                  subtitle: s(
+                    'readiness_sub',
+                  ).replaceAll('{n}', '$readinessTests'),
+                  value: readiness,
+                ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ExamFormat extends StatelessWidget {
+  final String text;
+  const _ExamFormat({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(
+          Icons.flag_outlined,
+          size: 22,
+          color: AppTheme.brandAccent(context),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.35,
+              color: AppTheme.textP(context),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Foiz, chiziq va 90% belgisi — "o'tdi" shu yerdan boshlanadi. Yashil faqat
+/// chegaradan o'tganda: rang holatni bildiradi, bezak emas.
+class _Readiness extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final double value;
+
+  const _Readiness({
+    required this.title,
+    required this.subtitle,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final pct = (value * 100).round();
+    final passing = value >= 0.9;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.textP(context),
+                ),
+              ),
+            ),
+            Text(
+              '$pct%',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w800,
+                color: passing ? AppTheme.success : AppTheme.textP(context),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        LayoutBuilder(
+          builder: (context, box) => Stack(
+            clipBehavior: Clip.none,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: value.clamp(0.0, 1.0),
+                  minHeight: 8,
+                  backgroundColor: AppTheme.hairline(context),
+                  color: passing
+                      ? AppTheme.success
+                      : AppTheme.brandFill(context),
+                ),
+              ),
+              Positioned(
+                left: box.maxWidth * 0.9 - 1,
+                top: -3,
+                child: Container(
+                  width: 2,
+                  height: 14,
+                  color: AppTheme.textP(context).withValues(alpha: 0.45),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          subtitle,
+          style: TextStyle(fontSize: 12.5, color: AppTheme.mutedText(context)),
+        ),
+      ],
+    );
+  }
+}
+
+class _QuickTileData {
+  final IconData icon;
+  final String title;
+  final bool pro;
+  final VoidCallback onTap;
+  const _QuickTileData({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+    this.pro = false,
+  });
+}
+
+/// Uchta tezkor bo'lim bitta qatorda — saytdagi QUICK_ITEMS bilan bir xil.
+class _QuickRow extends StatelessWidget {
+  final List<_QuickTileData> tiles;
+  const _QuickRow({required this.tiles});
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = AppTheme.isDark(context);
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < tiles.length; i++) ...[
+            if (i > 0) const SizedBox(width: 10),
+            Expanded(
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Positioned.fill(
+                    child: Material(
+                      color: AppTheme.card(context),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+                        side: BorderSide(color: AppTheme.hairline(context)),
+                      ),
+                      clipBehavior: Clip.antiAlias,
+                      child: InkWell(onTap: tiles[i].onTap),
+                    ),
+                  ),
+                  IgnorePointer(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 14, 8, 12),
+                      child: Column(
+                        children: [
+                          Container(
+                            width: 42,
+                            height: 42,
+                            decoration: BoxDecoration(
+                              color: dark
+                                  ? Colors.white.withValues(alpha: 0.1)
+                                  : AppTheme.ink.withValues(alpha: 0.07),
+                              borderRadius: BorderRadius.circular(
+                                AppTheme.radiusSm,
+                              ),
+                            ),
+                            child: Icon(
+                              tiles[i].icon,
+                              size: 22,
+                              color: dark ? Colors.white : AppTheme.ink,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            tiles[i].title,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 13.5,
+                              fontWeight: FontWeight.w600,
+                              height: 1.25,
+                              color: AppTheme.textP(context),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (tiles[i].pro)
+                    const Positioned(right: -4, top: -8, child: ProTag()),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Qo'l yetadigan joydagi amallar: to'la siyoh "Test ishlash" va uning
+/// ostida yonma-yon ikkilamchi "Variantlar" | "Mavzular".
+class _ActionPanel extends StatelessWidget {
+  final String testLabel;
+  final String variantsLabel;
+  final String topicsLabel;
+  final bool isPro;
+  final bool topicsNeedPro;
+  final VoidCallback onTest;
+  final VoidCallback onVariants;
+  final VoidCallback onTopics;
+
+  const _ActionPanel({
+    required this.testLabel,
+    required this.variantsLabel,
+    required this.topicsLabel,
+    required this.isPro,
+    required this.topicsNeedPro,
+    required this.onTest,
+    required this.onVariants,
+    required this.onTopics,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = AppTheme.isDark(context);
+    final crown = CrownIcon(
+      size: 20,
+      color: dark ? AppTheme.proBorder : AppTheme.proIcon,
+    );
+    return Container(
+      decoration: BoxDecoration(
+        color: dark ? AppTheme.scaffoldBg : AppTheme.lightScaffoldBg,
+        border: Border(top: BorderSide(color: AppTheme.hairline(context))),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          BrandButton(
+            label: testLabel,
+            icon: const Icon(Icons.play_arrow_rounded),
+            minHeight: 58,
+            onPressed: onTest,
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: BrandButton(
+                  label: variantsLabel,
+                  icon: isPro ? crown : const Icon(Icons.grid_view_rounded),
+                  kind: BrandButtonKind.secondary,
+                  minHeight: 48,
+                  dense: true,
+                  onPressed: onVariants,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: BrandButton(
+                  label: topicsLabel,
+                  icon: isPro ? crown : const Icon(Icons.menu_book_rounded),
+                  kind: BrandButtonKind.secondary,
+                  minHeight: 48,
+                  dense: true,
+                  proTag: topicsNeedPro,
+                  onPressed: onTopics,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -320,39 +612,6 @@ class _Badge extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _Stat extends StatelessWidget {
-  final String value;
-  final String label;
-  const _Stat({required this.value, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6),
-        child: Column(
-          children: [
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w800,
-                color: AppTheme.textP(context),
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 12, color: AppTheme.mutedText(context)),
-            ),
-          ],
-        ),
       ),
     );
   }
