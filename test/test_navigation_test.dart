@@ -116,7 +116,22 @@ void main() {
     await tearDownScreen(tester);
   });
 
-  testWidgets('a sideways swipe does not change the question', (tester) async {
+  testWidgets('a finger drifting while tapping does not turn the page', (
+    tester,
+  ) async {
+    await pumpTest(tester);
+    await tester.timedDrag(
+      find.text(questions[0].getText('uz_lat')),
+      const Offset(-70, 0),
+      const Duration(milliseconds: 600),
+    );
+    await tester.pumpAndSettle(const Duration(milliseconds: 100));
+
+    expect(onScreen(tester, questions[0]), isTrue);
+    await tearDownScreen(tester);
+  });
+
+  testWidgets('a deliberate swipe moves on, and back', (tester) async {
     await pumpTest(tester);
     await tester.fling(
       find.text(questions[0].getText('uz_lat')),
@@ -124,7 +139,14 @@ void main() {
       1500,
     );
     await tester.pumpAndSettle(const Duration(milliseconds: 100));
+    expect(onScreen(tester, questions[1]), isTrue);
 
+    await tester.fling(
+      find.text(questions[1].getText('uz_lat')),
+      const Offset(300, 0),
+      1500,
+    );
+    await tester.pumpAndSettle(const Duration(milliseconds: 100));
     expect(onScreen(tester, questions[0]), isTrue);
     await tearDownScreen(tester);
   });

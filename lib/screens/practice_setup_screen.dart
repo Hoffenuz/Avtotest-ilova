@@ -76,54 +76,67 @@ class _PracticeSetupScreenState extends State<PracticeSetupScreen> {
       body: Column(
         children: [
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-              children: [
-                _SectionLabel(
-                  title: s('choose_count'),
-                  hint: s('random_questions'),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    for (final c in _mainCounts) ...[
-                      if (c != _mainCounts.first) const SizedBox(width: 10),
-                      Expanded(
-                        child: _CountCard(
-                          count: c,
-                          unit: s('n_questions'),
-                          selected: c == _count,
-                          onTap: () => setState(() => _count = c),
-                        ),
+            // The choice sits in the middle of the free space, not pinned to
+            // the top with an empty half-screen under it.
+            child: LayoutBuilder(
+              builder: (context, box) => SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: box.maxHeight - 32),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _SectionLabel(
+                        title: s('choose_count'),
+                        hint: s('random_questions'),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          for (final c in _mainCounts) ...[
+                            if (c != _mainCounts.first)
+                              const SizedBox(width: 10),
+                            Expanded(
+                              child: _CountCard(
+                                count: c,
+                                unit: s('n_questions'),
+                                selected: c == _count,
+                                onTap: () => setState(() => _count = c),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          for (final c in _extraCounts) ...[
+                            if (c != _extraCounts.first)
+                              const SizedBox(width: 10),
+                            Expanded(
+                              child: _ExtraCount(
+                                label: '$c ${s('n_questions')}',
+                                selected: c == _count,
+                                onTap: () => setState(() => _count = c),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // The count is already on the selected card; only what follows
+                      // from it is repeated here.
+                      StatCells(
+                        cells: [
+                          ('$minutes', s('stat_minutes')),
+                          ('90%', s('stat_pass')),
+                        ],
                       ),
                     ],
-                  ],
+                  ),
                 ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    for (final c in _extraCounts) ...[
-                      if (c != _extraCounts.first) const SizedBox(width: 10),
-                      Expanded(
-                        child: _ExtraCount(
-                          label: '$c ${s('n_questions')}',
-                          selected: c == _count,
-                          onTap: () => setState(() => _count = c),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-                const SizedBox(height: 16),
-                // The count is already on the selected card; only what follows
-                // from it is repeated here.
-                StatCells(
-                  cells: [
-                    ('$minutes', s('stat_minutes')),
-                    ('90%', s('stat_pass')),
-                  ],
-                ),
-              ],
+              ),
             ),
           ),
           Container(
@@ -162,26 +175,29 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
+          textAlign: TextAlign.center,
           style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
             color: AppTheme.textP(context),
           ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: 4),
         Text(
           hint,
-          style: TextStyle(fontSize: 13, color: AppTheme.mutedText(context)),
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 14, color: AppTheme.mutedText(context)),
         ),
       ],
     );
   }
 }
 
+/// 20 / 50 — the big pair. The chosen one is filled with the brand gradient,
+/// so the choice reads at a glance without a tick in the corner.
 class _CountCard extends StatelessWidget {
   final int count;
   final String unit;
@@ -197,64 +213,63 @@ class _CountCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = AppTheme.brandAccent(context);
-    final radius = BorderRadius.circular(AppTheme.radiusMd);
+    final radius = BorderRadius.circular(AppTheme.radiusLg);
+    final fg = selected ? Colors.white : AppTheme.textP(context);
     return Semantics(
       button: true,
       selected: selected,
-      child: Material(
-        color: selected
-            ? accent.withValues(alpha: AppTheme.isDark(context) ? 0.16 : 0.06)
-            : AppTheme.card(context),
-        shape: RoundedRectangleBorder(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        decoration: BoxDecoration(
+          gradient: selected ? AppTheme.primaryGradient : null,
+          color: selected ? null : AppTheme.card(context),
           borderRadius: radius,
-          side: BorderSide(
-            color: selected ? accent : AppTheme.hairline(context),
-            width: selected ? 2 : 1,
-          ),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Stack(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '$count',
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w800,
-                        height: 1.1,
-                        color: selected ? accent : AppTheme.textP(context),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      unit,
-                      style: TextStyle(
-                        fontSize: 13.5,
-                        color: AppTheme.mutedText(context),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (selected)
-                Positioned(
-                  top: 10,
-                  right: 10,
-                  child: Icon(
-                    Icons.check_circle_rounded,
-                    size: 22,
-                    color: accent,
+          border: selected
+              ? null
+              : Border.all(color: AppTheme.hairline(context)),
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: AppTheme.blueDark.withValues(alpha: 0.28),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
                   ),
-                ),
-            ],
+                ]
+              : null,
+        ),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: radius,
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              child: Column(
+                children: [
+                  Text(
+                    '$count',
+                    style: TextStyle(
+                      fontSize: 34,
+                      fontWeight: FontWeight.w800,
+                      height: 1.1,
+                      color: fg,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    unit,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: selected
+                          ? Colors.white.withValues(alpha: 0.9)
+                          : AppTheme.mutedText(context),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),

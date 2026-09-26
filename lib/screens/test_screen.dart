@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/gestures.dart' show DeviceGestureSettings;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/question.dart';
@@ -691,29 +692,38 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
                 onSelect: _goToQuestion,
               ),
               Expanded(
-                // NO SWIPING BETWEEN QUESTIONS. A finger that drifts while
-                // tapping an answer turned the page instead, and the answer
-                // landed on nothing. Moving is deliberate now: the number
-                // strip above, or Oldingi / Keyingi below.
-                child: PageView.builder(
-                  controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _questions.length,
-                  onPageChanged: (index) {
-                    setState(() => _currentIndex = index);
-                    _precacheAround(index);
-                  },
-                  itemBuilder: (context, index) {
-                    return _QuestionCard(
-                      question: _questions[index],
-                      uiLang: uiLang,
-                      questionLang: qLang,
-                      selectedAnswer:
-                          _selectedAnswers[_questions[index].globalId],
-                      onSelect: (optionId) =>
-                          _selectAnswer(_questions[index], optionId, qLang),
-                    );
-                  },
+                // SWIPING, BUT ONLY ON PURPOSE. A finger that drifted while
+                // tapping an answer used to turn the page, and the answer
+                // landed on nothing. Here a tap may wander further before it
+                // counts as a drag (larger touch slop), and the page only
+                // turns for a real flick or a drag past half the screen.
+                child: MediaQuery(
+                  data: MediaQuery.of(context).copyWith(
+                    gestureSettings: const DeviceGestureSettings(touchSlop: 28),
+                  ),
+                  child: PageView.builder(
+                    controller: _pageController,
+                    physics: const _DeliberatePagePhysics(),
+                    itemCount: _questions.length,
+                    onPageChanged: (index) {
+                      // A swipe away from an answered question cancels its
+                      // pending auto-advance.
+                      _advanceTimer?.cancel();
+                      setState(() => _currentIndex = index);
+                      _precacheAround(index);
+                    },
+                    itemBuilder: (context, index) {
+                      return _QuestionCard(
+                        question: _questions[index],
+                        uiLang: uiLang,
+                        questionLang: qLang,
+                        selectedAnswer:
+                            _selectedAnswers[_questions[index].globalId],
+                        onSelect: (optionId) =>
+                            _selectAnswer(_questions[index], optionId, qLang),
+                      );
+                    },
+                  ),
                 ),
               ),
             ],
@@ -883,10 +893,10 @@ class _AnswerOptionTile extends StatelessWidget {
     final dark = AppTheme.isDark(context);
     Color bgColor = AppTheme.card(context);
     Color borderColor = AppTheme.hairline(context);
-    Color chipBg = dark
-        ? Colors.white.withValues(alpha: 0.1)
-        : AppTheme.ink.withValues(alpha: 0.07);
-    Color chipFg = dark ? Colors.white : AppTheme.ink;
+    Color chipBg = AppTheme.brandAccent(
+      context,
+    ).withValues(alpha: dark ? 0.18 : 0.1);
+    Color chipFg = AppTheme.brandAccent(context);
     double borderWidth = 1;
     IconData? trailingIcon;
     Color? iconColor;
@@ -1229,9 +1239,10 @@ class _QuestionNavBar extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
           child: Row(
             children: [
-              // The left half stays reserved when a question has no
-              // explanation, so Keyingi never jumps sideways.
+              // Izoh is the smaller of the two, and its slot stays reserved
+              // when a question has none, so Keyingi never jumps sideways.
               Expanded(
+                flex: 2,
                 child: explanationLabel == null
                     ? const SizedBox.shrink()
                     : _NavButton(
@@ -1253,15 +1264,18 @@ class _QuestionNavBar extends StatelessWidget {
                                 alpha: dark ? 0.4 : 1,
                               )
                             : null,
+                        fontSize: 14,
                         onTap: onExplanation,
                       ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 24),
               Expanded(
+                flex: 3,
                 child: _NavButton(
                   label: isLast ? finishLabel : nextLabel,
                   trailing: isLast ? null : Icons.chevron_right_rounded,
                   filled: true,
+                  minHeight: 50,
                   onTap: isLast ? onFinish : onNext,
                 ),
               ),
@@ -1280,6 +1294,8 @@ class _NavButton extends StatelessWidget {
   final bool filled;
   final Color? background;
   final Color? borderColor;
+  final double minHeight;
+  final double fontSize;
   final VoidCallback? onTap;
 
   const _NavButton({
@@ -1289,6 +1305,8 @@ class _NavButton extends StatelessWidget {
     this.filled = false,
     this.background,
     this.borderColor,
+    this.minHeight = 46,
+    this.fontSize = 15.5,
     this.onTap,
   });
 
@@ -1296,13 +1314,12 @@ class _NavButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final enabled = onTap != null;
     final fg = filled ? Colors.white : AppTheme.brandAccent(context);
-    final radius = BorderRadius.circular(AppTheme.radiusSm);
+    final radius = BorderRadius.circular(AppTheme.radiusMd);
     return Opacity(
       opacity: enabled ? 1 : 0.4,
       child: Material(
-        color: filled
-            ? AppTheme.brandFill(context)
-            : (background ?? Colors.transparent),
+        color: filled ? null : (background ?? Colors.transparent),
+        type: filled ? MaterialType.transparency : MaterialType.canvas,
         shape: RoundedRectangleBorder(
           borderRadius: radius,
           side: filled
@@ -1310,35 +1327,45 @@ class _NavButton extends StatelessWidget {
               : BorderSide(color: borderColor ?? AppTheme.hairline(context)),
         ),
         clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: 48),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (leadingWidget != null) ...[
-                    leadingWidget!,
-                    const SizedBox(width: 6),
-                  ],
-                  Flexible(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        label,
-                        maxLines: 1,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: fg,
+        child: Ink(
+          decoration: filled
+              ? BoxDecoration(
+                  gradient: AppTheme.primaryGradient,
+                  borderRadius: radius,
+                )
+              : null,
+          child: InkWell(
+            onTap: onTap,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: minHeight),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (leadingWidget != null) ...[
+                      leadingWidget!,
+                      const SizedBox(width: 6),
+                    ],
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          label,
+                          maxLines: 1,
+                          style: TextStyle(
+                            fontSize: fontSize,
+                            fontWeight: filled
+                                ? FontWeight.w700
+                                : FontWeight.w600,
+                            color: fg,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  if (trailing != null) Icon(trailing, size: 22, color: fg),
-                ],
+                    if (trailing != null) Icon(trailing, size: 22, color: fg),
+                  ],
+                ),
               ),
             ),
           ),
@@ -1514,4 +1541,20 @@ class _DialogStatRow extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Page swiping that needs a real swipe: a slow drift ends as "no fling" and
+/// the page settles back unless it was dragged past half way.
+class _DeliberatePagePhysics extends PageScrollPhysics {
+  const _DeliberatePagePhysics({super.parent});
+
+  @override
+  _DeliberatePagePhysics applyTo(ScrollPhysics? ancestor) =>
+      _DeliberatePagePhysics(parent: buildParent(ancestor));
+
+  @override
+  double get minFlingVelocity => 700;
+
+  @override
+  double get minFlingDistance => 40;
 }
