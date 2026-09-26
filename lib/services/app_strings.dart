@@ -22,9 +22,9 @@ class AppStrings {
       'ru': 'Подготовка к экзамену на права',
     },
     'hero_subtitle': {
-      'uz_lat': '1250+ savol va 63 variant',
-      'uz_cyr': '1250+ савол ва 63 вариант',
-      'ru': '1250+ вопросов и 63 варианта',
+      'uz_lat': '1250+ savol va 64 variant',
+      'uz_cyr': '1250+ савол ва 64 вариант',
+      'ru': '1250+ вопросов и 64 варианта',
     },
 
     // ── Navigation ──
@@ -98,11 +98,11 @@ class AppStrings {
     },
     'pro_header_subtitle': {
       'uz_lat':
-          '1250+ savol, 63 ta variant va admin yordami bilan to\'liq tayyorlaning.',
+          '1250+ savol, 64 ta variant va admin yordami bilan to\'liq tayyorlaning.',
       'uz_cyr':
-          '1250+ савол, 63 та вариант ва админ ёрдами билан тўлиқ тайёрланинг.',
+          '1250+ савол, 64 та вариант ва админ ёрдами билан тўлиқ тайёрланинг.',
       'ru':
-          '1250+ вопросов, 63 варианта и поддержка администратора — готовьтесь полностью.',
+          '1250+ вопросов, 64 варианта и поддержка администратора — готовьтесь полностью.',
     },
     'pro_choose_plan': {
       'uz_lat': 'Ta\'rifni tanlang',
@@ -171,9 +171,9 @@ class AppStrings {
       'ru': 'База из 1250+ закрытых вопросов',
     },
     'pro_perk_2': {
-      'uz_lat': '63 ta imtihon varianti',
-      'uz_cyr': '63 та имтиҳон варианти',
-      'ru': '63 экзаменационных варианта',
+      'uz_lat': '64 ta imtihon varianti',
+      'uz_cyr': '64 та имтиҳон варианти',
+      'ru': '64 экзаменационных варианта',
     },
     'pro_perk_3': {
       'uz_lat': 'Mavzular bo\'yicha testlar va izohlar',

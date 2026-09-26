@@ -7,7 +7,7 @@
 class FreeAccess {
   FreeAccess._();
 
-  /// Exam tickets 1..5 open to everyone; 6..63 need PRO.
+  /// Exam tickets 1..5 open to everyone; the rest need PRO.
   static const int freeVariantCount = 5;
 
   static bool isVariantFree(int variantNumber) =>

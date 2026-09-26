@@ -11,7 +11,7 @@ import '../widgets/premium_access_gate.dart';
 import 'pro_screen.dart';
 import 'test_screen.dart';
 
-/// The 63 exam tickets.
+/// The exam tickets ([QuestionService.variantCount]).
 ///
 /// THE LIST ITSELF IS NOT GATED. It used to sit behind a full-screen paywall,
 /// so someone without an account saw a locked door and no idea what was behind

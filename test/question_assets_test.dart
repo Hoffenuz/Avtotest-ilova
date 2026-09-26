@@ -42,16 +42,25 @@ void main() {
 
   test('every variant resolves and keeps its exam length', () async {
     final files = QuestionService.getVariantFiles();
-    expect(files.length, 63);
+    final manifest = await AssetManifest.loadFromAssetBundle(rootBundle);
+    final bundled = manifest
+        .listAssets()
+        .where((a) => RegExp(r'^assets/tests-json/variants/v\d+\.json$').hasMatch(a))
+        .length;
+    expect(
+      files.length,
+      bundled,
+      reason: 'QuestionService.variantCount must list every bundled ticket',
+    );
 
     for (final file in files) {
       final questions = await QuestionService.loadVariantQuestions(file);
       expect(questions, isNotEmpty, reason: '$file resolved to nothing');
-      // An exam ticket is 20 questions. v63 is the one the website is still
-      // filling in — it was 10, is now 19 — so it is bounded rather than
-      // pinned. Pinning it is what made the generator refuse to run and left
-      // the app three months behind the site.
-      if (file == 'v63.json') {
+      // An exam ticket is 20 questions. The last one is the ticket the
+      // website is still filling in (v64 has 15 today), so it is bounded
+      // rather than pinned. Pinning it is what made the generator refuse to
+      // run and left the app three months behind the site.
+      if (file == files.last) {
         expect(
           questions.length,
           inInclusiveRange(1, 20),

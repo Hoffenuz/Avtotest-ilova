@@ -607,7 +607,12 @@ class QuestionService {
         }),
       ];
 
+  /// Must equal the number of files under assets/tests-json/variants/ —
+  /// test/question_assets_test.dart fails when a sync adds one and this
+  /// is left behind (the ticket would be bundled but never listed).
+  static const int variantCount = 64;
+
   static List<String> getVariantFiles() {
-    return List.generate(63, (i) => 'v${i + 1}.json');
+    return List.generate(variantCount, (i) => 'v${i + 1}.json');
   }
 }

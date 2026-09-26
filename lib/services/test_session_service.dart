@@ -22,7 +22,7 @@ class TestSessionService {
   /// started in the app is indistinguishable from one started on the site.
   static const int realExamVariant = 97;
 
-  /// The "difficult questions" pool. It is not one of the 63 tickets, so it
+  /// The "difficult questions" pool. It is not one of the exam tickets, so it
   /// needs a number of its own: `deriveVariant` finds no digits in the key
   /// "difficult" and used to fall through to 1, filing every one of those
   /// sessions under exam ticket 1 and quietly corrupting that ticket's
