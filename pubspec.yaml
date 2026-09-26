@@ -6,10 +6,11 @@ publish_to: 'none'
 # 1.0.6 / 6 — Flutter'ga o'tilgan birinchi qurilma, faqat sinovda ishlatildi.
 # 1.0.7 / 7 — birinchi Flutter build (AvtoSmart rebrend'dan oldin).
 # 1.0.8 / 8 — AvtoSmart rebrend, yangi ikonka, 63-variant 20-savol bilan.
+# 1.0.9 / 9 — test yakunlangach ilovani baholash (in-app review) qo'shildi.
 #
 # DIQQAT: lib/config/app_version.dart shu bilan mos bo'lishi shart —
 # test/app_version_test.dart mos kelmasa qurilishni to'xtatadi.
-version: 1.0.8+8
+version: 1.0.9+9
 
 environment:
 
