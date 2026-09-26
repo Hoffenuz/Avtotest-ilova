@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
+
+import '../providers/language_provider.dart';
 
 import '../theme/app_theme.dart';
 import 'app_logo.dart';
@@ -639,7 +642,15 @@ class BrandHeader extends StatelessWidget {
   final VoidCallback? onPro;
   final String proLabel;
 
-  const BrandHeader({super.key, this.onPro, this.proLabel = 'PRO'});
+  /// Shown before the PRO chip (e.g. [LanguageMenu]), as on the site header.
+  final List<Widget> actions;
+
+  const BrandHeader({
+    super.key,
+    this.onPro,
+    this.proLabel = 'PRO',
+    this.actions = const [],
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -665,6 +676,8 @@ class BrandHeader extends StatelessWidget {
             children: [
               const AppHeaderLogo(height: 30, onBrand: true),
               const Spacer(),
+              ...actions,
+              if (actions.isNotEmpty && onPro != null) const SizedBox(width: 6),
               if (onPro != null)
                 Material(
                   color: AppTheme.proBorder.withValues(alpha: 0.1),
@@ -700,6 +713,74 @@ class BrandHeader extends StatelessWidget {
                     ),
                   ),
                 ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// "UZ ▾" — the site header's language switch, for the ink header bar.
+class LanguageMenu extends StatelessWidget {
+  const LanguageMenu({super.key});
+
+  static const Map<String, String> _short = {
+    'uz_lat': 'UZ',
+    'uz_cyr': 'ЎЗ',
+    'ru': 'RU',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.watch<LanguageProvider>();
+    return PopupMenuButton<String>(
+      tooltip: provider.langLabel,
+      initialValue: provider.lang,
+      onSelected: provider.setLanguage,
+      position: PopupMenuPosition.under,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+      ),
+      itemBuilder: (_) => [
+        for (final l in LanguageProvider.languages)
+          PopupMenuItem<String>(
+            value: l['code'],
+            height: 48,
+            child: Row(
+              children: [
+                Expanded(child: Text(l['label']!)),
+                if (l['code'] == provider.lang)
+                  Icon(
+                    Icons.check_rounded,
+                    size: 20,
+                    color: AppTheme.brandAccent(context),
+                  ),
+              ],
+            ),
+          ),
+      ],
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 44, minWidth: 44),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _short[provider.lang] ?? 'UZ',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(width: 2),
+              Icon(
+                Icons.expand_more_rounded,
+                size: 18,
+                color: Colors.white.withValues(alpha: 0.8),
+              ),
             ],
           ),
         ),

@@ -109,11 +109,17 @@ void main() {
   testWidgets('Home fits a 320 dp phone and offers the quick actions', (
     tester,
   ) async {
-    await _pumpAt(tester, const HomeScreen(), dark: true, settle: false);
+    await _pumpAt(
+      tester,
+      const HomeScreen(),
+      dark: true,
+      settle: false,
+      tall: true,
+    );
     expect(tester.takeException(), isNull);
 
-    // The two the exam-day routine is built around, reachable from the first
-    // screen rather than a tab away.
+    // The two the exam-day routine is built around, on the home screen rather
+    // than a tab away — under the three main buttons, as on the site.
     expect(find.text('Real imtihon'), findsOneWidget);
     expect(find.text('Xatolar ustida ishlash'), findsOneWidget);
   });
