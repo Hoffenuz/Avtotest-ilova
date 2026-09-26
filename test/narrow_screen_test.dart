@@ -1,3 +1,4 @@
+import 'package:avtotest_app/models/question.dart';
 import 'package:avtotest_app/providers/auth_provider.dart';
 import 'package:avtotest_app/providers/language_provider.dart';
 import 'package:avtotest_app/providers/subscription_provider.dart';
@@ -8,6 +9,7 @@ import 'package:avtotest_app/screens/home_screen.dart';
 import 'package:avtotest_app/screens/main_shell.dart';
 import 'package:avtotest_app/screens/memorize_screen.dart';
 import 'package:avtotest_app/screens/profile_screen.dart';
+import 'package:avtotest_app/screens/result_screen.dart';
 import 'package:avtotest_app/screens/sections_screen.dart';
 import 'package:avtotest_app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
@@ -125,9 +127,7 @@ void main() {
     expect(find.byIcon(Icons.home_rounded), findsOneWidget);
     expect(find.byIcon(Icons.apps_rounded), findsOneWidget);
     expect(find.byIcon(Icons.settings_rounded), findsOneWidget);
-    // Two matches on purpose: the nav item and the home screen's practice
-    // card share this glyph.
-    expect(find.byIcon(Icons.play_circle_fill_rounded), findsWidgets);
+    expect(find.byIcon(Icons.play_circle_fill_rounded), findsOneWidget);
 
     // Left to right: Asosiy · Bo'limlar · Test ishlash · Sozlamalar. Compared
     // by actual on-screen position, so reordering the Row fails the test
@@ -151,6 +151,43 @@ void main() {
     final settings = bar.center.dx;
     expect(home, lessThan(sections));
     expect(sections, lessThan(settings));
+  });
+
+  testWidgets('Result screen fits a 320 dp phone with large text', (
+    tester,
+  ) async {
+    // "Sarflangan vaqt: 17 daqiqa 12 soniya" overflowed by 16 px at 320 dp
+    // and by 85 px at text scale 1.3.
+    await _pumpAt(
+      tester,
+      Builder(
+        builder: (context) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: const TextScaler.linear(1.3)),
+          child: ResultScreen(
+            result: TestResult(
+              type: 'variant',
+              label: '1-variant',
+              totalQuestions: 20,
+              correctAnswers: 15,
+              timeSpentSeconds: 17 * 60 + 12,
+              date: DateTime(2026, 9, 26),
+              isCompleted: true,
+            ),
+            questions: const [],
+            selectedAnswers: const {},
+            incorrectIds: const {},
+          ),
+        ),
+      ),
+      dark: false,
+      settle: false,
+    );
+    expect(tester.takeException(), isNull);
+    // The review prompt waits 2.2 s; let its timer fire before teardown.
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump(const Duration(seconds: 3));
   });
 
   testWidgets('Settings is one flat list of uniform rows', (tester) async {

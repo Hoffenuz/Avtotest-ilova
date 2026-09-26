@@ -197,15 +197,20 @@ class _ResultScreenState extends State<ResultScreen>
                         color: AppTheme.blue,
                       ),
                       const SizedBox(width: 8),
-                      Text(
-                        '${s('time_spent')}: '
-                        '${widget.result.timeSpentSeconds ~/ 60} '
-                        '${s('minutes')} '
-                        '${widget.result.timeSpentSeconds % 60} '
-                        '${s('seconds')}',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: AppTheme.textS(context),
+                      // Flexible: "Sarflangan vaqt: 17 daqiqa 12 soniya" is
+                      // wider than a 320 dp phone and overflowed by 16 px.
+                      Flexible(
+                        child: Text(
+                          '${s('time_spent')}: '
+                          '${widget.result.timeSpentSeconds ~/ 60} '
+                          '${s('minutes')} '
+                          '${widget.result.timeSpentSeconds % 60} '
+                          '${s('seconds')}',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppTheme.textS(context),
+                          ),
                         ),
                       ),
                     ],
