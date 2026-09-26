@@ -113,7 +113,7 @@ void main() {
     // The two the exam-day routine is built around, reachable from the first
     // screen rather than a tab away.
     expect(find.text('Real imtihon'), findsOneWidget);
-    expect(find.text('Xatolarim'), findsOneWidget);
+    expect(find.text('Xatolar ustida ishlash'), findsOneWidget);
   });
 
   testWidgets('the four-tab bar fits a 320 dp phone', (tester) async {

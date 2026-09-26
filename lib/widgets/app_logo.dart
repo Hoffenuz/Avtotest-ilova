@@ -51,14 +51,17 @@ class AppLogo extends StatelessWidget {
 class AppHeaderLogo extends StatelessWidget {
   final double height;
 
-  const AppHeaderLogo({super.key, this.height = 28});
+  /// On the ink header the ground is dark in both themes.
+  final bool onBrand;
+
+  const AppHeaderLogo({super.key, this.height = 28, this.onBrand = false});
 
   static const _light = 'assets/branding/logo_notag.svg';
   static const _dark = 'assets/branding/logo_white_notag.svg';
 
   @override
   Widget build(BuildContext context) {
-    final asset = AppTheme.isDark(context) ? _dark : _light;
+    final asset = onBrand || AppTheme.isDark(context) ? _dark : _light;
     return SvgPicture.asset(asset, height: height, alignment: Alignment.centerLeft);
   }
 }

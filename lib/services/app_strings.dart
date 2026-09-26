@@ -9,12 +9,81 @@ class AppStrings {
     return map[lang] ?? map['uz_lat'] ?? key;
   }
 
+  /// "64 variant" / "64 вариант" / "64 варианта" — o'zbekchada son bilan
+  /// ot birlikda, ruschada songa qarab uch shakl.
+  static String variantsPhrase(int n, String lang) {
+    switch (lang) {
+      case 'ru':
+        final mod10 = n % 10, mod100 = n % 100;
+        final word = mod10 == 1 && mod100 != 11
+            ? 'вариант'
+            : mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)
+                ? 'варианта'
+                : 'вариантов';
+        return '$n $word';
+      case 'uz_cyr':
+        return '$n вариант';
+      default:
+        return '$n variant';
+    }
+  }
+
   static const Map<String, Map<String, String>> _strings = {
     // ── App-level ──
     'app_title': {
       'uz_lat': 'AvtoSmart',
       'uz_cyr': 'AvtoSmart',
       'ru': 'AvtoSmart',
+    },
+    // ── Bosh ekran — saytdagi matnlar (src/locales: home.*, sections.*) ──
+    'home_badge': {
+      'uz_lat': '2026 YHQ savollari',
+      'uz_cyr': '2026 ЙҲҚ саволлари',
+      'ru': 'Вопросы ПДД 2026',
+    },
+    'home_title': {
+      'uz_lat': 'Avto test — Prava test va YHQ testlar 2026',
+      'uz_cyr': 'Avto test — Права тест ва ЙҲҚ тестлар 2026',
+      'ru': 'Avto test — Права и ПДД тесты 2026',
+    },
+    'home_btn_test': {
+      'uz_lat': 'Test ishlash',
+      'uz_cyr': 'Тест ишлаш',
+      'ru': 'Пройти тест',
+    },
+    'home_btn_variants': {
+      'uz_lat': 'Variantlar',
+      'uz_cyr': 'Вариантлар',
+      'ru': 'Варианты',
+    },
+    'home_btn_topics': {
+      'uz_lat': 'Mavzular',
+      'uz_cyr': 'Мавзулар',
+      'ru': 'Темы',
+    },
+    'section_errors_drill': {
+      'uz_lat': 'Xatolar ustida ishlash',
+      'uz_cyr': 'Хатолар устида ишлаш',
+      'ru': 'Работа над ошибками',
+    },
+    'pro_card_title': {
+      'uz_lat': 'PRO obuna',
+      'uz_cyr': 'PRO обуна',
+      'ru': 'Подписка PRO',
+    },
+    // {variants} — AppStrings.variantsPhrase: "64 variant" / "64 варианта".
+    'pro_card_desc': {
+      'uz_lat':
+          "To'liq savollar bazasi, barcha {variants} va har bir savolga izoh bir joyda.",
+      'uz_cyr':
+          'Тўлиқ саволлар базаси, барча {variants} ва ҳар бир саволга изоҳ бир жойда.',
+      'ru':
+          'Полная база вопросов, все {variants} и пояснение к каждому вопросу.',
+    },
+    'get_pro': {
+      'uz_lat': 'Pro olish',
+      'uz_cyr': 'Pro олиш',
+      'ru': 'Получить Pro',
     },
     'hero_title': {
       'uz_lat': 'Haydovchilik imtihoniga tayyorlaning',

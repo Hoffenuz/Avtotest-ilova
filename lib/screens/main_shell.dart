@@ -60,10 +60,11 @@ class MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     final lang = context.watch<LanguageProvider>().lang;
-    final selectedColor = AppTheme.primary(context);
-    final unselectedColor = AppTheme.textM(context);
+    // Saytdagi BottomNav: faol — siyoh va qalin, qolgani kulrang.
+    final selectedColor = AppTheme.brandAccent(context);
+    final unselectedColor = AppTheme.mutedText(context);
     final dark = AppTheme.isDark(context);
-    final navBg = dark ? AppTheme.surfaceBg : Colors.white;
+    final navBg = dark ? AppTheme.cardBg : Colors.white;
 
     return TabVisibility(
       activeIndex: _currentIndex,
@@ -75,7 +76,7 @@ class MainShellState extends State<MainShell> {
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
             color: navBg,
-            border: Border(top: BorderSide(color: AppTheme.border(context))),
+            border: Border(top: BorderSide(color: AppTheme.hairline(context))),
           ),
           child: SafeArea(
             child: Padding(
@@ -105,6 +106,9 @@ class MainShellState extends State<MainShell> {
                     selected: _currentIndex == practiceTab,
                     selectedColor: selectedColor,
                     unselectedColor: unselectedColor,
+                    // The app's main action: its glyph stays ink even when
+                    // another tab is open, as on the website.
+                    unselectedIconColor: selectedColor,
                     onTap: () => switchTab(practiceTab),
                   ),
                   _NavItem(
@@ -131,6 +135,7 @@ class _NavItem extends StatelessWidget {
   final bool selected;
   final Color selectedColor;
   final Color unselectedColor;
+  final Color? unselectedIconColor;
   final VoidCallback onTap;
 
   const _NavItem({
@@ -139,12 +144,16 @@ class _NavItem extends StatelessWidget {
     required this.selected,
     required this.selectedColor,
     required this.unselectedColor,
+    this.unselectedIconColor,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     final color = selected ? selectedColor : unselectedColor;
+    final iconColor = selected
+        ? selectedColor
+        : (unselectedIconColor ?? unselectedColor);
     // Expanded, not a fixed width: four tabs at 72 dp each left no room for a
     // Russian label on a 320 dp phone.
     return Expanded(
@@ -164,20 +173,24 @@ class _NavItem extends StatelessWidget {
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            Icon(icon, color: color, size: 24),
+            Icon(icon, color: iconColor, size: 24),
             const SizedBox(height: 4),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 2),
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: color,
-                  fontSize: 10,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+              // Shrinks rather than truncates: at 320 dp with large text a
+              // label cut to "Test ishla…" no longer says where it leads.
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 11,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                  ),
+                  maxLines: 1,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],

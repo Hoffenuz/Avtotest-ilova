@@ -11,6 +11,35 @@ class AppTheme {
   static const Color orangeLight = Color(0xFFFB923C);
   static const Color orangeDark = Color(0xFFEA580C);
 
+  // ──── BRAND — saytdagi bilan bir xil (src/index.css) ────
+  // Siyoh — asosiy tugma, header, faol belgi. Qorong'i rejimda to'la tugma
+  // indigo bo'ladi (sayt `.dark --primary`), header esa siyohligicha qoladi.
+  static const Color ink = Color(0xFF131A45);
+  static const Color ink800 = Color(0xFF1B2455);
+  static const Color inkHeaderDark = Color(0xFF14163D);
+  static const Color indigo = Color(0xFF474CD1);
+
+  /// Qorong'i fonda urg'u matni: indigo u yerda 2.7:1 — o'qib bo'lmaydi.
+  static const Color indigoLight = Color(0xFF999CE6);
+  static const Color blue600 = Color(0xFF2563EB);
+
+  /// Faqat faol belgi (masalan header'dagi chiziq) — bezak uchun emas.
+  static const Color cyan = Color(0xFF22D3EE);
+
+  /// Brend kulrangi. Oq fonda 3.5:1 — faqat ikonka va bezak uchun; matnga
+  /// [inkMutedText] (5.3:1, WCAG AA).
+  static const Color inkMuted = Color(0xFF7C87AE);
+  static const Color inkMutedText = Color(0xFF5F6A92);
+  static const Color darkMutedText = Color(0xFF94A3B8);
+
+  // PRO — yumshoq oltin (sayt amber-50/300/600/800), to'q sariq gradient emas.
+  static const Color proBg = Color(0xFFFFFBEB);
+  static const Color proBorder = Color(0xFFFCD34D);
+  static const Color proIcon = Color(0xFFD97706);
+  static const Color proText = Color(0xFF92400E);
+  static const Color proBgDark = Color(0xFF451A03);
+  static const Color proTextDark = Color(0xFFFDE68A);
+
   // ──── DARK PALETTE ────
   static const Color scaffoldBg = Color(0xFF0B1120);
   static const Color cardBg = Color(0xFF15202E);
@@ -84,6 +113,20 @@ class AppTheme {
       : Colors.black.withValues(alpha: 0.06);
 
   static Color primary(BuildContext context) => blue;
+
+  /// To'la (asosiy) tugma foni.
+  static Color brandFill(BuildContext context) => isDark(context) ? indigo : ink;
+
+  /// Siyoh urg'u: ikkilamchi tugma matni/chegarasi, faol ikonka, havola.
+  static Color brandAccent(BuildContext context) =>
+      isDark(context) ? indigoLight : ink;
+
+  /// Ikkilamchi matn — ikkala temada ham WCAG AA.
+  static Color mutedText(BuildContext context) =>
+      isDark(context) ? darkMutedText : inkMutedText;
+
+  static Color hairline(BuildContext context) =>
+      isDark(context) ? const Color(0xFF243044) : const Color(0xFFE5E7EB);
 
   static Color accent(BuildContext context) => orange;
 
