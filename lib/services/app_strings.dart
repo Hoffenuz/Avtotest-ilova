@@ -85,6 +85,26 @@ class AppStrings {
       'uz_cyr': 'Pro олиш',
       'ru': 'Получить Pro',
     },
+    'exam_format': {
+      'uz_lat':
+          "Imtihon: 20 savol, 25 daqiqa. O'tish uchun kamida 18 ta to'g'ri javob.",
+      'uz_cyr':
+          'Имтиҳон: 20 савол, 25 дақиқа. Ўтиш учун камида 18 та тўғри жавоб.',
+      'ru':
+          'Экзамен: 20 вопросов, 25 минут. Для сдачи — не меньше 18 верных ответов.',
+    },
+    'readiness_title': {
+      'uz_lat': 'Tayyorgarlik',
+      'uz_cyr': 'Тайёргарлик',
+      'ru': 'Готовность',
+    },
+    'readiness_sub': {
+      'uz_lat': "So'nggi {n} ta test bo'yicha · o'tish uchun 90%",
+      'uz_cyr': 'Сўнгги {n} та тест бўйича · ўтиш учун 90%',
+      'ru': 'По последним тестам: {n} · для сдачи 90%',
+    },
+    'show_all': {'uz_lat': 'Barchasi', 'uz_cyr': 'Барчаси', 'ru': 'Все'},
+    'show_less': {'uz_lat': 'Kamroq', 'uz_cyr': 'Камроқ', 'ru': 'Свернуть'},
     'hero_title': {
       'uz_lat': 'Haydovchilik imtihoniga tayyorlaning',
       'uz_cyr': 'Ҳайдовчилик имтиҳонига тайёрланинг',
@@ -443,6 +463,26 @@ class AppStrings {
       'uz_lat': "Avtomatik o'tish o'chirildi",
       'uz_cyr': 'Автоматик ўтиш ўчирилди',
       'ru': 'Автопереход выключен',
+    },
+    'auto_advance_setting': {
+      'uz_lat': "Keyingi savolga avtomatik o'tish",
+      'uz_cyr': 'Кейинги саволга автоматик ўтиш',
+      'ru': 'Автопереход к следующему вопросу',
+    },
+    'auto_advance_sub': {
+      'uz_lat': 'Javob belgilangach 1 soniyada keyingisi ochiladi',
+      'uz_cyr': 'Жавоб белгилангач 1 сонияда кейингиси очилади',
+      'ru': 'Через секунду после ответа откроется следующий',
+    },
+    'prev_question': {
+      'uz_lat': 'Oldingi',
+      'uz_cyr': 'Олдинги',
+      'ru': 'Назад',
+    },
+    'next_question': {
+      'uz_lat': 'Keyingi',
+      'uz_cyr': 'Кейинги',
+      'ru': 'Далее',
     },
     'clear_results': {
       'uz_lat': "Natijalarni o'chirish",

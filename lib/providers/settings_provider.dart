@@ -10,6 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class SettingsProvider extends ChangeNotifier {
   static const _scaleKey = 'question_text_scale';
   static const _autoExplanationKey = 'auto_explanation_on_wrong';
+  static const _autoAdvanceKey = 'auto_advance_next_question';
 
   // ── Question text size ────────────────────────────────────────────────
   //
@@ -40,12 +41,24 @@ class SettingsProvider extends ChangeNotifier {
   bool _autoExplanation = false;
   bool get autoExplanation => _autoExplanation;
 
+  // ── Moving on to the next question by itself ──────────────────────────
+
+  /// OFF by default, and remembered.
+  ///
+  /// Jumping away 1.2 s after a tap takes the question off the screen before
+  /// someone has read why their answer was wrong, and it used to switch
+  /// itself back on at the start of every test. People who want the pace ask
+  /// for it once — in Settings or on the test toolbar — and it stays.
+  bool _autoAdvance = false;
+  bool get autoAdvance => _autoAdvance;
+
   Future<void> init() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final savedScale = prefs.getDouble(_scaleKey);
       if (savedScale != null) _scale = savedScale.clamp(minScale, maxScale);
       _autoExplanation = prefs.getBool(_autoExplanationKey) ?? false;
+      _autoAdvance = prefs.getBool(_autoAdvanceKey) ?? false;
     } catch (e) {
       debugPrint('SettingsProvider.init: $e');
     }
@@ -67,6 +80,13 @@ class SettingsProvider extends ChangeNotifier {
     _autoExplanation = value;
     notifyListeners();
     await _write((prefs) => prefs.setBool(_autoExplanationKey, value));
+  }
+
+  Future<void> setAutoAdvance(bool value) async {
+    if (value == _autoAdvance) return;
+    _autoAdvance = value;
+    notifyListeners();
+    await _write((prefs) => prefs.setBool(_autoAdvanceKey, value));
   }
 
   /// The UI has already been updated by the time this runs; a failed write

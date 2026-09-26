@@ -10,6 +10,7 @@ import '../services/app_strings.dart';
 import '../services/storage_service.dart';
 import '../services/test_results_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/brand.dart';
 import '../widgets/explanation_panel.dart';
 import '../widgets/ha_yo_dialog.dart';
 import '../widgets/image_lightbox.dart';
@@ -71,8 +72,12 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
   bool _finished = false;
   late DateTime _startTime;
   late PageController _pageController;
-  bool _autoAdvance = true;
   final Set<String> _savedIds = {};
+
+  /// The pending move to the next question. Kept so it can be cancelled: the
+  /// user may move on by hand, or switch the feature off, inside the delay —
+  /// and a jump that fires anyway lands them somewhere they did not choose.
+  Timer? _advanceTimer;
 
   @override
   void initState() {
@@ -189,6 +194,7 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
   @override
   void dispose() {
     _timer?.cancel();
+    _advanceTimer?.cancel();
     _timeLeft.dispose();
     _pageController.dispose();
     super.dispose();
@@ -253,9 +259,17 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
   void _scheduleAutoAdvance({
     Duration delay = const Duration(milliseconds: 1200),
   }) {
-    if (!_autoAdvance) return;
-    Future.delayed(delay, () {
-      if (!mounted) return;
+    _advanceTimer?.cancel();
+    if (!context.read<SettingsProvider>().autoAdvance) return;
+    final answeredIndex = _currentIndex;
+    _advanceTimer = Timer(delay, () {
+      if (!mounted || _finished) return;
+      // Re-checked on firing: the user may have moved on by hand or switched
+      // the feature off while the delay ran.
+      if (_currentIndex != answeredIndex ||
+          !context.read<SettingsProvider>().autoAdvance) {
+        return;
+      }
       final nextIndex = _findNextUnanswered(_currentIndex);
       if (nextIndex == -1) {
         _finishTest();
@@ -276,6 +290,8 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
   }
 
   void _goToQuestion(int index) {
+    if (index < 0 || index >= _questions.length) return;
+    _advanceTimer?.cancel();
     setState(() => _currentIndex = index);
     _pageController.animateToPage(
       index,
@@ -615,7 +631,7 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
               _TestToolbar(
                 timeLeft: _timeLeft,
                 countUp: widget.countUp,
-                autoAdvance: _autoAdvance,
+                autoAdvance: context.watch<SettingsProvider>().autoAdvance,
                 isCurrentSaved:
                     _questions.isNotEmpty &&
                     _savedIds.contains(_questions[_currentIndex].globalId),
@@ -629,14 +645,16 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
                     : s('save_question'),
                 onToggleSave: () => _toggleSaveCurrent(uiLang),
                 onToggleAutoAdvance: () {
-                  setState(() => _autoAdvance = !_autoAdvance);
+                  final settings = context.read<SettingsProvider>();
+                  final enable = !settings.autoAdvance;
+                  // Remembered for every later test, not just this one.
+                  settings.setAutoAdvance(enable);
+                  if (!enable) _advanceTimer?.cancel();
                   ScaffoldMessenger.of(context).clearSnackBars();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                        s(
-                          _autoAdvance ? 'auto_advance_on' : 'auto_advance_off',
-                        ),
+                        s(enable ? 'auto_advance_on' : 'auto_advance_off'),
                         style: const TextStyle(fontSize: 13),
                       ),
                       duration: const Duration(milliseconds: 1400),
@@ -660,9 +678,13 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
                 onSelect: _goToQuestion,
               ),
               Expanded(
+                // NO SWIPING BETWEEN QUESTIONS. A finger that drifts while
+                // tapping an answer turned the page instead, and the answer
+                // landed on nothing. Moving is deliberate now: the number
+                // strip above, or Oldingi / Keyingi below.
                 child: PageView.builder(
                   controller: _pageController,
-                  physics: const BouncingScrollPhysics(),
+                  physics: const NeverScrollableScrollPhysics(),
                   itemCount: _questions.length,
                   onPageChanged: (index) {
                     setState(() => _currentIndex = index);
@@ -684,25 +706,35 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
             ],
           ),
         ),
-        // THE EXPLANATION IS A CORNER BUTTON, NOT A FOOTER BAR.
-        //
-        // A full-width bar across the bottom cost a whole row of height on
-        // every screen, and height is the scarce thing here: on a small phone
-        // a long question plus four answers already does not fit. Floating it
-        // in the corner gives that row back to the content and still leaves
-        // the button exactly where a left thumb rests.
-        floatingActionButton: _questions[_currentIndex].hasIzoh
-            ? _ExplanationButton(
-                label: s('explanation_title'),
-                onTap: () => _showExplanationSheet(
-                  context,
-                  question: _questions[_currentIndex],
-                  lang: qLang,
-                  uiLang: uiLang,
-                ),
-              )
-            : null,
-        floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
+        // Prev / explanation / next in the thumb's reach. The explanation used
+        // to float in a corner and, on a 320 dp phone, sat on top of the
+        // third answer.
+        bottomNavigationBar: _QuestionNavBar(
+          isFirst: _currentIndex == 0,
+          isLast: _currentIndex == _questions.length - 1,
+          prevLabel: s('prev_question'),
+          nextLabel: s('next_question'),
+          finishLabel: s('finish'),
+          explanationLabel: _questions[_currentIndex].hasIzoh
+              ? s('explanation_title')
+              : null,
+          // A calm hint, not a pop-up: after a wrong answer, a free user sees
+          // that the explanation is what PRO adds.
+          explanationIsPro:
+              !context.watch<SubscriptionProvider>().isPro,
+          explanationHighlighted: _incorrectIds.contains(
+            _questions[_currentIndex].globalId,
+          ),
+          onPrev: () => _goToQuestion(_currentIndex - 1),
+          onNext: () => _goToQuestion(_currentIndex + 1),
+          onFinish: _showFinishDialog,
+          onExplanation: () => _showExplanationSheet(
+            context,
+            question: _questions[_currentIndex],
+            lang: qLang,
+            uiLang: uiLang,
+          ),
+        ),
       ),
     );
   }
@@ -731,11 +763,8 @@ class _QuestionCard extends StatelessWidget {
     final scale = context.watch<SettingsProvider>().scale;
 
     return SingleChildScrollView(
-      // Clamping (not bouncing) so vertical overscroll at the top/bottom of a
-      // long question doesn't fight the PageView's horizontal swipe gesture.
       physics: const ClampingScrollPhysics(),
-      // Bottom room for the floating explanation button.
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 72),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -1117,52 +1146,175 @@ class _TestToolbar extends StatelessWidget {
   }
 }
 
-/// "Why is that the answer?" — a small floating pill in the bottom-left
-/// corner, shown only when the current question actually has an explanation.
-///
-/// Deliberately not a `FloatingActionButton`: that would be a circle with an
-/// icon and no word on it, and this needs to say what it does.
-class _ExplanationButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
+/// Oldingi · Izoh · Keyingi — the only way between questions now that the
+/// page no longer swipes. Every target is at least 48 dp tall.
+class _QuestionNavBar extends StatelessWidget {
+  final bool isFirst;
+  final bool isLast;
+  final String prevLabel;
+  final String nextLabel;
+  final String finishLabel;
 
-  const _ExplanationButton({required this.label, required this.onTap});
+  /// Null when the current question has no explanation.
+  final String? explanationLabel;
+  final bool explanationIsPro;
+  final bool explanationHighlighted;
+  final VoidCallback onPrev;
+  final VoidCallback onNext;
+  final VoidCallback onFinish;
+  final VoidCallback onExplanation;
+
+  const _QuestionNavBar({
+    required this.isFirst,
+    required this.isLast,
+    required this.prevLabel,
+    required this.nextLabel,
+    required this.finishLabel,
+    required this.explanationLabel,
+    required this.explanationIsPro,
+    required this.explanationHighlighted,
+    required this.onPrev,
+    required this.onNext,
+    required this.onFinish,
+    required this.onExplanation,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: AppTheme.card(context),
-      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-      elevation: 3,
-      shadowColor: Colors.black.withValues(alpha: 0.25),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        child: Ink(
-          height: 42,
-          padding: const EdgeInsets.symmetric(horizontal: 14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-            border: Border.all(color: AppTheme.blue.withValues(alpha: 0.35)),
-          ),
+    final dark = AppTheme.isDark(context);
+    final gold = dark ? AppTheme.proBorder : AppTheme.proIcon;
+    final teaser = explanationIsPro && explanationHighlighted;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.card(context),
+        border: Border(top: BorderSide(color: AppTheme.hairline(context))),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
           child: Row(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
-                Icons.menu_book_rounded,
-                size: 19,
-                color: AppTheme.blue,
+              Expanded(
+                child: _NavButton(
+                  label: prevLabel,
+                  leading: Icons.chevron_left_rounded,
+                  onTap: isFirst ? null : onPrev,
+                ),
               ),
+              if (explanationLabel != null) ...[
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _NavButton(
+                    label: explanationLabel!,
+                    leadingWidget: explanationIsPro
+                        ? CrownIcon(size: 16, color: gold)
+                        : Icon(
+                            Icons.menu_book_rounded,
+                            size: 18,
+                            color: AppTheme.brandAccent(context),
+                          ),
+                    background: teaser
+                        ? (dark
+                              ? AppTheme.proBorder.withValues(alpha: 0.1)
+                              : AppTheme.proBg)
+                        : null,
+                    borderColor: teaser
+                        ? AppTheme.proBorder.withValues(alpha: dark ? 0.4 : 1)
+                        : null,
+                    onTap: onExplanation,
+                  ),
+                ),
+              ],
               const SizedBox(width: 8),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 14.5,
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.blue,
+              Expanded(
+                child: _NavButton(
+                  label: isLast ? finishLabel : nextLabel,
+                  trailing: isLast ? null : Icons.chevron_right_rounded,
+                  filled: true,
+                  onTap: isLast ? onFinish : onNext,
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NavButton extends StatelessWidget {
+  final String label;
+  final IconData? leading;
+  final Widget? leadingWidget;
+  final IconData? trailing;
+  final bool filled;
+  final Color? background;
+  final Color? borderColor;
+  final VoidCallback? onTap;
+
+  const _NavButton({
+    required this.label,
+    this.leading,
+    this.leadingWidget,
+    this.trailing,
+    this.filled = false,
+    this.background,
+    this.borderColor,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onTap != null;
+    final fg = filled ? Colors.white : AppTheme.brandAccent(context);
+    final radius = BorderRadius.circular(AppTheme.radiusSm);
+    return Opacity(
+      opacity: enabled ? 1 : 0.4,
+      child: Material(
+        color: filled
+            ? AppTheme.brandFill(context)
+            : (background ?? Colors.transparent),
+        shape: RoundedRectangleBorder(
+          borderRadius: radius,
+          side: filled
+              ? BorderSide.none
+              : BorderSide(color: borderColor ?? AppTheme.hairline(context)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (leadingWidget != null) ...[
+                    leadingWidget!,
+                    const SizedBox(width: 6),
+                  ] else if (leading != null)
+                    Icon(leading, size: 22, color: fg),
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: fg,
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (trailing != null) Icon(trailing, size: 22, color: fg),
+                ],
+              ),
+            ),
           ),
         ),
       ),
