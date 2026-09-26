@@ -13,6 +13,7 @@ import '../services/app_strings.dart';
 import '../services/daily_question_service.dart';
 import '../services/test_results_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/brand.dart';
 import '../widgets/update_banner.dart';
 import '../utils/phone.dart';
 import '../widgets/ha_yo_dialog.dart';
@@ -35,9 +36,6 @@ class _ProfileScreenState extends State<ProfileScreen>
   List<TestResult> _practiceResults = [];
   List<TestResult> _cloudResults = [];
   bool _loading = true;
-  bool _syncingCloud = false;
-  bool _showAllPracticeResults = false;
-  bool _showAllCloudResults = false;
   String? _syncedUserId;
   String? _cloudSyncedUserId;
 
@@ -66,37 +64,6 @@ class _ProfileScreenState extends State<ProfileScreen>
       _cloudResults = cloud;
       _loading = false;
     });
-  }
-
-  Future<void> _refreshCloudResults() async {
-    if (_syncingCloud) return;
-    final lang = context.read<LanguageProvider>().lang;
-    String s(String k) => AppStrings.get(k, lang);
-
-    setState(() => _syncingCloud = true);
-    try {
-      final cloud = await TestResultsService.refreshCloud();
-      if (!mounted) return;
-      setState(() {
-        _cloudResults = cloud;
-        _syncingCloud = false;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(s('sync_success')),
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    } catch (_) {
-      if (!mounted) return;
-      setState(() => _syncingCloud = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(s('sync_failed')),
-          duration: const Duration(seconds: 3),
-        ),
-      );
-    }
   }
 
   /// Keeps the cloud-results list in step with whoever is signed in, so one
@@ -369,33 +336,17 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
-  Future<void> _clearResults(String lang) async {
-    String s(String k) => AppStrings.get(k, lang);
-
-    final ok = await showHaYoDialog(
-      context,
-      title: s('clear_results'),
-      message: s('clear_practice_results_msg'),
-      lang: lang,
-      yesLabel: s('yes'),
-      noLabel: s('no'),
-      destructive: true,
-    );
-    if (ok != true || !mounted) return;
-
-    await TestResultsService.clearPracticeResults();
-    if (!mounted) return;
-    setState(() {
-      _practiceResults = [];
-      _showAllPracticeResults = false;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(s('results_cleared')),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+  /// "12 ta test · 7 tasidan o'tilgan" — the one line of results that
+  /// belongs on the settings list.
+  String _resultsSummary(String lang) {
+    final completed = [
+      ..._practiceResults,
+      ..._cloudResults,
+    ].where((r) => r.isCompleted).toList();
+    if (completed.isEmpty) return AppStrings.get('my_results_empty', lang);
+    return AppStrings.get('my_results_sub', lang)
+        .replaceAll('{n}', '${completed.length}')
+        .replaceAll('{p}', '${completed.where((r) => r.isPassed).length}');
   }
 
   @override
@@ -403,14 +354,14 @@ class _ProfileScreenState extends State<ProfileScreen>
     super.build(context);
     final lang = context.watch<LanguageProvider>().lang;
     final auth = context.watch<AuthProvider>();
+    final settings = context.watch<SettingsProvider>();
+    final isDark = context.watch<ThemeProvider>().isDark;
     String s(String k) => AppStrings.get(k, lang);
 
     if (_loading) {
       return Scaffold(
         appBar: AppBar(title: Text(s('settings'))),
-        body: const Center(
-          child: CircularProgressIndicator(color: AppTheme.blue),
-        ),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -426,11 +377,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         leading: widget.embedded
             ? null
             : IconButton(
-                icon: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: AppTheme.glassDeco(context),
-                  child: const Icon(Icons.arrow_back_ios_new, size: 16),
-                ),
+                icon: const Icon(Icons.arrow_back_rounded),
                 onPressed: () => Navigator.pop(context),
               ),
       ),
@@ -451,103 +398,100 @@ class _ProfileScreenState extends State<ProfileScreen>
               onSignUp: () => _openAuth(signUp: true),
               onSignIn: () => _openAuth(signUp: false),
             ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
           // A new version waiting on Play is worth interrupting for; it sits
           // above everything else so it cannot be missed.
           const UpdateBanner(),
 
-          // Headline numbers, always visible.
-          _StatsCard(
-            results: [..._practiceResults, ..._cloudResults],
-            lang: lang,
-          ),
-          const SizedBox(height: 16),
-
-          // NO COLLAPSING ANY MORE.
-          //
-          // Every group used to open and close, and each one held a different
-          // kind of control: a card here, a bare slider there, a switch inside
-          // a tile somewhere else. Two clicks to reach a setting, and no two
-          // settings looking alike. It is one flat list now, and every row is
-          // the same row — icon, name, current value, and either a chevron or
-          // a switch on the right.
-          _SectionLabel(text: s('section_subscription')),
+          // One calm PRO card: the status for a subscriber, the offer for
+          // everyone else. The only PRO message on this screen.
           _ProEntryCard(lang: lang),
           const SizedBox(height: 20),
 
-          _SectionLabel(text: s('section_preferences')),
-          _SettingsGroup(
+          // ONE FLAT LIST, SETTINGS ONLY. Every row is the same row — icon,
+          // name, current value, and a chevron or a switch. Results used to sit
+          // in the middle of it as big cards; they have a page of their own
+          // now, behind one row below.
+          _SectionLabel(text: s('section_study')),
+          SettingsGroup(
             children: [
-              _SettingsTile(
-                icon: Icons.language_rounded,
-                iconColor: AppTheme.blue,
-                title: s('language'),
-                subtitle: context.watch<LanguageProvider>().langLabel,
-                onTap: () => _showLanguageSheet(lang),
-              ),
-              _SettingsTile(
-                icon: context.watch<ThemeProvider>().isDark
-                    ? Icons.dark_mode_rounded
-                    : Icons.light_mode_rounded,
-                iconColor: AppTheme.orange,
-                title: s('theme'),
-                subtitle: context.watch<ThemeProvider>().isDark
-                    ? s('dark_mode')
-                    : s('light_mode'),
+              SettingsRow(
+                icon: Icons.skip_next_rounded,
+                title: s('auto_advance_setting'),
+                subtitle: s('auto_advance_sub'),
                 showChevron: false,
-                trailing: Switch(
-                  value: context.watch<ThemeProvider>().isDark,
-                  onChanged: (_) => context.read<ThemeProvider>().toggle(),
-                  activeThumbColor: AppTheme.blue,
+                trailing: BrandSwitch(
+                  value: settings.autoAdvance,
+                  onChanged: settings.setAutoAdvance,
                 ),
-                onTap: () => context.read<ThemeProvider>().toggle(),
+                onTap: () => settings.setAutoAdvance(!settings.autoAdvance),
               ),
+              SettingsRow(
+                icon: Icons.menu_book_rounded,
+                title: s('auto_explanation'),
+                subtitle: s('auto_explanation_sub'),
+                showChevron: false,
+                trailing: BrandSwitch(
+                  value: settings.autoExplanation,
+                  onChanged: settings.setAutoExplanation,
+                ),
+                onTap: () =>
+                    settings.setAutoExplanation(!settings.autoExplanation),
+              ),
+              _DailyQuestionTile(lang: lang),
               // The slider lives in a sheet so this row looks like its
               // neighbours; the sheet is also where the live preview belongs.
-              _SettingsTile(
+              SettingsRow(
                 icon: Icons.format_size_rounded,
-                iconColor: AppTheme.blue,
                 title: s('text_size'),
-                subtitle: context.watch<SettingsProvider>().scaleLabel,
+                subtitle: settings.scaleLabel,
                 onTap: () => _showTextSizeSheet(lang),
               ),
             ],
           ),
           const SizedBox(height: 20),
 
-          _SectionLabel(text: s('section_study')),
-          _SettingsGroup(
+          _SectionLabel(text: s('section_preferences')),
+          SettingsGroup(
             children: [
-              _SettingsTile(
-                icon: Icons.menu_book_rounded,
-                iconColor: AppTheme.blue,
-                title: s('auto_explanation'),
-                subtitle: s('auto_explanation_sub'),
-                showChevron: false,
-                trailing: Switch(
-                  value: context.watch<SettingsProvider>().autoExplanation,
-                  onChanged: (value) => context
-                      .read<SettingsProvider>()
-                      .setAutoExplanation(value),
-                  activeThumbColor: AppTheme.blue,
-                ),
-                onTap: () {
-                  final settings = context.read<SettingsProvider>();
-                  settings.setAutoExplanation(!settings.autoExplanation);
-                },
+              SettingsRow(
+                icon: Icons.language_rounded,
+                title: s('language'),
+                subtitle: context.watch<LanguageProvider>().langLabel,
+                onTap: () => _showLanguageSheet(lang),
               ),
-              _DailyQuestionTile(lang: lang),
+              SettingsRow(
+                icon: isDark
+                    ? Icons.dark_mode_rounded
+                    : Icons.light_mode_rounded,
+                title: s('theme'),
+                subtitle: isDark ? s('dark_mode') : s('light_mode'),
+                showChevron: false,
+                trailing: BrandSwitch(
+                  value: isDark,
+                  onChanged: (_) => context.read<ThemeProvider>().toggle(),
+                ),
+                onTap: () => context.read<ThemeProvider>().toggle(),
+              ),
             ],
           ),
           const SizedBox(height: 20),
 
           _SectionLabel(text: s('section_results')),
-          _SettingsGroup(
+          SettingsGroup(
             children: [
-              _SettingsTile(
+              SettingsRow(
+                icon: Icons.bar_chart_rounded,
+                title: s('my_results'),
+                subtitle: _resultsSummary(lang),
+                onTap: () => Navigator.push(
+                  context,
+                  AppTheme.slideRoute(const _MyResultsPage()),
+                ),
+              ),
+              SettingsRow(
                 icon: Icons.insights_rounded,
-                iconColor: AppTheme.success,
                 title: s('topic_stats'),
                 subtitle: s('topic_stats_sub'),
                 onTap: () => Navigator.push(
@@ -556,28 +500,6 @@ class _ProfileScreenState extends State<ProfileScreen>
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 12),
-          _LocalResultsCard(
-            results: _practiceResults,
-            lang: lang,
-            expanded: _showAllPracticeResults,
-            onToggleExpanded: () => setState(
-              () => _showAllPracticeResults = !_showAllPracticeResults,
-            ),
-            onClear: () => _clearResults(lang),
-          ),
-          const SizedBox(height: 12),
-          _CloudResultsCard(
-            results: _cloudResults,
-            lang: lang,
-            isLoggedIn: auth.isLoggedIn,
-            syncing: _syncingCloud,
-            expanded: _showAllCloudResults,
-            onToggleExpanded: () =>
-                setState(() => _showAllCloudResults = !_showAllCloudResults),
-            onSync: _refreshCloudResults,
-            onSignIn: () => _openAuth(signUp: false),
           ),
           const SizedBox(height: 20),
 
@@ -786,9 +708,8 @@ class _DailyQuestionTileState extends State<_DailyQuestionTile> {
     String s(String k) => AppStrings.get(k, widget.lang);
     final hourLabel = '${_hour.toString().padLeft(2, '0')}:00';
 
-    return _SettingsTile(
+    return SettingsRow(
       icon: Icons.notifications_active_rounded,
-      iconColor: AppTheme.orange,
       title: s('daily_question'),
       subtitle: _enabled
           ? '${s('daily_question_time')}: $hourLabel'
@@ -798,16 +719,9 @@ class _DailyQuestionTileState extends State<_DailyQuestionTile> {
           ? const SizedBox(
               width: 20,
               height: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                color: AppTheme.blue,
-              ),
+              child: CircularProgressIndicator(strokeWidth: 2),
             )
-          : Switch(
-              value: _enabled,
-              onChanged: _toggle,
-              activeThumbColor: AppTheme.blue,
-            ),
+          : BrandSwitch(value: _enabled, onChanged: _toggle),
       // Tapping the row changes the time once the reminder is on, and turns it
       // on when it is off — the switch is still there for the direct action.
       onTap: _busy ? null : (_enabled ? _pickHour : () => _toggle(true)),
@@ -848,41 +762,18 @@ class _StatsCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(
-                Icons.emoji_events_rounded,
-                size: 20,
-                color: AppTheme.orange,
-              ),
-              const SizedBox(width: 8),
-              // Expanded: "Sizning natijalaringiz" is wider than a 320 dp
-              // phone leaves beside the icon.
-              Expanded(
-                child: Text(
-                  s('your_results'),
-                  style: TextStyle(
-                    fontSize: 15.5,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textP(context),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
               _StatTile(
                 icon: Icons.emoji_events_outlined,
                 value: '${completed.length}',
                 label: s('total_tests'),
-                color: AppTheme.blue,
+                color: AppTheme.brandAccent(context),
               ),
               const SizedBox(width: 10),
               _StatTile(
                 icon: Icons.workspace_premium_outlined,
                 value: '$passed',
                 label: s('passed_tests'),
-                color: AppTheme.orange,
+                color: AppTheme.brandAccent(context),
               ),
             ],
           ),
@@ -929,9 +820,9 @@ class _StatTile extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
         decoration: BoxDecoration(
-          color: AppTheme.surface(context),
+          color: AppTheme.card(context),
           borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-          border: Border.all(color: AppTheme.border(context)),
+          border: Border.all(color: AppTheme.hairline(context)),
         ),
         child: Column(
           children: [
@@ -993,14 +884,14 @@ class _AccountCard extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: AppTheme.cardDeco(context, radius: AppTheme.radiusXl),
+      decoration: AppTheme.cardDeco(context, radius: AppTheme.radiusMd),
       child: Row(
         children: [
           Container(
             width: 54,
             height: 54,
-            decoration: const BoxDecoration(
-              gradient: AppTheme.blueGradient,
+            decoration: BoxDecoration(
+              color: AppTheme.brandFill(context),
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -1067,8 +958,10 @@ class _AccountCard extends StatelessWidget {
             onPressed: onEditAccount,
             tooltip: s('section_account'),
             style: IconButton.styleFrom(
-              backgroundColor: AppTheme.blue.withValues(alpha: 0.1),
-              foregroundColor: AppTheme.blue,
+              backgroundColor: AppTheme.brandAccent(
+                context,
+              ).withValues(alpha: 0.1),
+              foregroundColor: AppTheme.brandAccent(context),
             ),
             icon: const Icon(Icons.edit_rounded, size: 18),
           ),
@@ -1095,7 +988,7 @@ class _GuestCard extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.all(18),
-      decoration: AppTheme.cardDeco(context, radius: AppTheme.radiusXl),
+      decoration: AppTheme.cardDeco(context, radius: AppTheme.radiusMd),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -1104,8 +997,8 @@ class _GuestCard extends StatelessWidget {
               Container(
                 width: 48,
                 height: 48,
-                decoration: const BoxDecoration(
-                  gradient: AppTheme.blueGradient,
+                decoration: BoxDecoration(
+                  color: AppTheme.brandFill(context),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -1144,18 +1037,17 @@ class _GuestCard extends StatelessWidget {
           const SizedBox(height: 16),
           // Creating an account is the primary path for a new user; signing in
           // is for people who already registered here or on the website.
-          ElevatedButton.icon(
+          BrandButton(
             onPressed: onSignUp,
-            icon: const Icon(Icons.person_add_alt_1_rounded, size: 18),
-            label: Text(s('create_account_cta')),
-            style: ElevatedButton.styleFrom(minimumSize: const Size(0, 46)),
+            icon: const Icon(Icons.person_add_alt_1_rounded),
+            label: s('create_account_cta'),
           ),
-          const SizedBox(height: 8),
-          OutlinedButton.icon(
+          const SizedBox(height: 10),
+          BrandButton(
+            kind: BrandButtonKind.secondary,
             onPressed: onSignIn,
-            icon: const Icon(Icons.login_rounded, size: 18),
-            label: Text(s('have_account_sign_in')),
-            style: OutlinedButton.styleFrom(minimumSize: const Size(0, 46)),
+            icon: const Icon(Icons.login_rounded),
+            label: s('have_account_sign_in'),
           ),
         ],
       ),
@@ -1164,117 +1056,6 @@ class _GuestCard extends StatelessWidget {
 }
 
 // ───────────────────────── Building blocks ─────────────────────────
-
-/// Card that holds a list of [_SettingsTile]s separated by hairlines.
-class _SettingsGroup extends StatelessWidget {
-  final List<Widget> children;
-  const _SettingsGroup({required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: AppTheme.cardDeco(context),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          for (var i = 0; i < children.length; i++) ...[
-            if (i > 0)
-              Divider(
-                height: 1,
-                thickness: 1,
-                indent: 58,
-                color: AppTheme.border(context),
-              ),
-            children[i],
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _SettingsTile extends StatelessWidget {
-  final IconData icon;
-  final Color iconColor;
-  final String title;
-  final String? subtitle;
-  final Widget? trailing;
-  final bool showChevron;
-  final bool destructive;
-  final VoidCallback? onTap;
-
-  const _SettingsTile({
-    required this.icon,
-    required this.iconColor,
-    required this.title,
-    this.subtitle,
-    this.trailing,
-    this.showChevron = true,
-    this.destructive = false,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          child: Row(
-            children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: iconColor.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: Icon(icon, size: 18, color: iconColor),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: destructive
-                            ? AppTheme.error
-                            : AppTheme.textP(context),
-                      ),
-                    ),
-                    if (subtitle != null) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitle!,
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          color: AppTheme.textM(context),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              ?trailing,
-              if (showChevron)
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: 22,
-                  color: AppTheme.textM(context),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
 
 // ───────────────────────── PRO ─────────────────────────
 
@@ -1297,39 +1078,42 @@ class _ProEntryCard extends StatelessWidget {
         ? '${info.daysRemaining} ${s('pro_days_left')} · ${info.expiryDateTashkent}'
         : s('pro_entry_subtitle');
 
+    void open() =>
+        Navigator.push(context, AppTheme.slideRoute(const ProScreen()));
+
+    if (!isPro) {
+      return ProUpsellCard(
+        title: s('pro_title'),
+        description: subtitle,
+        action: s('get_pro'),
+        onTap: open,
+      );
+    }
+
     return Material(
-      color: Colors.transparent,
-      child: InkWell(
+      color: AppTheme.card(context),
+      shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        onTap: () =>
-            Navigator.push(context, AppTheme.slideRoute(const ProScreen())),
-        child: Ink(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: isPro ? null : AppTheme.orangeGradient,
-            color: isPro ? AppTheme.card(context) : null,
-            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-            border: isPro
-                ? Border.all(color: AppTheme.success.withValues(alpha: 0.4))
-                : null,
-          ),
+        side: BorderSide(color: AppTheme.hairline(context)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: open,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Row(
             children: [
               Container(
-                width: 38,
-                height: 38,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
-                  color: isPro
-                      ? AppTheme.success.withValues(alpha: 0.15)
-                      : Colors.white.withValues(alpha: 0.22),
-                  borderRadius: BorderRadius.circular(10),
+                  color: AppTheme.success.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                 ),
-                child: Icon(
-                  isPro
-                      ? Icons.verified_rounded
-                      : Icons.workspace_premium_rounded,
-                  size: 20,
-                  color: isPro ? AppTheme.success : Colors.white,
+                child: const Icon(
+                  Icons.verified_rounded,
+                  size: 22,
+                  color: AppTheme.success,
                 ),
               ),
               const SizedBox(width: 12),
@@ -1338,21 +1122,19 @@ class _ProEntryCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isPro ? s('pro_active_title') : s('pro_title'),
+                      s('pro_active_title'),
                       style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: isPro ? AppTheme.textP(context) : Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                        color: AppTheme.textP(context),
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
                       style: TextStyle(
-                        fontSize: 12.5,
-                        color: isPro
-                            ? AppTheme.textM(context)
-                            : Colors.white.withValues(alpha: 0.9),
+                        fontSize: 13,
+                        color: AppTheme.mutedText(context),
                       ),
                     ),
                   ],
@@ -1360,7 +1142,7 @@ class _ProEntryCard extends StatelessWidget {
               ),
               Icon(
                 Icons.chevron_right_rounded,
-                color: isPro ? AppTheme.textM(context) : Colors.white,
+                color: AppTheme.mutedText(context),
               ),
             ],
           ),
@@ -1409,7 +1191,7 @@ class _LocalResultsCard extends StatelessWidget {
         children: [
           _CardHeader(
             icon: Icons.bar_chart_rounded,
-            color: AppTheme.blue,
+            color: AppTheme.brandAccent(context),
             title: s('local_statistics'),
           ),
           const SizedBox(height: 14),
@@ -1418,7 +1200,7 @@ class _LocalResultsCard extends StatelessWidget {
               _MiniStat(
                 label: s('total_tests'),
                 value: '$total',
-                color: AppTheme.blue,
+                color: AppTheme.brandAccent(context),
               ),
               const SizedBox(width: 10),
               _MiniStat(
@@ -1430,7 +1212,7 @@ class _LocalResultsCard extends StatelessWidget {
               _MiniStat(
                 label: s('average'),
                 value: '$avg%',
-                color: AppTheme.orange,
+                color: AppTheme.brandAccent(context),
               ),
             ],
           ),
@@ -1505,7 +1287,7 @@ class _CloudResultsCard extends StatelessWidget {
         children: [
           _CardHeader(
             icon: Icons.cloud_outlined,
-            color: AppTheme.blue,
+            color: AppTheme.brandAccent(context),
             title: s('cloud_results'),
           ),
           const SizedBox(height: 14),
@@ -1723,10 +1505,10 @@ class _ResultsAccordion extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.history_rounded,
                     size: 18,
-                    color: AppTheme.blue,
+                    color: AppTheme.brandAccent(context),
                   ),
                   const SizedBox(width: 8),
                   Text(
@@ -1744,15 +1526,17 @@ class _ResultsAccordion extends StatelessWidget {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: AppTheme.blue.withValues(alpha: 0.12),
+                      color: AppTheme.brandAccent(
+                        context,
+                      ).withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                     ),
                     child: Text(
                       '$count',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11.5,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.blue,
+                        color: AppTheme.brandAccent(context),
                       ),
                     ),
                   ),
@@ -1920,11 +1704,13 @@ class _LanguageSheet extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: selected
-                      ? AppTheme.blue.withValues(alpha: 0.1)
+                      ? AppTheme.brandAccent(context).withValues(alpha: 0.1)
                       : AppTheme.surface(context),
                   borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                   border: Border.all(
-                    color: selected ? AppTheme.blue : AppTheme.border(context),
+                    color: selected
+                        ? AppTheme.brandAccent(context)
+                        : AppTheme.border(context),
                     width: selected ? 1.5 : 1,
                   ),
                 ),
@@ -1935,7 +1721,9 @@ class _LanguageSheet extends StatelessWidget {
                           ? Icons.radio_button_checked_rounded
                           : Icons.radio_button_off_rounded,
                       size: 20,
-                      color: selected ? AppTheme.blue : AppTheme.textM(context),
+                      color: selected
+                          ? AppTheme.brandAccent(context)
+                          : AppTheme.textM(context),
                     ),
                     const SizedBox(width: 12),
                     Text(
@@ -1946,7 +1734,7 @@ class _LanguageSheet extends StatelessWidget {
                             ? FontWeight.w600
                             : FontWeight.w500,
                         color: selected
-                            ? AppTheme.blue
+                            ? AppTheme.brandAccent(context)
                             : AppTheme.textP(context),
                       ),
                     ),
@@ -2038,24 +1826,21 @@ class _AccountSheetState extends State<_AccountSheet> {
         const SizedBox(height: 18),
         Divider(height: 1, color: AppTheme.border(context)),
         const SizedBox(height: 6),
-        _SettingsTile(
+        SettingsRow(
           icon: Icons.key_rounded,
-          iconColor: AppTheme.blue,
           title: s('change_password'),
           onTap: () => Navigator.pop(context, _AccountAction.password),
         ),
-        _SettingsTile(
+        SettingsRow(
           icon: Icons.logout_rounded,
-          iconColor: AppTheme.error,
           title: s('logout'),
           destructive: true,
           showChevron: false,
           onTap: () => Navigator.pop(context, _AccountAction.logout),
         ),
         // Google Play requires an in-app way to delete the account.
-        _SettingsTile(
+        SettingsRow(
           icon: Icons.person_remove_rounded,
-          iconColor: AppTheme.error,
           title: s('delete_account'),
           subtitle: s('delete_account_sub'),
           destructive: true,
@@ -2175,6 +1960,159 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                     ),
                   )
                 : Text(s('save')),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ───────────────────────── Natijalarim ─────────────────────────
+
+/// "Natijalarim": the headline numbers and both result lists on a page of
+/// their own, so the settings tab holds settings and nothing else.
+class _MyResultsPage extends StatefulWidget {
+  const _MyResultsPage();
+
+  @override
+  State<_MyResultsPage> createState() => _MyResultsPageState();
+}
+
+class _MyResultsPageState extends State<_MyResultsPage> {
+  List<TestResult> _practiceResults = [];
+  List<TestResult> _cloudResults = [];
+  bool _syncingCloud = false;
+  bool _showAllPracticeResults = false;
+  bool _showAllCloudResults = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+    TestResultsService.revision.addListener(_loadData);
+  }
+
+  @override
+  void dispose() {
+    TestResultsService.revision.removeListener(_loadData);
+    super.dispose();
+  }
+
+  Future<void> _loadData() async {
+    final practice = await TestResultsService.getPracticeResults();
+    final cloud = await TestResultsService.getCloudResults();
+    if (!mounted) return;
+    setState(() {
+      _practiceResults = practice;
+      _cloudResults = cloud;
+    });
+  }
+
+  Future<void> _refreshCloudResults() async {
+    if (_syncingCloud) return;
+    final lang = context.read<LanguageProvider>().lang;
+    String s(String k) => AppStrings.get(k, lang);
+
+    setState(() => _syncingCloud = true);
+    try {
+      final cloud = await TestResultsService.refreshCloud();
+      if (!mounted) return;
+      setState(() {
+        _cloudResults = cloud;
+        _syncingCloud = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(s('sync_success')),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _syncingCloud = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(s('sync_failed')),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
+
+  Future<void> _clearResults(String lang) async {
+    String s(String k) => AppStrings.get(k, lang);
+
+    final ok = await showHaYoDialog(
+      context,
+      title: s('clear_results'),
+      message: s('clear_practice_results_msg'),
+      lang: lang,
+      yesLabel: s('yes'),
+      noLabel: s('no'),
+      destructive: true,
+    );
+    if (ok != true || !mounted) return;
+
+    await TestResultsService.clearPracticeResults();
+    if (!mounted) return;
+    setState(() {
+      _practiceResults = [];
+      _showAllPracticeResults = false;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(s('results_cleared')),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  Future<void> _openAuth() async {
+    final sub = context.read<SubscriptionProvider>();
+    final ok = await Navigator.push<bool>(
+      context,
+      AppTheme.slideRoute(const AuthScreen(isModal: true)),
+    );
+    if (ok == true && mounted) await sub.refresh(force: true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final lang = context.watch<LanguageProvider>().lang;
+    final auth = context.watch<AuthProvider>();
+    String s(String k) => AppStrings.get(k, lang);
+
+    return Scaffold(
+      appBar: AppBar(title: Text(s('my_results'))),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
+        children: [
+          _StatsCard(
+            results: [..._practiceResults, ..._cloudResults],
+            lang: lang,
+          ),
+          const SizedBox(height: 12),
+          _LocalResultsCard(
+            results: _practiceResults,
+            lang: lang,
+            expanded: _showAllPracticeResults,
+            onToggleExpanded: () => setState(
+              () => _showAllPracticeResults = !_showAllPracticeResults,
+            ),
+            onClear: () => _clearResults(lang),
+          ),
+          const SizedBox(height: 12),
+          _CloudResultsCard(
+            results: _cloudResults,
+            lang: lang,
+            isLoggedIn: auth.isLoggedIn,
+            syncing: _syncingCloud,
+            expanded: _showAllCloudResults,
+            onToggleExpanded: () =>
+                setState(() => _showAllCloudResults = !_showAllCloudResults),
+            onSync: _refreshCloudResults,
+            onSignIn: _openAuth,
           ),
         ],
       ),

@@ -9,6 +9,7 @@ import '../services/app_strings.dart';
 import '../services/app_update_service.dart';
 import '../services/review_prompt_service.dart';
 import '../theme/app_theme.dart';
+import 'brand.dart';
 
 /// "A new version is available — install it" strip.
 ///
@@ -197,85 +198,66 @@ class _AboutGroupState extends State<AboutGroup> {
     final lang = context.watch<LanguageProvider>().lang;
     String s(String k) => AppStrings.get(k, lang);
 
-    return Container(
-      decoration: AppTheme.cardDeco(context),
-      clipBehavior: Clip.antiAlias,
-      // The card's own background is painted by the DecoratedBox above, which
-      // would otherwise sit between these ListTiles and the nearest Material
-      // and swallow their tap ripples.
-      child: Material(
-        type: MaterialType.transparency,
-        child: Column(
-          children: [
-            ListTile(
-              leading: const Icon(
-                Icons.info_outline_rounded,
-                color: AppTheme.blue,
-              ),
-              title: Text(s('pro_version')),
-              subtitle: Text(AppVersion.displayVersion),
-              dense: true,
-            ),
-            Divider(height: 1, thickness: 1, color: AppTheme.border(context)),
-            ListTile(
-              leading: const Icon(
-                Icons.system_update_rounded,
-                color: AppTheme.blue,
-              ),
-              title: Text(s('check_for_updates')),
-              trailing: _checking
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: AppTheme.blue,
-                      ),
-                    )
-                  : const Icon(Icons.chevron_right_rounded),
-              onTap: _checking ? null : () => _checkNow(lang),
-              dense: true,
-            ),
-            Divider(height: 1, thickness: 1, color: AppTheme.border(context)),
-            // The people who open settings are the ones who use the app; they
-            // are also the only ones who will ever rate it unprompted.
-            ListTile(
-              leading: const Icon(
-                Icons.star_rounded,
-                color: AppTheme.orange,
-              ),
-              title: Text(s('rate_app')),
-              subtitle: Text(s('rate_app_sub')),
-              trailing: const Icon(Icons.open_in_new_rounded, size: 18),
-              onTap: ReviewPromptService.openStoreListing,
-              dense: true,
-            ),
-            Divider(height: 1, thickness: 1, color: AppTheme.border(context)),
-            ListTile(
-              leading: const Icon(
-                Icons.public_rounded,
-                color: AppTheme.success,
-              ),
-              title: Text(s('visit_website')),
-              trailing: const Icon(Icons.open_in_new_rounded, size: 18),
-              onTap: _openSite,
-              dense: true,
-            ),
-            Divider(height: 1, thickness: 1, color: AppTheme.border(context)),
-            ListTile(
-              leading: const Icon(
-                Icons.telegram_rounded,
-                color: Color(0xFF0088CC),
-              ),
-              title: Text(s('telegram_group_title')),
-              subtitle: Text(s('telegram_group_body')),
-              trailing: const Icon(Icons.open_in_new_rounded, size: 18),
-              onTap: _openTelegramGroup,
-              dense: true,
-            ),
-          ],
+    // The installed version is the subtitle of "check for updates": the two
+    // answer the same question, and the old stand-alone row was labelled
+    // "PRO Versiya", which read as a subscription status.
+    return SettingsGroup(
+      children: [
+        SettingsRow(
+          icon: Icons.system_update_rounded,
+          title: s('check_for_updates'),
+          subtitle: '${s('version_label')} ${AppVersion.displayVersion}',
+          showChevron: !_checking,
+          trailing: _checking
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : null,
+          onTap: _checking ? null : () => _checkNow(lang),
         ),
-      ),
+        // The people who open settings are the ones who use the app; they
+        // are also the only ones who will ever rate it unprompted.
+        SettingsRow(
+          icon: Icons.star_outline_rounded,
+          title: s('rate_app'),
+          subtitle: s('rate_app_sub'),
+          showChevron: false,
+          trailing: const _OutIcon(),
+          onTap: ReviewPromptService.openStoreListing,
+        ),
+        SettingsRow(
+          icon: Icons.public_rounded,
+          title: s('visit_website'),
+          showChevron: false,
+          trailing: const _OutIcon(),
+          onTap: _openSite,
+        ),
+        SettingsRow(
+          icon: Icons.telegram_rounded,
+          title: s('telegram_group_title'),
+          subtitle: s('telegram_group_body'),
+          showChevron: false,
+          trailing: const _OutIcon(),
+          onTap: _openTelegramGroup,
+        ),
+      ],
+    );
+  }
+}
+
+/// "Opens outside the app" — for rows that leave for the store, the site or
+/// Telegram.
+class _OutIcon extends StatelessWidget {
+  const _OutIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    return Icon(
+      Icons.open_in_new_rounded,
+      size: 18,
+      color: AppTheme.mutedText(context),
     );
   }
 }
