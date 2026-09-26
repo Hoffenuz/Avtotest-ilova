@@ -1386,14 +1386,37 @@ class AppStrings {
     },
     'payme_secure_note': {
       'uz_lat':
-          'To\'lov Payme orqali amalga oshiriladi. PRO obuna to\'lov '
-          'tasdiqlangach avtomatik ochiladi.',
+          'To\'lov Payme yoki Click orqali amalga oshiriladi. PRO obuna '
+          'to\'lov tasdiqlangach avtomatik ochiladi.',
       'uz_cyr':
-          'Тўлов Payme орқали амалга оширилади. PRO обуна тўлов '
+          'Тўлов Payme ёки Click орқали амалга оширилади. PRO обуна тўлов '
           'тасдиқлангач автоматик очилади.',
       'ru':
-          'Оплата проходит через Payme. PRO активируется автоматически '
-          'после подтверждения платежа.',
+          'Оплата проходит через Payme или Click. PRO активируется '
+          'автоматически после подтверждения платежа.',
+    },
+    'pay_method': {
+      'uz_lat': "To'lov usuli",
+      'uz_cyr': 'Тўлов усули',
+      'ru': 'Способ оплаты',
+    },
+    'payment_link_failed': {
+      'uz_lat':
+          "To'lov havolasini yaratib bo'lmadi. Internetni tekshirib, qayta "
+          "urinib ko'ring.",
+      'uz_cyr':
+          'Тўлов ҳаволасини яратиб бўлмади. Интернетни текшириб, қайта '
+          'уриниб кўринг.',
+      'ru':
+          'Не удалось создать ссылку на оплату. Проверьте интернет и '
+          'попробуйте снова.',
+    },
+    'payment_too_many': {
+      'uz_lat':
+          "Urinishlar soni ko'payib ketdi. Birozdan so'ng qayta urinib ko'ring.",
+      'uz_cyr':
+          'Уринишлар сони кўпайиб кетди. Бироздан сўнг қайта уриниб кўринг.',
+      'ru': 'Слишком много попыток. Попробуйте чуть позже.',
     },
     'payment_verifying': {
       'uz_lat': 'To\'lov tekshirilmoqda...',

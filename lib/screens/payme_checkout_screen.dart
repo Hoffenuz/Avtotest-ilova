@@ -10,9 +10,9 @@ import '../services/app_strings.dart';
 import '../theme/app_theme.dart';
 import '../widgets/ha_yo_dialog.dart';
 
-/// Payme checkout, hosted in a WebView.
+/// Payme or Click checkout, hosted in a WebView.
 ///
-/// Pops `true` when Payme redirected to the return URL — which means the user
+/// Pops `true` when the provider redirected to [returnUrl] — which means the user
 /// finished the flow, **not** that the payment succeeded. Only the Payme
 /// server can confirm that, so the caller must re-read
 /// `get_user_access_state` afterwards and never grant PRO on its own.
@@ -20,10 +20,15 @@ class PaymeCheckoutScreen extends StatefulWidget {
   final String checkoutUrl;
   final String planTitle;
 
+  /// Where the provider sends the user when the flow is over. Payme and Click
+  /// each have their own; reaching it closes this screen.
+  final String returnUrl;
+
   const PaymeCheckoutScreen({
     super.key,
     required this.checkoutUrl,
     required this.planTitle,
+    this.returnUrl = SupabaseConfig.paymeReturnUrl,
   });
 
   @override
@@ -86,7 +91,7 @@ class _PaymeCheckoutScreenState extends State<PaymeCheckoutScreen>
     final url = request.url;
 
     // Payme is done with us → close and let the caller verify the result.
-    if (url.startsWith(SupabaseConfig.paymeReturnUrl)) {
+    if (url.startsWith(widget.returnUrl)) {
       _finish(true);
       return NavigationDecision.prevent;
     }

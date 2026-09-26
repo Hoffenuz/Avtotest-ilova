@@ -7,12 +7,17 @@ import '../providers/auth_provider.dart';
 import '../providers/language_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../services/app_strings.dart';
+import '../services/click_service.dart';
 import '../services/payme_service.dart';
 import '../services/subscription_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/brand.dart';
 import '../widgets/tab_visibility.dart';
 import 'auth_screen.dart';
 import 'payme_checkout_screen.dart';
+
+/// Payment provider for the checkout — the same choice the website offers.
+enum PayVia { payme, click }
 
 class ProScreen extends StatefulWidget {
   final int? tabIndex;
@@ -28,6 +33,8 @@ class _ProScreenState extends State<ProScreen> with WidgetsBindingObserver {
 
   /// Guards against a second checkout being opened while one is running.
   bool _purchasing = false;
+
+  PayVia _via = PayVia.payme;
 
   bool _isVisible(BuildContext context) {
     if (widget.tabIndex == null) return true;
@@ -53,9 +60,9 @@ class _ProScreenState extends State<ProScreen> with WidgetsBindingObserver {
     setState(() => _plansFuture = PaymeService.fetchPlans());
   }
 
-  /// Full purchase flow: sign-in check → Payme checkout → server-side
-  /// verification. PRO is never switched on locally; the app only re-reads
-  /// `get_user_access_state` until the Payme callback has landed.
+  /// Full purchase flow: sign-in check → Payme or Click checkout →
+  /// server-side verification. PRO is never switched on locally; the app only
+  /// re-reads `get_user_access_state` until the provider's callback has landed.
   Future<void> _startPurchase(PaymePlan plan, String lang) async {
     if (_purchasing) return;
 
@@ -95,19 +102,52 @@ class _ProScreenState extends State<ProScreen> with WidgetsBindingObserver {
       return;
     }
 
+    final via = _via;
     final accountEmail = auth.userEmail;
-    if (accountEmail.isEmpty) {
+    if (via == PayVia.payme && accountEmail.isEmpty) {
       notify('auth_error_generic');
       return;
     }
 
     _purchasing = true;
     try {
-      final url = PaymeService.buildCheckoutUrl(
-        accountEmail: accountEmail,
-        amountTiyin: plan.amountTiyin,
-        lang: lang,
-      );
+      final String url;
+      final String returnUrl;
+      if (via == PayVia.click) {
+        // The order (and its price) is created on the server; the link only
+        // carries its id. Same reasons and wording as the website.
+        final ClickOrder order;
+        try {
+          order = await ClickService.createOrder(plan.planName);
+        } on ClickOrderException catch (e) {
+          notify(switch (e.reason) {
+            'already_paid' => 'pro_already_active',
+            'plan_not_found' => 'plans_load_failed',
+            'too_many_orders' => 'payment_too_many',
+            _ => 'payment_link_failed',
+          });
+          return;
+        }
+        if (!mounted) return;
+        final link = ClickService.buildPayUrl(
+          orderId: order.orderId,
+          amountTiyin: order.amountTiyin,
+          returnUrl: SupabaseConfig.clickReturnUrl,
+        );
+        if (link == null) {
+          notify('payment_link_failed');
+          return;
+        }
+        url = link;
+        returnUrl = SupabaseConfig.clickReturnUrl;
+      } else {
+        url = PaymeService.buildCheckoutUrl(
+          accountEmail: accountEmail,
+          amountTiyin: plan.amountTiyin,
+          lang: lang,
+        );
+        returnUrl = SupabaseConfig.paymeReturnUrl;
+      }
 
       final completed = await Navigator.push<bool>(
         context,
@@ -115,6 +155,7 @@ class _ProScreenState extends State<ProScreen> with WidgetsBindingObserver {
           PaymeCheckoutScreen(
             checkoutUrl: url,
             planTitle: _planTitle(plan, lang),
+            returnUrl: returnUrl,
           ),
         ),
       );
@@ -122,7 +163,7 @@ class _ProScreenState extends State<ProScreen> with WidgetsBindingObserver {
 
       if (completed != true) {
         // Cancelled — but a payment made in a card app or the browser also
-        // lands here, because this screen never saw Payme redirect. Check, and
+        // lands here, because this screen never saw the redirect. Check, and
         // congratulate rather than silently returning if it did go through.
         await sub.refresh(force: true);
         if (!mounted) return;
@@ -279,13 +320,13 @@ class _ProScreenState extends State<ProScreen> with WidgetsBindingObserver {
     return Scaffold(
       appBar: AppBar(title: Text(s('pro_title')), centerTitle: true),
       body: RefreshIndicator(
-        color: AppTheme.orange,
+        color: AppTheme.brandAccent(context),
         onRefresh: () => context.read<SubscriptionProvider>().refresh(),
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(
             parent: AlwaysScrollableScrollPhysics(),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -312,9 +353,16 @@ class _ProScreenState extends State<ProScreen> with WidgetsBindingObserver {
                 const SizedBox(height: 24),
                 _ChoosePlanHeader(lang: lang),
                 const SizedBox(height: 12),
+                _ProviderPicker(
+                  label: s('pay_method'),
+                  selected: _via,
+                  onChanged: (v) => setState(() => _via = v),
+                ),
+                const SizedBox(height: 16),
 
                 // Prices come from `payme_plans`, never from the app: Payme
-                // rejects any amount its server didn't authorise (-31001).
+                // rejects any amount its server didn't authorise (-31001), and
+                // a Click order takes its price from the same table.
                 FutureBuilder<List<PaymePlan>>(
                   future: _plansFuture,
                   builder: (context, snapshot) {
@@ -382,16 +430,9 @@ class _ActiveProBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.success.withValues(alpha: 0.18),
-            AppTheme.success.withValues(alpha: 0.08),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        border: Border.all(color: AppTheme.success.withValues(alpha: 0.35)),
-        borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+        color: AppTheme.card(context),
+        border: Border.all(color: AppTheme.success.withValues(alpha: 0.45)),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
       ),
       child: Row(
         children: [
@@ -464,10 +505,7 @@ class _VerifyingDialog extends StatelessWidget {
               const SizedBox(
                 width: 34,
                 height: 34,
-                child: CircularProgressIndicator(
-                  strokeWidth: 3,
-                  color: AppTheme.orange,
-                ),
+                child: CircularProgressIndicator(strokeWidth: 3),
               ),
               const SizedBox(height: 18),
               Text(
@@ -501,7 +539,7 @@ class _PlansPlaceholder extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppTheme.card(context),
             borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-            border: Border.all(color: AppTheme.border(context)),
+            border: Border.all(color: AppTheme.hairline(context)),
           ),
         ),
       ),
@@ -522,7 +560,7 @@ class _PlansError extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.card(context),
         borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(color: AppTheme.border(context)),
+        border: Border.all(color: AppTheme.hairline(context)),
       ),
       child: Column(
         children: [
@@ -586,34 +624,142 @@ class _PaymeNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppTheme.blue.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        border: Border.all(color: AppTheme.blue.withValues(alpha: 0.18)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(
-            Icons.lock_outline_rounded,
-            size: 18,
-            color: AppTheme.blue,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          Icons.lock_outline_rounded,
+          size: 18,
+          color: AppTheme.mutedText(context),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            AppStrings.get('payme_secure_note', lang),
+            style: TextStyle(
+              fontSize: 12.5,
+              height: 1.4,
+              color: AppTheme.mutedText(context),
+            ),
           ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              AppStrings.get('payme_secure_note', lang),
-              style: TextStyle(
-                fontSize: 12.5,
-                height: 1.4,
-                color: AppTheme.textM(context),
+        ),
+      ],
+    );
+  }
+}
+
+/// Payme | CLICK — two segments with each provider's own wordmark colours, so
+/// the choice is recognised at a glance (as on the website's Pro page).
+class _ProviderPicker extends StatelessWidget {
+  final String label;
+  final PayVia selected;
+  final ValueChanged<PayVia> onChanged;
+
+  const _ProviderPicker({
+    required this.label,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    Widget option(PayVia via, Widget mark) {
+      final on = via == selected;
+      final accent = AppTheme.brandAccent(context);
+      return Expanded(
+        child: Semantics(
+          button: true,
+          selected: on,
+          child: Material(
+            color: on
+                ? accent.withValues(
+                    alpha: AppTheme.isDark(context) ? 0.16 : 0.06,
+                  )
+                : AppTheme.card(context),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+              side: BorderSide(
+                color: on ? accent : AppTheme.hairline(context),
+                width: on ? 2 : 1,
+              ),
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: () => onChanged(via),
+              child: SizedBox(
+                height: 52,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      on
+                          ? Icons.radio_button_checked_rounded
+                          : Icons.radio_button_off_rounded,
+                      size: 20,
+                      color: on ? accent : AppTheme.mutedText(context),
+                    ),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: FittedBox(fit: BoxFit.scaleDown, child: mark),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      );
+    }
+
+    const markStyle = TextStyle(fontSize: 18, fontWeight: FontWeight.w800);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.mutedText(context),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            option(
+              PayVia.payme,
+              Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: 'pay',
+                      style: TextStyle(color: AppTheme.textP(context)),
+                    ),
+                    const TextSpan(
+                      text: 'me',
+                      style: TextStyle(color: Color(0xFF33CCCC)),
+                    ),
+                  ],
+                ),
+                style: markStyle,
+              ),
+            ),
+            const SizedBox(width: 10),
+            option(
+              PayVia.click,
+              const Text(
+                'CLICK',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 0.5,
+                  color: Color(0xFF0164FD),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -626,19 +772,14 @@ class _ProHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String s(String k) => AppStrings.get(k, lang);
+    final dark = AppTheme.isDark(context);
+    final gold = dark ? AppTheme.proTextDark : AppTheme.proText;
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.orange.withValues(alpha: 0.18),
-            AppTheme.orange.withValues(alpha: 0.08),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        border: Border.all(color: AppTheme.orange.withValues(alpha: 0.3)),
-        borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+        color: AppTheme.card(context),
+        border: Border.all(color: AppTheme.hairline(context)),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -651,25 +792,23 @@ class _ProHeader extends StatelessWidget {
                   vertical: 4,
                 ),
                 decoration: BoxDecoration(
-                  color: AppTheme.orange.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(20),
+                  color: dark ? AppTheme.proBgDark : AppTheme.proBg,
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                   border: Border.all(
-                    color: AppTheme.orange.withValues(alpha: 0.5),
+                    color: AppTheme.proBorder.withValues(
+                      alpha: dark ? 0.3 : 0.8,
+                    ),
                   ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
-                      Icons.workspace_premium_rounded,
-                      color: AppTheme.orange,
-                      size: 14,
-                    ),
+                    CrownIcon(size: 14, color: gold),
                     const SizedBox(width: 6),
                     Text(
                       s('pro_header_badge'),
-                      style: const TextStyle(
-                        color: AppTheme.orange,
+                      style: TextStyle(
+                        color: gold,
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 0.5,
@@ -683,10 +822,7 @@ class _ProHeader extends StatelessWidget {
                 const SizedBox(
                   width: 18,
                   height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: AppTheme.orange,
-                  ),
+                  child: CircularProgressIndicator(strokeWidth: 2),
                 ),
             ],
           ),
@@ -695,8 +831,8 @@ class _ProHeader extends StatelessWidget {
             s('pro_header_title'),
             style: TextStyle(
               fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.textP(context),
+              fontWeight: FontWeight.w800,
+              color: dark ? AppTheme.textPrimary : AppTheme.ink,
               height: 1.25,
               letterSpacing: -0.3,
             ),
@@ -705,8 +841,8 @@ class _ProHeader extends StatelessWidget {
           Text(
             s('pro_header_subtitle'),
             style: TextStyle(
-              fontSize: 13,
-              color: AppTheme.textM(context),
+              fontSize: 13.5,
+              color: AppTheme.mutedText(context),
               height: 1.5,
             ),
           ),
@@ -724,12 +860,6 @@ class _ChoosePlanHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Icon(
-          Icons.star_outline_rounded,
-          color: AppTheme.orange,
-          size: 20,
-        ),
-        const SizedBox(width: 8),
         Text(
           AppStrings.get('pro_choose_plan', lang),
           style: TextStyle(
@@ -767,11 +897,10 @@ class _PlanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final borderColor = isPrimary
-        ? AppTheme.orange.withValues(alpha: 0.7)
-        : AppTheme.border(context);
-    final bg = isPrimary
-        ? AppTheme.orange.withValues(alpha: 0.06)
-        : AppTheme.card(context);
+        ? AppTheme.brandAccent(context)
+        : AppTheme.hairline(context);
+    final bg = AppTheme.card(context);
+    final dark = AppTheme.isDark(context);
 
     return Stack(
       clipBehavior: Clip.none,
@@ -780,17 +909,8 @@ class _PlanCard extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
           decoration: BoxDecoration(
             color: bg,
-            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
             border: Border.all(color: borderColor, width: isPrimary ? 2 : 1),
-            boxShadow: AppTheme.isDark(context) || !isPrimary
-                ? null
-                : [
-                    BoxShadow(
-                      color: AppTheme.orange.withValues(alpha: 0.08),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -856,20 +976,16 @@ class _PlanCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                gradient: AppTheme.orangeGradient,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppTheme.orange.withValues(alpha: 0.4),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
+                color: dark ? AppTheme.proBgDark : AppTheme.proBg,
+                borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                border: Border.all(
+                  color: AppTheme.proBorder.withValues(alpha: dark ? 0.4 : 1),
+                ),
               ),
               child: Text(
                 badge!,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: dark ? AppTheme.proTextDark : AppTheme.proText,
                   fontSize: 10,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.6,
@@ -895,66 +1011,11 @@ class _PlanButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isPrimary) {
-      return Container(
-        decoration: BoxDecoration(
-          gradient: AppTheme.orangeGradient,
-          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-          boxShadow: [
-            BoxShadow(
-              color: AppTheme.orange.withValues(alpha: 0.35),
-              blurRadius: 12,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-            onTap: onTap,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 13),
-              child: Center(
-                child: Text(
-                  label,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 14.5,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    return Material(
-      color: AppTheme.surface(context),
-      borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 13),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-            border: Border.all(color: AppTheme.border(context)),
-          ),
-          child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: AppTheme.textP(context),
-                fontSize: 14.5,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ),
-      ),
+    return BrandButton(
+      label: label,
+      icon: const Icon(Icons.lock_open_rounded),
+      kind: isPrimary ? BrandButtonKind.primary : BrandButtonKind.secondary,
+      onPressed: onTap,
     );
   }
 }
@@ -976,19 +1037,9 @@ class _FeaturesCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.orange.withValues(alpha: 0.14),
-            AppTheme.orange.withValues(alpha: 0.04),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-        border: Border.all(
-          color: AppTheme.orange.withValues(alpha: 0.35),
-          width: 1.5,
-        ),
+        color: AppTheme.card(context),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        border: Border.all(color: AppTheme.hairline(context)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(18),
@@ -1001,13 +1052,17 @@ class _FeaturesCard extends StatelessWidget {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    gradient: AppTheme.orangeGradient,
-                    borderRadius: BorderRadius.circular(10),
+                    color: AppTheme.isDark(context)
+                        ? AppTheme.proBorder.withValues(alpha: 0.1)
+                        : AppTheme.proBg,
+                    borderRadius: BorderRadius.circular(AppTheme.radiusSm),
                   ),
-                  child: const Icon(
-                    Icons.workspace_premium_rounded,
-                    color: Colors.white,
+                  alignment: Alignment.center,
+                  child: CrownIcon(
                     size: 20,
+                    color: AppTheme.isDark(context)
+                        ? AppTheme.proBorder
+                        : AppTheme.proIcon,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -1035,11 +1090,8 @@ class _FeaturesCard extends StatelessWidget {
                       width: 26,
                       height: 26,
                       decoration: BoxDecoration(
-                        color: AppTheme.success.withValues(alpha: 0.18),
+                        color: AppTheme.success.withValues(alpha: 0.14),
                         shape: BoxShape.circle,
-                        border: Border.all(
-                          color: AppTheme.success.withValues(alpha: 0.35),
-                        ),
                       ),
                       child: const Icon(
                         Icons.check_rounded,
@@ -1053,7 +1105,7 @@ class _FeaturesCard extends StatelessWidget {
                         p,
                         style: TextStyle(
                           fontSize: 14.5,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w500,
                           color: AppTheme.textP(context),
                           height: 1.35,
                         ),
@@ -1087,7 +1139,7 @@ class _ContactCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppTheme.card(context),
             borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-            border: Border.all(color: AppTheme.border(context)),
+            border: Border.all(color: AppTheme.hairline(context)),
           ),
           child: Row(
             children: [

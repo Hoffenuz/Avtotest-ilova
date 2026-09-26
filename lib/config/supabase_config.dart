@@ -31,6 +31,10 @@ class SupabaseConfig {
   /// this page — it intercepts the navigation and closes the checkout view.
   static const String paymeReturnUrl = '$siteUrl/payment-return';
 
+  /// Click's return address — the same page the website uses, so a payment
+  /// finished in an outside browser still lands somewhere that re-checks PRO.
+  static const String clickReturnUrl = '$siteUrl/profile?from=click';
+
   /// Deep link registered in AndroidManifest.xml and in the Supabase
   /// dashboard's redirect URL list; used by Google sign-in.
   static const String authRedirectUrl = 'uz.avtotestu.app://auth-callback';
