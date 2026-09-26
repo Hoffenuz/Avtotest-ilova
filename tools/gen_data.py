@@ -161,6 +161,22 @@ def copy_image_sizes(web_root):
         f'{len(data.get("other", {}))} named entries')
 
 
+def copy_questions_version(web_public):
+    """The website's fingerprint of this bank (date, counts, barcha.json hash).
+
+    test/questions_version_test.dart compares this copy with the website's
+    current file and fails when they differ, so a stale bank cannot ship.
+    """
+    src = os.path.join(web_public, 'data', 'questions-version.json')
+    if not os.path.isfile(src):
+        log(f'WARNING: {src} missing — questions-version.json not copied '
+            '(run scripts/question-tools/generate-questions-version.cjs on the website)')
+        return
+    shutil.copyfile(src, os.path.join(DST, 'questions-version.json'))
+    v = load_json(src)
+    log(f'questions-version.json: {v.get("updated")}, {v.get("questions")} questions')
+
+
 def copy_road_signs(web_public):
     src = os.path.join(web_public, 'data', 'belgilar.json')
     dst = os.path.join(DST, 'belgilar.json')
@@ -315,6 +331,7 @@ def main():
     reconcile_images(web_public, [barcha])
 
     build_free_ids(web_public, barcha)
+    copy_questions_version(web_public)
     copy_image_sizes(web_root)
     copy_road_signs(web_public)
     dedupe_question_files(barcha)
