@@ -34,11 +34,7 @@ class VariantListScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text(AppStrings.get('variants', lang)),
         leading: IconButton(
-          icon: Container(
-            padding: const EdgeInsets.all(6),
-            decoration: AppTheme.glassDeco(context),
-            child: const Icon(Icons.arrow_back_ios_new, size: 16),
-          ),
+          icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -50,12 +46,13 @@ class VariantListScreen extends StatelessWidget {
             ),
           Expanded(
             child: GridView.builder(
-              physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+              // Five across, as on the site's variant picker: every ticket
+              // is one tap, and 64 of them fit in under three screens.
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 4,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
+                crossAxisCount: 5,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
                 childAspectRatio: 1,
               ),
               itemCount: variants.length,
@@ -65,6 +62,9 @@ class VariantListScreen extends StatelessWidget {
                   number: number,
                   lang: lang,
                   isUnlocked: hasPro || FreeAccess.isVariantFree(number),
+                  // The free ones are marked out only for someone who does
+                  // not have everything anyway.
+                  isFreeHighlight: !hasPro && FreeAccess.isVariantFree(number),
                   onTap: () => _open(context, variants[index], number, lang),
                 );
               },
@@ -140,16 +140,16 @@ class FreeAccessNotice extends StatelessWidget {
           Icon(
             Icons.info_outline_rounded,
             size: 16,
-            color: AppTheme.textM(context),
+            color: AppTheme.mutedText(context),
           ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               text,
               style: TextStyle(
-                fontSize: 12.5,
+                fontSize: 13,
                 height: 1.35,
-                color: AppTheme.textM(context),
+                color: AppTheme.mutedText(context),
               ),
             ),
           ),
@@ -167,72 +167,74 @@ class _VariantTile extends StatelessWidget {
   /// opposed to whether the ticket is free for everyone.
   final bool isUnlocked;
 
+  /// Light-blue "free" tile, as on the site.
+  final bool isFreeHighlight;
+
   final VoidCallback onTap;
 
   const _VariantTile({
     required this.number,
     required this.lang,
     required this.isUnlocked,
+    required this.isFreeHighlight,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    final accent = isUnlocked ? AppTheme.orange : AppTheme.textM(context);
+    final dark = AppTheme.isDark(context);
+    final Color bg;
+    final Color border;
+    final Color fg;
+    if (isFreeHighlight) {
+      bg = dark ? const Color(0x66172554) : const Color(0xFFEFF6FF);
+      border = dark ? const Color(0xFF1E40AF) : const Color(0xFF93C5FD);
+      fg = dark ? const Color(0xFF93C5FD) : const Color(0xFF1D4ED8);
+    } else {
+      bg = AppTheme.card(context);
+      border = AppTheme.hairline(context);
+      fg = AppTheme.textP(context);
+    }
 
-    return Semantics(
-      button: true,
-      label:
-          '${AppStrings.get('variant', lang)} $number'
-          '${isUnlocked ? '' : ', ${AppStrings.get('pro_badge', lang)}'}',
-      excludeSemantics: true,
-      child: Material(
-        color: AppTheme.card(context),
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-          child: Ink(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-              border: Border.all(color: accent.withValues(alpha: 0.2)),
-            ),
+    // Locked tickets are dimmed, not hidden: seeing how much more there is,
+    // is the argument for PRO.
+    return Opacity(
+      opacity: isUnlocked ? 1 : 0.5,
+      child: Semantics(
+        button: true,
+        label:
+            '${AppStrings.get('variant', lang)} $number'
+            '${isUnlocked ? '' : ', ${AppStrings.get('pro_badge', lang)}'}',
+        excludeSemantics: true,
+        child: Material(
+          color: bg,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+            side: BorderSide(color: border),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
             child: Stack(
               children: [
                 Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '$number',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.bold,
-                          // Locked tickets are dimmed, not hidden: seeing how
-                          // much more there is, is the argument for PRO.
-                          color: isUnlocked
-                              ? AppTheme.orange
-                              : AppTheme.textM(context),
-                        ),
-                      ),
-                      Text(
-                        AppStrings.get('variant', lang),
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: AppTheme.textM(context),
-                        ),
-                      ),
-                    ],
+                  child: Text(
+                    '$number',
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: isUnlocked ? fg : AppTheme.mutedText(context),
+                    ),
                   ),
                 ),
                 if (!isUnlocked)
                   Positioned(
-                    top: 5,
-                    right: 5,
+                    top: 4,
+                    right: 4,
                     child: Icon(
                       Icons.lock_rounded,
-                      size: 13,
-                      color: AppTheme.textM(context).withValues(alpha: 0.7),
+                      size: 11,
+                      color: AppTheme.mutedText(context),
                     ),
                   ),
               ],

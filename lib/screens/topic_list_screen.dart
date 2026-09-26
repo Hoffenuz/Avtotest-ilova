@@ -7,6 +7,7 @@ import '../services/app_strings.dart';
 import '../services/question_service.dart';
 import '../services/test_session_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/brand.dart';
 import '../widgets/guarded_test_launcher.dart';
 import '../widgets/premium_access_gate.dart';
 import 'pro_screen.dart';
@@ -30,14 +31,14 @@ class TopicListScreen extends StatelessWidget {
   /// showing them next to "Barcha savollar" made the list look like a numbered
   /// syllabus that skips numbers.
   static const Map<String, IconData> _categoryIcons = {
-    'asosiy': Icons.menu_book_rounded,
-    'belgilar': Icons.signpost_rounded,
+    'asosiy': Icons.menu_book_outlined,
+    'belgilar': Icons.signpost_outlined,
     'chorrahalar': Icons.alt_route_rounded,
     'chiziqlar': Icons.horizontal_rule_rounded,
-    'ishoralar': Icons.traffic_rounded,
-    'harakat': Icons.directions_car_filled_rounded,
+    'ishoralar': Icons.traffic_outlined,
+    'harakat': Icons.directions_car_outlined,
     'maxsus': Icons.warning_amber_rounded,
-    'xavfsizlik': Icons.medical_services_rounded,
+    'xavfsizlik': Icons.medical_services_outlined,
   };
 
   void _openTopic(BuildContext context, Topic topic, String lang) {
@@ -112,16 +113,11 @@ class TopicListScreen extends StatelessWidget {
         leading: embedded
             ? null
             : IconButton(
-                icon: Container(
-                  padding: const EdgeInsets.all(6),
-                  decoration: AppTheme.glassDeco(context),
-                  child: const Icon(Icons.arrow_back_ios_new, size: 16),
-                ),
+                icon: const Icon(Icons.arrow_back_rounded),
                 onPressed: () => Navigator.pop(context),
               ),
       ),
       body: ListView.builder(
-        physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
         // +1 for the notice that heads the list.
         itemCount: QuestionService.topicCategoryOrder.length + 1,
@@ -138,136 +134,43 @@ class TopicListScreen extends StatelessWidget {
           final categoryTopics = byCategory[entry.key] ?? const [];
           if (categoryTopics.isEmpty) return const SizedBox.shrink();
 
+          // One card per category, one uniform row per topic — the same
+          // rows as Settings; PRO sits at the end of a locked row.
           return Padding(
             padding: const EdgeInsets.only(bottom: 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 10, left: 4),
+                  padding: const EdgeInsets.fromLTRB(2, 0, 2, 10),
                   child: Text(
                     entry.value[lang] ?? entry.value['uz_lat']!,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: 16,
                       fontWeight: FontWeight.w700,
-                      letterSpacing: 0.4,
-                      color: AppTheme.textM(context),
+                      color: AppTheme.textP(context),
                     ),
                   ),
                 ),
-                ...categoryTopics.map(
-                  (topic) => Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: _TopicTile(
-                      topic: topic,
-                      lang: lang,
-                      icon:
-                          _categoryIcons[topic.category] ??
-                          Icons.menu_book_rounded,
-                      isUnlocked: hasPro || FreeAccess.isTopicFree(topic.id),
-                      onTap: () => _openTopic(context, topic, lang),
-                    ),
-                  ),
+                SettingsGroup(
+                  children: [
+                    for (final topic in categoryTopics)
+                      SettingsRow(
+                        icon:
+                            _categoryIcons[topic.category] ??
+                            Icons.menu_book_rounded,
+                        title: topic.getName(lang),
+                        trailing: hasPro || FreeAccess.isTopicFree(topic.id)
+                            ? null
+                            : const ProTag(),
+                        onTap: () => _openTopic(context, topic, lang),
+                      ),
+                  ],
                 ),
               ],
             ),
           );
         },
-      ),
-    );
-  }
-}
-
-class _TopicTile extends StatelessWidget {
-  final Topic topic;
-  final String lang;
-  final IconData icon;
-
-  /// Whether THIS USER may open it — a free topic or an active subscription —
-  /// as opposed to whether the topic is free for everyone.
-  final bool isUnlocked;
-
-  final VoidCallback onTap;
-
-  const _TopicTile({
-    required this.topic,
-    required this.lang,
-    required this.icon,
-    required this.isUnlocked,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: AppTheme.cardDeco(context),
-          child: Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  // A locked topic gets a flat, muted square instead of the
-                  // brand gradient — visibly the same list, visibly not yet
-                  // yours.
-                  gradient: isUnlocked ? AppTheme.blueGradient : null,
-                  color: isUnlocked
-                      ? null
-                      : AppTheme.textM(context).withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-                ),
-                child: Icon(
-                  icon,
-                  color: isUnlocked ? Colors.white : AppTheme.textM(context),
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  topic.getName(lang),
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: 15,
-                    color: AppTheme.textP(context),
-                  ),
-                ),
-              ),
-              if (!isUnlocked) ...[
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    gradient: AppTheme.orangeGradient,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Text(
-                    'PRO',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 6),
-              ],
-              Icon(
-                Icons.chevron_right,
-                color: AppTheme.textM(context),
-                size: 22,
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
