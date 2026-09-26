@@ -300,7 +300,7 @@ void main() {
   });
 
   for (final shot in _shots()) {
-    if (_only.isNotEmpty && !shot.name.contains(_only)) continue;
+    if (_only.isNotEmpty && !_only.split(',').any(shot.name.contains)) continue;
     for (final size in _sizes) {
       for (final dark in _tall ? const [false] : const [false, true]) {
         final theme = dark ? 'dark' : 'light';

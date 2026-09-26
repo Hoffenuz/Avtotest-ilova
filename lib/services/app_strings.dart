@@ -18,8 +18,8 @@ class AppStrings {
         final word = mod10 == 1 && mod100 != 11
             ? 'вариант'
             : mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)
-                ? 'варианта'
-                : 'вариантов';
+            ? 'варианта'
+            : 'вариантов';
         return '$n $word';
       case 'uz_cyr':
         return '$n вариант';
@@ -84,14 +84,6 @@ class AppStrings {
       'uz_lat': 'Pro olish',
       'uz_cyr': 'Pro олиш',
       'ru': 'Получить Pro',
-    },
-    'exam_format': {
-      'uz_lat':
-          "Imtihon: 20 savol, 25 daqiqa. O'tish uchun kamida 18 ta to'g'ri javob.",
-      'uz_cyr':
-          'Имтиҳон: 20 савол, 25 дақиқа. Ўтиш учун камида 18 та тўғри жавоб.',
-      'ru':
-          'Экзамен: 20 вопросов, 25 минут. Для сдачи — не меньше 18 верных ответов.',
     },
     'readiness_title': {
       'uz_lat': 'Tayyorgarlik',
@@ -474,16 +466,8 @@ class AppStrings {
       'uz_cyr': 'Жавоб белгилангач 1 сонияда кейингиси очилади',
       'ru': 'Через секунду после ответа откроется следующий',
     },
-    'prev_question': {
-      'uz_lat': 'Oldingi',
-      'uz_cyr': 'Олдинги',
-      'ru': 'Назад',
-    },
-    'next_question': {
-      'uz_lat': 'Keyingi',
-      'uz_cyr': 'Кейинги',
-      'ru': 'Далее',
-    },
+    'prev_question': {'uz_lat': 'Oldingi', 'uz_cyr': 'Олдинги', 'ru': 'Назад'},
+    'next_question': {'uz_lat': 'Keyingi', 'uz_cyr': 'Кейинги', 'ru': 'Далее'},
     'clear_results': {
       'uz_lat': "Natijalarni o'chirish",
       'uz_cyr': 'Натижаларни ўчириш',
@@ -590,10 +574,33 @@ class AppStrings {
       'uz_cyr': 'та савол',
       'ru': 'вопрос(ов)',
     },
-    'n_minutes': {
-      'uz_lat': 'daqiqa vaqt',
-      'uz_cyr': 'дақиқа вақт',
-      'ru': 'минут',
+    'version_label': {'uz_lat': 'Versiya', 'uz_cyr': 'Версия', 'ru': 'Версия'},
+    'my_results': {
+      'uz_lat': 'Natijalarim',
+      'uz_cyr': 'Натижаларим',
+      'ru': 'Мои результаты',
+    },
+    'my_results_sub': {
+      'uz_lat': "{n} ta test · {p} tasidan o'tilgan",
+      'uz_cyr': '{n} та тест · {p} тасидан ўтилган',
+      'ru': 'Тестов: {n} · сдано: {p}',
+    },
+    'my_results_empty': {
+      'uz_lat': 'Hali test ishlanmagan',
+      'uz_cyr': 'Ҳали тест ишланмаган',
+      'ru': 'Пока нет пройденных тестов',
+    },
+    // Same three cells as the site's start page (TestStartPage stats).
+    'stat_questions': {
+      'uz_lat': 'Savollar',
+      'uz_cyr': 'Саволлар',
+      'ru': 'Вопросы',
+    },
+    'stat_minutes': {'uz_lat': 'Daqiqa', 'uz_cyr': 'Дақиқа', 'ru': 'Минуты'},
+    'stat_pass': {
+      'uz_lat': "O'tish bali",
+      'uz_cyr': 'Ўтиш бали',
+      'ru': 'Проходной балл',
     },
 
     // ── Topic / variant screens ──
@@ -651,9 +658,9 @@ class AppStrings {
       'ru': 'Работа над ошибками',
     },
     'saved_tests': {
-      'uz_lat': 'Saqlangan testlar',
-      'uz_cyr': 'Сақланган тестлар',
-      'ru': 'Сохранённые тесты',
+      'uz_lat': 'Saqlangan savollar',
+      'uz_cyr': 'Сақланган саволлар',
+      'ru': 'Сохранённые вопросы',
     },
     'save_question': {
       'uz_lat': 'Savolni saqlash',
@@ -1767,14 +1774,14 @@ class AppStrings {
     'reset': {'uz_lat': 'Standart', 'uz_cyr': 'Стандарт', 'ru': 'По умолчанию'},
 
     'section_reference': {
-      'uz_lat': 'Ma\'lumotnoma',
-      'uz_cyr': 'Маълумотнома',
-      'ru': 'Справочник',
+      'uz_lat': "O'rganish",
+      'uz_cyr': 'Ўрганиш',
+      'ru': 'Обучение',
     },
     'section_practice': {
-      'uz_lat': 'Mashq va imtihon',
-      'uz_cyr': 'Машқ ва имтиҳон',
-      'ru': 'Практика и экзамен',
+      'uz_lat': 'Imtihon va takrorlash',
+      'uz_cyr': 'Имтиҳон ва такрорлаш',
+      'ru': 'Экзамен и повторение',
     },
   };
 }

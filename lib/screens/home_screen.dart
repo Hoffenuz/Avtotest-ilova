@@ -93,7 +93,9 @@ class _HomeScreenState extends State<HomeScreen>
     String s(String key) => AppStrings.get(key, lang);
 
     final isLoggedIn = context.select<AuthProvider, bool>((a) => a.isLoggedIn);
-    final isPro = context.select<SubscriptionProvider, bool>((sub) => sub.isPro);
+    final isPro = context.select<SubscriptionProvider, bool>(
+      (sub) => sub.isPro,
+    );
     // `isDeniedForSure`, not `!isPro`: before the access RPC answers, `isPro`
     // is false for everyone, and a subscriber would watch PRO badges appear
     // on their own content for a frame and then vanish.
@@ -274,53 +276,31 @@ class _Hero extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 14),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-          decoration: BoxDecoration(
-            color: AppTheme.card(context),
-            borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-            border: Border.all(color: AppTheme.hairline(context)),
-          ),
-          child: completedTests == 0
-              ? _ExamFormat(text: s('exam_format'))
-              : _Readiness(
-                  title: s('readiness_title'),
-                  subtitle: s(
-                    'readiness_sub',
-                  ).replaceAll('{n}', '$readinessTests'),
-                  value: readiness,
-                ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ExamFormat extends StatelessWidget {
-  final String text;
-  const _ExamFormat({required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(
-          Icons.flag_outlined,
-          size: 22,
-          color: AppTheme.brandAccent(context),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.35,
-              color: AppTheme.textP(context),
+        // Before the first test: what the exam is, in the site's three cells.
+        // After it: how close the user is to passing it.
+        if (completedTests == 0)
+          StatCells(
+            cells: [
+              ('20', s('stat_questions')),
+              ('25', s('stat_minutes')),
+              ('90%', s('stat_pass')),
+            ],
+          )
+        else
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+            decoration: BoxDecoration(
+              color: AppTheme.card(context),
+              borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+              border: Border.all(color: AppTheme.hairline(context)),
+            ),
+            child: _Readiness(
+              title: s('readiness_title'),
+              subtitle: s('readiness_sub').replaceAll('{n}', '$readinessTests'),
+              value: readiness,
             ),
           ),
-        ),
       ],
     );
   }

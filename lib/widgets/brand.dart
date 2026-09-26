@@ -129,7 +129,10 @@ class BrandButton extends StatelessWidget {
           borderRadius: radius,
           side: primary
               ? BorderSide.none
-              : BorderSide(color: dark ? AppTheme.indigo : AppTheme.ink, width: 2),
+              : BorderSide(
+                  color: dark ? AppTheme.indigo : AppTheme.ink,
+                  width: 2,
+                ),
         ),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -145,7 +148,10 @@ class BrandButton extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   IconTheme(
-                    data: IconThemeData(color: foreground, size: dense ? 20 : 22),
+                    data: IconThemeData(
+                      color: foreground,
+                      size: dense ? 20 : 22,
+                    ),
                     child: icon,
                   ),
                   SizedBox(width: dense ? 8 : 10),
@@ -191,6 +197,222 @@ class BrandButton extends StatelessWidget {
         button,
         const Positioned(right: -6, top: -8, child: ProTag()),
       ],
+    );
+  }
+}
+
+/// "20 Savollar · 25 Daqiqa · 90% O'tish bali" — saytdagi TestStartPage
+/// kataklari bilan bir xil: qiymat katta, izoh ostida kichik.
+class StatCells extends StatelessWidget {
+  final List<(String value, String label)> cells;
+  const StatCells({super.key, required this.cells});
+
+  @override
+  Widget build(BuildContext context) {
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var i = 0; i < cells.length; i++) ...[
+            if (i > 0) const SizedBox(width: 8),
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 4,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: AppTheme.card(context),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                  border: Border.all(color: AppTheme.hairline(context)),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        cells[i].$1,
+                        maxLines: 1,
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          height: 1.2,
+                          color: AppTheme.textP(context),
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      cells[i].$2,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1.2,
+                        color: AppTheme.mutedText(context),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Sozlamalar kartasi: bir nechta [SettingsRow], orasida ingichka chiziq.
+/// Material — qatorlarning bosish to'lqini karta foni ostida qolib ketmaydi.
+class SettingsGroup extends StatelessWidget {
+  final List<Widget> children;
+  const SettingsGroup({super.key, required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppTheme.card(context),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        side: BorderSide(color: AppTheme.hairline(context)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        children: [
+          for (var i = 0; i < children.length; i++) ...[
+            if (i > 0)
+              Divider(
+                height: 1,
+                thickness: 1,
+                indent: 62,
+                color: AppTheme.hairline(context),
+              ),
+            children[i],
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Sozlamalar qatori — hammasi bir shaklda: siyoh ikonka qutisi, nom, joriy
+/// qiymat, o'ngda o'q yoki switch. Rang faqat xavfli amalda (qizil).
+class SettingsRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final Widget? trailing;
+  final bool showChevron;
+  final bool destructive;
+  final VoidCallback? onTap;
+
+  const SettingsRow({
+    super.key,
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    this.trailing,
+    this.showChevron = true,
+    this.destructive = false,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = AppTheme.isDark(context);
+    final iconFg = destructive
+        ? AppTheme.error
+        : (dark ? Colors.white : AppTheme.ink);
+    return InkWell(
+      onTap: onTap,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: 56),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: destructive
+                      ? AppTheme.error.withValues(alpha: 0.1)
+                      : (dark
+                            ? Colors.white.withValues(alpha: 0.1)
+                            : AppTheme.ink.withValues(alpha: 0.07)),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                ),
+                child: Icon(icon, size: 20, color: iconFg),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: destructive
+                            ? AppTheme.error
+                            : AppTheme.textP(context),
+                      ),
+                    ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        subtitle!,
+                        style: TextStyle(
+                          fontSize: 13,
+                          height: 1.3,
+                          color: AppTheme.mutedText(context),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              if (trailing != null) ...[const SizedBox(width: 8), trailing!],
+              if (showChevron)
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 22,
+                  color: AppTheme.mutedText(context),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Switch in the brand colours (ink track, white thumb) — as on the site.
+class BrandSwitch extends StatelessWidget {
+  final bool value;
+  final ValueChanged<bool>? onChanged;
+  const BrandSwitch({super.key, required this.value, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Switch(
+      value: value,
+      onChanged: onChanged,
+      activeThumbColor: Colors.white,
+      activeTrackColor: AppTheme.brandFill(context),
+      // Off: a light outline and a muted thumb, not a heavy black knob.
+      inactiveThumbColor: AppTheme.mutedText(context),
+      inactiveTrackColor: AppTheme.isDark(context)
+          ? Colors.white.withValues(alpha: 0.06)
+          : AppTheme.lightScaffoldBg,
+      trackOutlineColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.selected)
+            ? Colors.transparent
+            : AppTheme.mutedText(context).withValues(alpha: 0.45),
+      ),
     );
   }
 }
