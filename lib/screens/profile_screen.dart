@@ -503,7 +503,6 @@ class _ProfileScreenState extends State<ProfileScreen>
           ),
           const SizedBox(height: 20),
 
-          _SectionLabel(text: s('section_about')),
           const AboutGroup(),
         ],
       ),

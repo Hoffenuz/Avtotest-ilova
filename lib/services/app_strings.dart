@@ -46,6 +46,18 @@ class AppStrings {
       'uz_cyr': 'Avto test — Права тест ва ЙҲҚ тестлар 2026',
       'ru': 'Avto test — Права и ПДД тесты 2026',
     },
+    // Site: home.heroSubtitle, with the app's own variant count.
+    'home_subtitle': {
+      'uz_lat':
+          "AvtoSmart — YHQ testlari, yo'l belgilari va {variants}. "
+          'Haydovchilik guvohnomasi imtihoniga tayyorgarlik.',
+      'uz_cyr':
+          'AvtoSmart — ЙҲҚ тестлари, йўл белгилари ва {variants}. '
+          'Ҳайдовчилик гувоҳномаси имтиҳонига тайёргарлик.',
+      'ru':
+          'AvtoSmart — тесты ПДД, дорожные знаки и {variants}. '
+          'Подготовка к экзамену на водительские права.',
+    },
     'home_btn_test': {
       'uz_lat': 'Test ishlash',
       'uz_cyr': 'Тест ишлаш',
@@ -84,28 +96,6 @@ class AppStrings {
       'uz_lat': 'Pro olish',
       'uz_cyr': 'Pro олиш',
       'ru': 'Получить Pro',
-    },
-    'readiness_title': {
-      'uz_lat': 'Tayyorgarlik',
-      'uz_cyr': 'Тайёргарлик',
-      'ru': 'Готовность',
-    },
-    'readiness_sub': {
-      'uz_lat': "So'nggi {n} ta test bo'yicha · o'tish uchun 90%",
-      'uz_cyr': 'Сўнгги {n} та тест бўйича · ўтиш учун 90%',
-      'ru': 'По последним тестам: {n} · для сдачи 90%',
-    },
-    'show_all': {'uz_lat': 'Barchasi', 'uz_cyr': 'Барчаси', 'ru': 'Все'},
-    'show_less': {'uz_lat': 'Kamroq', 'uz_cyr': 'Камроқ', 'ru': 'Свернуть'},
-    'hero_title': {
-      'uz_lat': 'Haydovchilik imtihoniga tayyorlaning',
-      'uz_cyr': 'Ҳайдовчилик имтиҳонига тайёрланинг',
-      'ru': 'Подготовка к экзамену на права',
-    },
-    'hero_subtitle': {
-      'uz_lat': '1250+ savol va 64 variant',
-      'uz_cyr': '1250+ савол ва 64 вариант',
-      'ru': '1250+ вопросов и 64 варианта',
     },
 
     // ── Navigation ──
@@ -466,7 +456,6 @@ class AppStrings {
       'uz_cyr': 'Жавоб белгилангач 1 сонияда кейингиси очилади',
       'ru': 'Через секунду после ответа откроется следующий',
     },
-    'prev_question': {'uz_lat': 'Oldingi', 'uz_cyr': 'Олдинги', 'ru': 'Назад'},
     'next_question': {'uz_lat': 'Keyingi', 'uz_cyr': 'Кейинги', 'ru': 'Далее'},
     'clear_results': {
       'uz_lat': "Natijalarni o'chirish",
@@ -591,11 +580,6 @@ class AppStrings {
       'ru': 'Пока нет пройденных тестов',
     },
     // Same three cells as the site's start page (TestStartPage stats).
-    'stat_questions': {
-      'uz_lat': 'Savollar',
-      'uz_cyr': 'Саволлар',
-      'ru': 'Вопросы',
-    },
     'stat_minutes': {'uz_lat': 'Daqiqa', 'uz_cyr': 'Дақиқа', 'ru': 'Минуты'},
     'stat_pass': {
       'uz_lat': "O'tish bali",
@@ -820,16 +804,6 @@ class AppStrings {
       'uz_lat': 'savollik test',
       'uz_cyr': 'саволлик тест',
       'ru': 'вопросов тест',
-    },
-    'test_session_language': {
-      'uz_lat': 'Test tili',
-      'uz_cyr': 'Тест тили',
-      'ru': 'Язык теста',
-    },
-    'test_session_language_hint': {
-      'uz_lat': 'Savollar qaysi tilda ko\'rsatilsin',
-      'uz_cyr': 'Саволлар қайси тилда кўрсатилсин',
-      'ru': 'На каком языке показывать вопросы',
     },
     'start_test': {
       'uz_lat': 'Testni boshlash',
@@ -1078,11 +1052,6 @@ class AppStrings {
       'uz_lat': 'Obuna ma\'lumotini olishda xatolik. Qayta urinib ko\'ring.',
       'uz_cyr': 'Обуна маълумотини олишда хатолик. Қайта уриниб кўринг.',
       'ru': 'Ошибка загрузки подписки. Попробуйте снова.',
-    },
-    'pro_version': {
-      'uz_lat': 'PRO Versiya',
-      'uz_cyr': 'PRO Версия',
-      'ru': 'PRO версия',
     },
 
     // ── Telefon orqali ro'yxatdan o'tish / kirish ──

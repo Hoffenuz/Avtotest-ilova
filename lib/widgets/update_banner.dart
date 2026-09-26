@@ -152,6 +152,9 @@ class AboutGroup extends StatefulWidget {
 class _AboutGroupState extends State<AboutGroup> {
   bool _checking = false;
 
+  /// Folded by default: one row with the version, the rest one tap away.
+  bool _expanded = false;
+
   Future<void> _checkNow(String lang) async {
     setState(() => _checking = true);
     final status = await AppUpdateService.check();
@@ -198,50 +201,65 @@ class _AboutGroupState extends State<AboutGroup> {
     final lang = context.watch<LanguageProvider>().lang;
     String s(String k) => AppStrings.get(k, lang);
 
-    // The installed version is the subtitle of "check for updates": the two
-    // answer the same question, and the old stand-alone row was labelled
-    // "PRO Versiya", which read as a subscription status.
+    // The version sits on the folded header row (the old stand-alone row was
+    // labelled "PRO Versiya", which read as a subscription status).
     return SettingsGroup(
       children: [
         SettingsRow(
-          icon: Icons.system_update_rounded,
-          title: s('check_for_updates'),
+          icon: Icons.info_outline_rounded,
+          title: s('section_about'),
           subtitle: '${s('version_label')} ${AppVersion.displayVersion}',
-          showChevron: !_checking,
-          trailing: _checking
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : null,
-          onTap: _checking ? null : () => _checkNow(lang),
-        ),
-        // The people who open settings are the ones who use the app; they
-        // are also the only ones who will ever rate it unprompted.
-        SettingsRow(
-          icon: Icons.star_outline_rounded,
-          title: s('rate_app'),
-          subtitle: s('rate_app_sub'),
           showChevron: false,
-          trailing: const _OutIcon(),
-          onTap: ReviewPromptService.openStoreListing,
+          trailing: AnimatedRotation(
+            turns: _expanded ? 0.5 : 0,
+            duration: const Duration(milliseconds: 200),
+            child: Icon(
+              Icons.expand_more_rounded,
+              color: AppTheme.mutedText(context),
+            ),
+          ),
+          onTap: () => setState(() => _expanded = !_expanded),
         ),
-        SettingsRow(
-          icon: Icons.public_rounded,
-          title: s('visit_website'),
-          showChevron: false,
-          trailing: const _OutIcon(),
-          onTap: _openSite,
-        ),
-        SettingsRow(
-          icon: Icons.telegram_rounded,
-          title: s('telegram_group_title'),
-          subtitle: s('telegram_group_body'),
-          showChevron: false,
-          trailing: const _OutIcon(),
-          onTap: _openTelegramGroup,
-        ),
+        if (_expanded) ...[
+          SettingsRow(
+            icon: Icons.system_update_rounded,
+            title: s('check_for_updates'),
+            showChevron: !_checking,
+            trailing: _checking
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : null,
+            onTap: _checking ? null : () => _checkNow(lang),
+          ),
+          // The people who open settings are the ones who use the app; they
+          // are also the only ones who will ever rate it unprompted.
+          SettingsRow(
+            icon: Icons.star_outline_rounded,
+            title: s('rate_app'),
+            subtitle: s('rate_app_sub'),
+            showChevron: false,
+            trailing: const _OutIcon(),
+            onTap: ReviewPromptService.openStoreListing,
+          ),
+          SettingsRow(
+            icon: Icons.public_rounded,
+            title: s('visit_website'),
+            showChevron: false,
+            trailing: const _OutIcon(),
+            onTap: _openSite,
+          ),
+          SettingsRow(
+            icon: Icons.telegram_rounded,
+            title: s('telegram_group_title'),
+            subtitle: s('telegram_group_body'),
+            showChevron: false,
+            trailing: const _OutIcon(),
+            onTap: _openTelegramGroup,
+          ),
+        ],
       ],
     );
   }
