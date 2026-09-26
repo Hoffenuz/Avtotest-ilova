@@ -154,13 +154,16 @@ void main() {
     await tearDownScreen(tester);
   });
 
-  testWidgets('Keyingi moves on, Oldingi comes back', (tester) async {
+  testWidgets('Keyingi moves on, the number strip comes back', (tester) async {
     await pumpTest(tester);
+    // No back button in the footer — Izoh took its place.
+    expect(find.text('Oldingi'), findsNothing);
+
     await tester.tap(find.text('Keyingi'));
     await tester.pumpAndSettle(const Duration(milliseconds: 100));
     expect(onScreen(tester, questions[1]), isTrue);
 
-    await tester.tap(find.text('Oldingi'));
+    await tester.tap(find.text('1').first);
     await tester.pumpAndSettle(const Duration(milliseconds: 100));
     expect(onScreen(tester, questions[0]), isTrue);
     await tearDownScreen(tester);

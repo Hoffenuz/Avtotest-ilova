@@ -723,9 +723,7 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
         // to float in a corner and, on a 320 dp phone, sat on top of the
         // third answer.
         bottomNavigationBar: _QuestionNavBar(
-          isFirst: _currentIndex == 0,
           isLast: _currentIndex == _questions.length - 1,
-          prevLabel: s('prev_question'),
           nextLabel: s('next_question'),
           finishLabel: s('finish'),
           explanationLabel: _questions[_currentIndex].hasIzoh
@@ -737,7 +735,6 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
           explanationHighlighted: _incorrectIds.contains(
             _questions[_currentIndex].globalId,
           ),
-          onPrev: () => _goToQuestion(_currentIndex - 1),
           onNext: () => _goToQuestion(_currentIndex + 1),
           onFinish: _showFinishDialog,
           onExplanation: () => _showExplanationSheet(
@@ -1187,12 +1184,11 @@ class _TestToolbar extends StatelessWidget {
   }
 }
 
-/// Oldingi · Izoh · Keyingi — the only way between questions now that the
-/// page no longer swipes. Every target is at least 48 dp tall.
+/// Izoh on the left, Keyingi on the right — as on the site's footer. There is
+/// no "back" button: going back is the number strip above, and a third button
+/// only squeezed the two that matter. Every target is at least 48 dp tall.
 class _QuestionNavBar extends StatelessWidget {
-  final bool isFirst;
   final bool isLast;
-  final String prevLabel;
   final String nextLabel;
   final String finishLabel;
 
@@ -1200,21 +1196,17 @@ class _QuestionNavBar extends StatelessWidget {
   final String? explanationLabel;
   final bool explanationIsPro;
   final bool explanationHighlighted;
-  final VoidCallback onPrev;
   final VoidCallback onNext;
   final VoidCallback onFinish;
   final VoidCallback onExplanation;
 
   const _QuestionNavBar({
-    required this.isFirst,
     required this.isLast,
-    required this.prevLabel,
     required this.nextLabel,
     required this.finishLabel,
     required this.explanationLabel,
     required this.explanationIsPro,
     required this.explanationHighlighted,
-    required this.onPrev,
     required this.onNext,
     required this.onFinish,
     required this.onExplanation,
@@ -1237,38 +1229,34 @@ class _QuestionNavBar extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
           child: Row(
             children: [
+              // The left half stays reserved when a question has no
+              // explanation, so Keyingi never jumps sideways.
               Expanded(
-                child: _NavButton(
-                  label: prevLabel,
-                  leading: Icons.chevron_left_rounded,
-                  onTap: isFirst ? null : onPrev,
-                ),
+                child: explanationLabel == null
+                    ? const SizedBox.shrink()
+                    : _NavButton(
+                        label: explanationLabel!,
+                        leadingWidget: explanationIsPro
+                            ? CrownIcon(size: 16, color: gold)
+                            : Icon(
+                                Icons.menu_book_rounded,
+                                size: 18,
+                                color: AppTheme.brandAccent(context),
+                              ),
+                        background: teaser
+                            ? (dark
+                                  ? AppTheme.proBorder.withValues(alpha: 0.1)
+                                  : AppTheme.proBg)
+                            : null,
+                        borderColor: teaser
+                            ? AppTheme.proBorder.withValues(
+                                alpha: dark ? 0.4 : 1,
+                              )
+                            : null,
+                        onTap: onExplanation,
+                      ),
               ),
-              if (explanationLabel != null) ...[
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _NavButton(
-                    label: explanationLabel!,
-                    leadingWidget: explanationIsPro
-                        ? CrownIcon(size: 16, color: gold)
-                        : Icon(
-                            Icons.menu_book_rounded,
-                            size: 18,
-                            color: AppTheme.brandAccent(context),
-                          ),
-                    background: teaser
-                        ? (dark
-                              ? AppTheme.proBorder.withValues(alpha: 0.1)
-                              : AppTheme.proBg)
-                        : null,
-                    borderColor: teaser
-                        ? AppTheme.proBorder.withValues(alpha: dark ? 0.4 : 1)
-                        : null,
-                    onTap: onExplanation,
-                  ),
-                ),
-              ],
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Expanded(
                 child: _NavButton(
                   label: isLast ? finishLabel : nextLabel,
@@ -1287,7 +1275,6 @@ class _QuestionNavBar extends StatelessWidget {
 
 class _NavButton extends StatelessWidget {
   final String label;
-  final IconData? leading;
   final Widget? leadingWidget;
   final IconData? trailing;
   final bool filled;
@@ -1297,7 +1284,6 @@ class _NavButton extends StatelessWidget {
 
   const _NavButton({
     required this.label,
-    this.leading,
     this.leadingWidget,
     this.trailing,
     this.filled = false,
@@ -1336,8 +1322,7 @@ class _NavButton extends StatelessWidget {
                   if (leadingWidget != null) ...[
                     leadingWidget!,
                     const SizedBox(width: 6),
-                  ] else if (leading != null)
-                    Icon(leading, size: 22, color: fg),
+                  ],
                   Flexible(
                     child: FittedBox(
                       fit: BoxFit.scaleDown,

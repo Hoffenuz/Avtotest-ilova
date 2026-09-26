@@ -9,11 +9,11 @@ import 'test_screen.dart';
 
 /// "Test ishlash": choose, check, start — in that order, top to bottom.
 ///
-/// Tapping a count used to start the test at once, so there was no moment to
-/// see what was about to happen or to change the language first; the language
-/// card sat above the counts and was easy to miss. Now a count is only
-/// *selected*, its time and pass mark follow it, and the one button
-/// that starts anything sits in the thumb's reach.
+/// A count is only *selected*; its time and pass mark follow it, and the one
+/// button that starts anything sits in the thumb's reach. 20 and 50 are what
+/// people pick, so they are the two big cards; 75 and 100 are the occasional
+/// marathon, a smaller pair underneath. Questions come in the app's own
+/// language — a second language choice here was one step too many.
 class PracticeSetupScreen extends StatefulWidget {
   final bool embedded;
   const PracticeSetupScreen({super.key, this.embedded = false});
@@ -27,14 +27,10 @@ class _PracticeSetupScreenState extends State<PracticeSetupScreen> {
   /// longer set feels the same, not more rushed.
   static const Map<int, int> _minutesFor = {20: 25, 50: 60, 75: 90, 100: 120};
 
-  late String _sessionLang;
-  int _count = 20;
+  static const List<int> _mainCounts = [20, 50];
+  static const List<int> _extraCounts = [75, 100];
 
-  @override
-  void initState() {
-    super.initState();
-    _sessionLang = context.read<LanguageProvider>().lang;
-  }
+  int _count = 20;
 
   void _startPractice(int count, int timeMinutes) {
     final uiLang = context.read<LanguageProvider>().lang;
@@ -46,7 +42,7 @@ class _PracticeSetupScreenState extends State<PracticeSetupScreen> {
         testType: 'practice',
         testLabel: '$count ${AppStrings.get('n_question_test', uiLang)}',
         timeLimitMinutes: timeMinutes,
-        questionLang: _sessionLang,
+        questionLang: uiLang,
       ),
     );
 
@@ -88,13 +84,37 @@ class _PracticeSetupScreenState extends State<PracticeSetupScreen> {
                   hint: s('random_questions'),
                 ),
                 const SizedBox(height: 12),
-                _CountGrid(
-                  counts: _minutesFor.keys.toList(),
-                  selected: _count,
-                  unit: s('n_questions'),
-                  onSelect: (c) => setState(() => _count = c),
+                Row(
+                  children: [
+                    for (final c in _mainCounts) ...[
+                      if (c != _mainCounts.first) const SizedBox(width: 10),
+                      Expanded(
+                        child: _CountCard(
+                          count: c,
+                          unit: s('n_questions'),
+                          selected: c == _count,
+                          onTap: () => setState(() => _count = c),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    for (final c in _extraCounts) ...[
+                      if (c != _extraCounts.first) const SizedBox(width: 10),
+                      Expanded(
+                        child: _ExtraCount(
+                          label: '$c ${s('n_questions')}',
+                          selected: c == _count,
+                          onTap: () => setState(() => _count = c),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 16),
                 // The count is already on the selected card; only what follows
                 // from it is repeated here.
                 StatCells(
@@ -102,16 +122,6 @@ class _PracticeSetupScreenState extends State<PracticeSetupScreen> {
                     ('$minutes', s('stat_minutes')),
                     ('90%', s('stat_pass')),
                   ],
-                ),
-                const SizedBox(height: 24),
-                _SectionLabel(
-                  title: s('test_session_language'),
-                  hint: s('test_session_language_hint'),
-                ),
-                const SizedBox(height: 12),
-                _LanguageSegments(
-                  selected: _sessionLang,
-                  onChanged: (code) => setState(() => _sessionLang = code),
                 ),
               ],
             ),
@@ -169,51 +179,6 @@ class _SectionLabel extends StatelessWidget {
         ),
       ],
     );
-  }
-}
-
-/// Four equal choices, two by two. Picking one only selects it; the number is
-/// the big thing on the card because it is the thing being chosen.
-class _CountGrid extends StatelessWidget {
-  final List<int> counts;
-  final int selected;
-  final String unit;
-  final ValueChanged<int> onSelect;
-
-  const _CountGrid({
-    required this.counts,
-    required this.selected,
-    required this.unit,
-    required this.onSelect,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final rows = <Widget>[];
-    for (var i = 0; i < counts.length; i += 2) {
-      if (i > 0) rows.add(const SizedBox(height: 10));
-      rows.add(
-        IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              for (var j = i; j < i + 2 && j < counts.length; j++) ...[
-                if (j > i) const SizedBox(width: 10),
-                Expanded(
-                  child: _CountCard(
-                    count: counts[j],
-                    unit: unit,
-                    selected: counts[j] == selected,
-                    onTap: () => onSelect(counts[j]),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      );
-    }
-    return Column(children: rows);
   }
 }
 
@@ -297,63 +262,59 @@ class _CountCard extends StatelessWidget {
   }
 }
 
-/// The three question languages side by side; the chosen one is filled.
-class _LanguageSegments extends StatelessWidget {
-  final String selected;
-  final ValueChanged<String> onChanged;
+/// 75 / 100 — the same choice as the big cards, one size down.
+class _ExtraCount extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
 
-  const _LanguageSegments({required this.selected, required this.onChanged});
+  const _ExtraCount({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final fill = AppTheme.brandFill(context);
-    return Container(
-      padding: const EdgeInsets.all(4),
-      decoration: BoxDecoration(
-        color: AppTheme.card(context),
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
-        border: Border.all(color: AppTheme.hairline(context)),
-      ),
-      child: Row(
-        children: [
-          for (final l in LanguageProvider.languages)
-            Expanded(
-              child: Semantics(
-                button: true,
-                selected: l['code'] == selected,
-                child: Material(
-                  color: l['code'] == selected ? fill : Colors.transparent,
-                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
-                  clipBehavior: Clip.antiAlias,
-                  child: InkWell(
-                    onTap: () => onChanged(l['code']!),
-                    child: ConstrainedBox(
-                      constraints: const BoxConstraints(minHeight: 44),
-                      child: Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 6),
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              l['label']!,
-                              maxLines: 1,
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                color: l['code'] == selected
-                                    ? Colors.white
-                                    : AppTheme.textS(context),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
+    final accent = AppTheme.brandAccent(context);
+    return Semantics(
+      button: true,
+      selected: selected,
+      child: Material(
+        color: selected
+            ? accent.withValues(alpha: AppTheme.isDark(context) ? 0.16 : 0.06)
+            : AppTheme.card(context),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+          side: BorderSide(
+            color: selected ? accent : AppTheme.hairline(context),
+            width: selected ? 2 : 1,
+          ),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 48),
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: selected ? accent : AppTheme.textS(context),
                     ),
                   ),
                 ),
               ),
             ),
-        ],
+          ),
+        ),
       ),
     );
   }
