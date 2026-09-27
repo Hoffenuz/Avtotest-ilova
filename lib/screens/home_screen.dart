@@ -8,11 +8,13 @@ import '../services/question_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/brand.dart';
 import '../widgets/update_banner.dart';
+import '../widgets/readiness_widgets.dart';
 import 'difficult_questions_screen.dart';
 import 'errors_screen.dart';
 import 'main_shell.dart';
 import 'pro_screen.dart';
 import 'real_exam_screen.dart';
+import 'profile_screen.dart';
 import 'topic_list_screen.dart';
 import 'variant_list_screen.dart';
 
@@ -45,6 +47,14 @@ class HomeScreen extends StatelessWidget {
       fade ? AppTheme.fadeRoute(screen) : AppTheme.slideRoute(screen),
     );
 
+    // "Test ishlash" tab — also from the results page opened on top.
+    void startTest() {
+      Navigator.of(context).popUntil((r) => r.isFirst);
+      context.findAncestorStateOfType<MainShellState>()?.switchTab(
+        MainShellState.practiceTab,
+      );
+    }
+
     // A subscriber's secondary buttons are filled with a gold crown, as on
     // the site: everything behind them is already theirs.
     final secondaryKind = isPro
@@ -70,7 +80,13 @@ class HomeScreen extends StatelessWidget {
                   // without a hole in the middle — and the quick sections
                   // begin just below the fold.
                   ConstrainedBox(
-                    constraints: BoxConstraints(minHeight: box.maxHeight - 72),
+                    constraints: BoxConstraints(
+                      // Never negative, even in a tiny split-screen window.
+                      minHeight: (box.maxHeight - 72).clamp(
+                        0.0,
+                        double.infinity,
+                      ),
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -81,6 +97,14 @@ class HomeScreen extends StatelessWidget {
                             // A new version waiting on Play is worth interrupting for —
                             // practising on an outdated question bank forever is worse.
                             const UpdateBanner(),
+                            // Readiness, as on the website's home — signed-in
+                            // users only; the same height in every state, so
+                            // nothing below moves when the score arrives.
+                            ReadinessStripSlot(
+                              onOpen: () =>
+                                  push(MyResultsScreen(onStartTest: startTest)),
+                              onStart: startTest,
+                            ),
                             Align(
                               alignment: Alignment.centerLeft,
                               child: _Badge(text: s('home_badge')),

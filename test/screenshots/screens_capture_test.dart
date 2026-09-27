@@ -13,6 +13,9 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
+import 'package:avtotest_app/screens/profile_screen.dart';
+import 'package:avtotest_app/services/readiness_service.dart';
+import 'package:avtotest_app/providers/readiness_provider.dart';
 import 'package:avtotest_app/models/question.dart';
 import 'package:avtotest_app/providers/auth_provider.dart';
 import 'package:avtotest_app/providers/language_provider.dart';
@@ -100,14 +103,60 @@ class _Shot {
 
   /// SharedPreferences the screen starts with (e.g. finished tests).
   final Map<String, Object> prefs;
+
+  /// Readiness state shown (null: the app's own provider, i.e. a guest).
+  final ReadinessProvider Function()? readiness;
   const _Shot(
     this.name,
     this.build, {
     this.after,
     this.pro = false,
     this.prefs = const {},
+    this.readiness,
   });
 }
+
+/// A decided readiness state — no network.
+class _FixedReadiness extends ReadinessProvider {
+  _FixedReadiness({this.fixed, this.isLoading = false});
+  final Readiness? fixed;
+  final bool isLoading;
+  @override
+  bool get active => true;
+  @override
+  Readiness? get data => isLoading ? null : fixed;
+  @override
+  bool get loading => isLoading;
+  @override
+  bool get unavailable => !isLoading && fixed == null;
+}
+
+final Readiness _sampleReadiness = Readiness.fromRow(const {
+  'readiness_percent': 62,
+  'accuracy_percent': 78,
+  'coverage_percent': 19,
+  'variants_percent': 45,
+  'mastery_percent': 60,
+  'tests_percent': 70,
+  'tests_total': 35,
+  'tests_today': 2,
+  'tests_target': 50,
+  'questions_seen': 240,
+  'questions_total': 1260,
+  'questions_mastered': 144,
+  'questions_to_review': 17,
+  'variants_passed': 9,
+  'variants_attempted': 14,
+  'variants_total': 20,
+  'level_index': 3,
+  'level_min_percent': 50,
+  'level_next_percent': 70,
+  'percent_to_next': 8,
+  'exam_date': '2026-10-15',
+  'days_to_exam': 18,
+  'streak_days': 4,
+  'has_data': true,
+});
 
 /// Decided subscription state — no network (as in pro_visibility_test).
 class _Sub extends SubscriptionProvider {
@@ -159,6 +208,24 @@ Future<void> Function(WidgetTester) _tab(int index) => (tester) async {
 
 List<_Shot> _shots() => [
   _Shot('01_home', () => MainShell(key: _shellKey)),
+  _Shot(
+    '01c_home_readiness',
+    () => MainShell(key: _shellKey),
+    pro: true,
+    readiness: () => _FixedReadiness(fixed: _sampleReadiness),
+  ),
+  _Shot(
+    '01d_home_readiness_skeleton',
+    () => MainShell(key: _shellKey),
+    pro: true,
+    readiness: () => _FixedReadiness(isLoading: true),
+  ),
+  _Shot(
+    '21_my_results',
+    () => const MyResultsScreen(),
+    pro: true,
+    readiness: () => _FixedReadiness(fixed: _sampleReadiness),
+  ),
   _Shot(
     '01b_home_pro_results',
     () => MainShell(key: _shellKey),
@@ -262,9 +329,17 @@ ThemeData _withRoboto(ThemeData t) {
   );
 }
 
-Widget _host(Widget child, {required bool dark, bool pro = false}) {
+Widget _host(
+  Widget child, {
+  required bool dark,
+  bool pro = false,
+  ReadinessProvider Function()? readiness,
+}) {
   return MultiProvider(
     providers: [
+      ChangeNotifierProvider<ReadinessProvider>(
+        create: (_) => readiness?.call() ?? ReadinessProvider(),
+      ),
       ChangeNotifierProvider(create: (_) => LanguageProvider()),
       ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ChangeNotifierProvider(create: (_) => SettingsProvider()),
@@ -362,7 +437,12 @@ void main() {
             await tester.pumpWidget(
               RepaintBoundary(
                 key: const ValueKey('shot'),
-                child: _host(shot.build(), dark: dark, pro: shot.pro),
+                child: _host(
+                  shot.build(),
+                  dark: dark,
+                  pro: shot.pro,
+                  readiness: shot.readiness,
+                ),
               ),
             );
             for (var i = 0; i < 8; i++) {

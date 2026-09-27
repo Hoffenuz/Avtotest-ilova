@@ -17,6 +17,10 @@ import '../widgets/brand.dart';
 import '../widgets/update_banner.dart';
 import '../utils/phone.dart';
 import '../widgets/ha_yo_dialog.dart';
+import '../providers/readiness_provider.dart';
+import '../widgets/readiness_widgets.dart';
+import 'errors_screen.dart';
+import 'main_shell.dart';
 
 /// Settings tab.
 ///
@@ -336,9 +340,21 @@ class _ProfileScreenState extends State<ProfileScreen>
     );
   }
 
+  void _startTestFromResults() {
+    final shell = context.findAncestorStateOfType<MainShellState>();
+    Navigator.of(context).popUntil((r) => r.isFirst);
+    shell?.switchTab(MainShellState.practiceTab);
+  }
+
+  /// "Yuqori · 62%" once there is a readiness score, otherwise
   /// "12 ta test · 7 tasidan o'tilgan" — the one line of results that
   /// belongs on the settings list.
   String _resultsSummary(String lang) {
+    final readiness = context.watch<ReadinessProvider?>()?.data;
+    if (readiness != null && readiness.hasData) {
+      return '${AppStrings.get('readiness_level${readiness.levelIndex}', lang)}'
+          ' · ${readiness.readinessPercent}%';
+    }
     final completed = [
       ..._practiceResults,
       ..._cloudResults,
@@ -493,7 +509,9 @@ class _ProfileScreenState extends State<ProfileScreen>
                 subtitle: _resultsSummary(lang),
                 onTap: () => Navigator.push(
                   context,
-                  AppTheme.slideRoute(const _MyResultsPage()),
+                  AppTheme.slideRoute(
+                    MyResultsScreen(onStartTest: _startTestFromResults),
+                  ),
                 ),
               ),
               SettingsRow(
@@ -1979,14 +1997,17 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
 
 /// "Natijalarim": the headline numbers and both result lists on a page of
 /// their own, so the settings tab holds settings and nothing else.
-class _MyResultsPage extends StatefulWidget {
-  const _MyResultsPage();
+class MyResultsScreen extends StatefulWidget {
+  /// "Boshlash" on the readiness card: back to the tabs, on "Test ishlash".
+  final VoidCallback? onStartTest;
+
+  const MyResultsScreen({super.key, this.onStartTest});
 
   @override
-  State<_MyResultsPage> createState() => _MyResultsPageState();
+  State<MyResultsScreen> createState() => _MyResultsScreenState();
 }
 
-class _MyResultsPageState extends State<_MyResultsPage> {
+class _MyResultsScreenState extends State<MyResultsScreen> {
   List<TestResult> _practiceResults = [];
   List<TestResult> _cloudResults = [];
   bool _syncingCloud = false;
@@ -2096,6 +2117,16 @@ class _MyResultsPageState extends State<_MyResultsPage> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
         children: [
+          // The same score as the website's profile, from the same RPC.
+          ReadinessCard(
+            onStart:
+                widget.onStartTest ??
+                () => Navigator.of(context).popUntil((r) => r.isFirst),
+            onReview: () => Navigator.push(
+              context,
+              AppTheme.slideRoute(const ErrorsScreen()),
+            ),
+          ),
           _StatsCard(
             results: [..._practiceResults, ..._cloudResults],
             lang: lang,
