@@ -64,15 +64,16 @@ class HomeScreen extends StatelessWidget {
               builder: (context, box) => ListView(
                 padding: const EdgeInsets.fromLTRB(16, 28, 16, 28),
                 children: [
-                  // THE BUTTONS SIT LOW, where the thumb is. The hero fills
-                  // the first screen — text at its top, the three buttons at
-                  // its bottom — and the quick sections begin just below the
-                  // fold, a sliver of the first one showing there is more.
+                  // THE HERO FILLS THE FIRST SCREEN. Its spare height is
+                  // shared evenly above the text, between text and buttons and
+                  // below the buttons — the buttons stay low, near the thumb,
+                  // without a hole in the middle — and the quick sections
+                  // begin just below the fold.
                   ConstrainedBox(
                     constraints: BoxConstraints(minHeight: box.maxHeight - 72),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
