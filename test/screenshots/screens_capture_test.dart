@@ -62,7 +62,7 @@ const String _scaleTag = _scaleArg == '1.0' ? '' : '_scale$_scaleArg';
 
 const List<Size> _sizes = _tall
     ? [Size(360, 2200)]
-    : [Size(360, 800), Size(320, 640)];
+    : [Size(360, 800), Size(320, 640), Size(411, 891)];
 const String _fontDir = r'C:\src\flutter\bin\cache\artifacts\material_fonts';
 
 final Directory _out = Directory('build/screenshots/$_phase');
