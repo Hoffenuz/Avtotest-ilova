@@ -73,19 +73,19 @@ void main() {
   });
 
   group('ThemeProvider', () {
-    test('defaults to dark when nothing was ever chosen', () async {
+    test('a first launch is light (white), not dark', () async {
       SharedPreferences.setMockInitialValues({});
       final provider = ThemeProvider();
-      expect(provider.isDark, isTrue, reason: 'before init');
+      expect(provider.isDark, isFalse, reason: 'before init');
       await provider.init();
-      expect(provider.mode, ThemeMode.dark);
+      expect(provider.mode, ThemeMode.light);
     });
 
-    test('an explicit light choice survives a restart', () async {
-      SharedPreferences.setMockInitialValues({'theme_mode': 'light'});
+    test('an explicit dark choice survives a restart', () async {
+      SharedPreferences.setMockInitialValues({'theme_mode': 'dark'});
       final provider = ThemeProvider();
       await provider.init();
-      expect(provider.isDark, isFalse);
+      expect(provider.isDark, isTrue);
     });
 
     test('toggling persists the new choice', () async {
@@ -93,14 +93,14 @@ void main() {
       final provider = ThemeProvider();
       await provider.init();
       await provider.toggle();
-      expect(provider.isDark, isFalse);
+      expect(provider.isDark, isTrue);
 
       final reopened = ThemeProvider();
       await reopened.init();
       expect(
         reopened.isDark,
-        isFalse,
-        reason: 'the light choice did not survive',
+        isTrue,
+        reason: 'the dark choice did not survive',
       );
     });
   });

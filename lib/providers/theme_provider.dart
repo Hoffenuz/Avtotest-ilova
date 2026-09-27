@@ -3,13 +3,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// Light/dark preference.
 ///
-/// DARK IS THE DEFAULT. This app is used in the evening, in a car, and on
-/// cheap OLED phones — and the screens it shows most (a question over a
-/// photograph, the Real Exam) were designed dark first. A user who wants light
-/// still gets it, and the choice is remembered; only the *unset* case changed.
+/// LIGHT IS THE DEFAULT: a first launch opens on the white design, the same
+/// as the website. Dark is one switch away in Settings and is remembered.
 class ThemeProvider extends ChangeNotifier {
   static const _key = 'theme_mode';
-  ThemeMode _mode = ThemeMode.dark;
+  ThemeMode _mode = ThemeMode.light;
 
   ThemeMode get mode => _mode;
   bool get isDark => _mode == ThemeMode.dark;
@@ -17,9 +15,9 @@ class ThemeProvider extends ChangeNotifier {
   Future<void> init() async {
     final prefs = await SharedPreferences.getInstance();
     final saved = prefs.getString(_key);
-    // Only an explicit 'light' opts out — an absent value means the user has
+    // Only an explicit 'dark' opts in — an absent value means the user has
     // never chosen, which is the case the default is for.
-    _mode = saved == 'light' ? ThemeMode.light : ThemeMode.dark;
+    _mode = saved == 'dark' ? ThemeMode.dark : ThemeMode.light;
     notifyListeners();
   }
 
