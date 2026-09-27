@@ -103,7 +103,8 @@ class _RealExamScreenState extends State<RealExamScreen> {
   final Map<String, int> _selected = {};
   final Set<String> _incorrectIds = {};
 
-  String? _sessionId;
+  /// Asked for when the exam starts, needed only when it is saved.
+  Future<String?>? _sessionId;
   bool _isPro = false;
 
   /// Ticks alone so the clock does not rebuild the question and its answers
@@ -175,17 +176,16 @@ class _RealExamScreenState extends State<RealExamScreen> {
 
       // The server session is best-effort: a Real Exam is open to everyone
       // (docs/MOBILE-CONTENT-PROMPT.md §3), so no session must never mean no
-      // exam. Without one the attempt simply is not written to the cloud.
-      final session = await TestSessionService.startSession(
+      // exam, and the exam does not wait for it either — it is requested
+      // alongside and only needed when the result is saved.
+      _sessionId = TestSessionService.startSession(
         variant: TestSessionService.realExamVariant,
         questionSource: _questionSource,
         isPremium: _isPro,
-      );
-      if (!mounted) return;
+      ).then((session) => session.sessionId);
 
       setState(() {
         _questions = questions;
-        _sessionId = session.sessionId;
         _loading = false;
         _startedAt = DateTime.now();
       });
@@ -319,7 +319,12 @@ class _RealExamScreenState extends State<RealExamScreen> {
       isCompleted: _selected.length >= _questions.length,
     );
 
-    TestResultsService.save(result, sessionId: _sessionId);
+    final session = _sessionId;
+    if (session == null) {
+      TestResultsService.save(result);
+    } else {
+      session.then((id) => TestResultsService.save(result, sessionId: id));
+    }
 
     Navigator.pushReplacement(
       context,

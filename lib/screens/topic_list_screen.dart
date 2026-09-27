@@ -47,7 +47,7 @@ class TopicListScreen extends StatelessWidget {
         : topic.filename.replaceAll('.json', '');
     final title = topic.getName(lang);
 
-    void start(String? sessionId) {
+    void start(String? sessionId, {Future<String?>? pending}) {
       Navigator.push(
         context,
         AppTheme.slideRoute(
@@ -62,6 +62,7 @@ class TopicListScreen extends StatelessWidget {
             countUp: true,
             questionLang: lang,
             sessionId: sessionId,
+            pendingSessionId: pending,
           ),
         ),
       );
@@ -81,16 +82,19 @@ class TopicListScreen extends StatelessWidget {
 
     // Free topics work offline and without an account; the session is
     // best-effort, exactly as for the free exam tickets.
-    TestSessionService.startSession(
-      variant: TestSessionService.deriveVariant(
-        type: 'topic',
-        testKey: testKey,
-      ),
-      questionSource: testKey,
-      isPremium: false,
-    ).then((session) {
-      if (context.mounted) start(session.sessionId);
-    });
+    // Opens at once — waiting on the network here was the pause after the
+    // tap. The session request runs alongside and is needed only at the end.
+    start(
+      null,
+      pending: TestSessionService.startSession(
+        variant: TestSessionService.deriveVariant(
+          type: 'topic',
+          testKey: testKey,
+        ),
+        questionSource: testKey,
+        isPremium: false,
+      ).then((session) => session.sessionId),
+    );
   }
 
   @override

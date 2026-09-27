@@ -39,6 +39,11 @@ class TestScreen extends StatefulWidget {
   /// `verify_and_save_test_result`. Null for practice tests.
   final String? sessionId;
 
+  /// A free test opens at once and asks for its server session meanwhile;
+  /// the id is only needed when the result is saved, by which time it has
+  /// long arrived (the request is bounded, see [TestSessionService]).
+  final Future<String?>? pendingSessionId;
+
   const TestScreen({
     super.key,
     required this.title,
@@ -50,6 +55,7 @@ class TestScreen extends StatefulWidget {
     this.countUp = false,
     this.questionLang,
     this.sessionId,
+    this.pendingSessionId,
   });
 
   @override
@@ -333,7 +339,12 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
       isCompleted: answeredAll,
     );
 
-    TestResultsService.save(result, sessionId: widget.sessionId);
+    final pending = widget.pendingSessionId;
+    if (widget.sessionId == null && pending != null) {
+      pending.then((id) => TestResultsService.save(result, sessionId: id));
+    } else {
+      TestResultsService.save(result, sessionId: widget.sessionId);
+    }
     // The per-question tally is written on a timer; a finished test is the
     // natural point to make sure none of it is still only in memory.
     StorageService.flushQuestionStats();

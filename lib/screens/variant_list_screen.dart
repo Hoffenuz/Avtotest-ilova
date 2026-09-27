@@ -79,7 +79,7 @@ class VariantListScreen extends StatelessWidget {
     final label = '${AppStrings.get('variant', lang)} $number';
     final testKey = filename.replaceAll('.json', '');
 
-    void start(String? sessionId) {
+    void start(String? sessionId, {Future<String?>? pending}) {
       Navigator.push(
         context,
         AppTheme.slideRoute(
@@ -92,6 +92,7 @@ class VariantListScreen extends StatelessWidget {
             timeLimitMinutes: 25,
             questionLang: lang,
             sessionId: sessionId,
+            pendingSessionId: pending,
           ),
         ),
       );
@@ -112,16 +113,19 @@ class VariantListScreen extends StatelessWidget {
     // A free ticket opens offline, and for a guest. The session is still asked
     // for, so the attempt reaches the user's history when there is a network
     // and an account — but failing to get one must not block the test.
-    TestSessionService.startSession(
-      variant: TestSessionService.deriveVariant(
-        type: 'variant',
-        testKey: testKey,
-      ),
-      questionSource: testKey,
-      isPremium: false,
-    ).then((session) {
-      if (context.mounted) start(session.sessionId);
-    });
+    // Opens at once — waiting on the network here was the pause after the
+    // tap. The session request runs alongside and is needed only at the end.
+    start(
+      null,
+      pending: TestSessionService.startSession(
+        variant: TestSessionService.deriveVariant(
+          type: 'variant',
+          testKey: testKey,
+        ),
+        questionSource: testKey,
+        isPremium: false,
+      ).then((session) => session.sessionId),
+    );
   }
 }
 

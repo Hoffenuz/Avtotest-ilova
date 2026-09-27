@@ -47,20 +47,26 @@ class TestSessionService {
   /// topic/variant tests. Free tests tolerate an RPC failure (offline-
   /// friendly) and proceed with a null session id; premium tests surface the
   /// failure so the caller can block the test from starting.
+  static const Duration _timeout = Duration(seconds: 10);
+
   static Future<TestSessionResult> startSession({
     required int variant,
     required String questionSource,
     required bool isPremium,
   }) async {
     try {
-      final raw = await SupabaseService.client.rpc(
-        'start_test_session',
-        params: {
-          'p_variant': variant,
-          'p_question_source': questionSource,
-          'p_is_premium': isPremium,
-        },
-      );
+      // Bounded: on a bad connection the call used to hang with nothing on
+      // screen. A timeout lands in the catch below like any network error.
+      final raw = await SupabaseService.client
+          .rpc(
+            'start_test_session',
+            params: {
+              'p_variant': variant,
+              'p_question_source': questionSource,
+              'p_is_premium': isPremium,
+            },
+          )
+          .timeout(_timeout);
 
       final map = raw is Map<String, dynamic> ? raw : <String, dynamic>{};
       final ok = map['ok'] as bool? ?? false;
