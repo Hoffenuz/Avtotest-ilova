@@ -563,6 +563,194 @@ class AppStrings {
       'uz_cyr': 'та савол',
       'ru': 'вопрос(ов)',
     },
+    // ── Tayyorgarlik darajalari — saytdagi readiness.* bilan aynan bir xil ──
+    "readiness_title": {
+      "uz_lat": "Imtihonga tayyorgarlik",
+      "uz_cyr": "Имтиҳонга тайёргарлик",
+      "ru": "Готовность к экзамену",
+    },
+    "readiness_accuracy": {
+      "uz_lat": "Aniqlik",
+      "uz_cyr": "Аниқлик",
+      "ru": "Точность",
+    },
+    "readiness_accuracy_detail": {
+      "uz_lat": "so'nggi 20 test",
+      "uz_cyr": "сўнгги 20 тест",
+      "ru": "последние 20 тестов",
+    },
+    "readiness_coverage": {
+      "uz_lat": "Bazani qamrash",
+      "uz_cyr": "Базани қамраш",
+      "ru": "Охват базы",
+    },
+    "readiness_mastery": {
+      "uz_lat": "Mustahkamlik",
+      "uz_cyr": "Мустаҳкамлик",
+      "ru": "Прочность",
+    },
+    "readiness_variants": {
+      "uz_lat": "Variantlar",
+      "uz_cyr": "Вариантлар",
+      "ru": "Варианты",
+    },
+    "readiness_review_hint": {
+      "uz_lat": "{n} ta savolda xato qilgansiz",
+      "uz_cyr": "{n} та саволда хато қилгансиз",
+      "ru": "Вы ошиблись в {n} вопросах",
+    },
+    "readiness_review_cta": {
+      "uz_lat": "Ishlash",
+      "uz_cyr": "Ишлаш",
+      "ru": "Решить",
+    },
+    "readiness_streak": {
+      "uz_lat": "{n} kun",
+      "uz_cyr": "{n} кун",
+      "ru": "{n} дн.",
+    },
+    "readiness_to_next_level": {
+      "uz_lat": "{name} darajasiga {n}% qoldi",
+      "uz_cyr": "{name} даражасига {n}% қолди",
+      "ru": "До уровня «{name}» — {n}%",
+    },
+    "readiness_exam_date_add": {
+      "uz_lat": "Imtihon sanasi",
+      "uz_cyr": "Имтиҳон санаси",
+      "ru": "Дата экзамена",
+    },
+    "readiness_exam_date_label": {
+      "uz_lat": "Imtihon sanasi",
+      "uz_cyr": "Имтиҳон санаси",
+      "ru": "Дата экзамена",
+    },
+    "readiness_exam_in_days": {
+      "uz_lat": "Imtihonga {n} kun",
+      "uz_cyr": "Имтиҳонга {n} кун",
+      "ru": "До экзамена {n} дн.",
+    },
+    "readiness_exam_today": {
+      "uz_lat": "Imtihon bugun",
+      "uz_cyr": "Имтиҳон бугун",
+      "ru": "Экзамен сегодня",
+    },
+    "readiness_exam_date_past": {
+      "uz_lat": "Imtihon o'tdi",
+      "uz_cyr": "Имтиҳон ўтди",
+      "ru": "Экзамен прошёл",
+    },
+    "readiness_empty_hint": {
+      "uz_lat":
+          "Birinchi testni ishlang — tayyorgarlik foizingiz shu yerda chiqadi",
+      "uz_cyr": "Биринчи тестни ишланг — тайёргарлик фоизингиз шу ерда чиқади",
+      "ru": "Решите первый тест — здесь появится ваш процент готовности",
+    },
+    "readiness_empty_cta": {
+      "uz_lat": "Boshlash",
+      "uz_cyr": "Бошлаш",
+      "ru": "Начать",
+    },
+    "readiness_level1": {
+      "uz_lat": "Boshlang'ich",
+      "uz_cyr": "Бошланғич",
+      "ru": "Начальный",
+    },
+    "readiness_level2": {"uz_lat": "O'rta", "uz_cyr": "Ўрта", "ru": "Средний"},
+    "readiness_level3": {
+      "uz_lat": "Yuqori",
+      "uz_cyr": "Юқори",
+      "ru": "Высокий",
+    },
+    "readiness_level4": {
+      "uz_lat": "Malakali",
+      "uz_cyr": "Малакали",
+      "ru": "Квалифицированный",
+    },
+    "readiness_level5": {
+      "uz_lat": "Professional",
+      "uz_cyr": "Профессионал",
+      "ru": "Профессионал",
+    },
+    "readiness_level6": {
+      "uz_lat": "Legenda",
+      "uz_cyr": "Легенда",
+      "ru": "Легенда",
+    },
+    "readiness_levels_open": {
+      "uz_lat": "Darajalar",
+      "uz_cyr": "Даражалар",
+      "ru": "Уровни",
+    },
+    "readiness_levels_title": {
+      "uz_lat": "Tayyorgarlik darajalari",
+      "uz_cyr": "Тайёргарлик даражалари",
+      "ru": "Уровни готовности",
+    },
+    "readiness_levels_subtitle": {
+      "uz_lat": "Daraja tayyorgarlik foizingizga qarab beriladi",
+      "uz_cyr": "Даража тайёргарлик фоизингизга қараб берилади",
+      "ru": "Уровень зависит от вашего процента готовности",
+    },
+    "readiness_levels_current": {
+      "uz_lat": "Hozir",
+      "uz_cyr": "Ҳозир",
+      "ru": "Сейчас",
+    },
+    "readiness_levels_range": {
+      "uz_lat": "{a}–{b}% tayyorgarlik",
+      "uz_cyr": "{a}–{b}% тайёргарлик",
+      "ru": "{a}–{b}% готовности",
+    },
+    "readiness_levels_from": {
+      "uz_lat": "{n}% va undan yuqori",
+      "uz_cyr": "{n}% ва ундан юқори",
+      "ru": "{n}% и выше",
+    },
+    "readiness_levels_how_title": {
+      "uz_lat": "Foiz nimadan hisoblanadi",
+      "uz_cyr": "Фоиз нимадан ҳисобланади",
+      "ru": "Из чего складывается процент",
+    },
+    "readiness_levels_how1": {
+      "uz_lat": "Aniqlik — so'nggi 20 testdagi o'rtacha natijangiz",
+      "uz_cyr": "Аниқлик — сўнгги 20 тестдаги ўртача натижангиз",
+      "ru": "Точность — средний результат последних 20 тестов",
+    },
+    "readiness_levels_how2": {
+      "uz_lat": "Qamrov — savollar bazasining qanchasini ko'rganingiz",
+      "uz_cyr": "Қамров — саволлар базасининг қанчасини кўрганингиз",
+      "ru": "Охват — какую часть базы вопросов вы прошли",
+    },
+    "readiness_levels_how3": {
+      "uz_lat":
+          "Variantlar — 80% va undan yuqori yechilgan variantlar (eng katta ta'sir)",
+      "uz_cyr":
+          "Вариантлар — 80% ва ундан юқори ечилган вариантлар (энг катта таъсир)",
+      "ru": "Варианты — решённые на 80% и выше (наибольшее влияние)",
+    },
+    "readiness_levels_how4": {
+      "uz_lat":
+          "Mustahkamlik — to'g'ri javoblaringiz xatolardan ko'p bo'lgan savollar",
+      "uz_cyr":
+          "Мустаҳкамлик — тўғри жавобларингиз хатолардан кўп бўлган саволлар",
+      "ru": "Прочность — вопросы, где правильных ответов больше, чем ошибок",
+    },
+    "readiness_tests": {
+      "uz_lat": "Yechilgan testlar",
+      "uz_cyr": "Ечилган тестлар",
+      "ru": "Решено тестов",
+    },
+    "readiness_levels_how5": {
+      "uz_lat": "Yechilgan testlar — umumiy mashq hajmingiz",
+      "uz_cyr": "Ечилган тестлар — умумий машқ ҳажмингиз",
+      "ru": "Решено тестов — общий объём вашей практики",
+    },
+    // Our own neutral line for "the score did not load" — never alarming.
+    'readiness_unavailable': {
+      'uz_lat': "Tayyorgarlik ma'lumoti hozircha yuklanmadi.",
+      'uz_cyr': 'Тайёргарлик маълумоти ҳозирча юкланмади.',
+      'ru': 'Данные о готовности пока не загрузились.',
+    },
     'version_label': {'uz_lat': 'Versiya', 'uz_cyr': 'Версия', 'ru': 'Версия'},
     'my_results': {
       'uz_lat': 'Natijalarim',

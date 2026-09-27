@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
+import 'providers/readiness_provider.dart';
 import 'providers/auth_provider.dart';
 import 'providers/language_provider.dart';
 import 'providers/subscription_provider.dart';
@@ -72,6 +73,11 @@ void main() async {
         ChangeNotifierProvider.value(value: authProvider),
         ChangeNotifierProvider.value(value: settingsProvider),
         ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
+        // Follows whoever is signed in; one score shared by every screen.
+        ChangeNotifierProxyProvider<AuthProvider, ReadinessProvider>(
+          create: (_) => ReadinessProvider(),
+          update: (_, auth, readiness) => readiness!..attach(auth.userId),
+        ),
       ],
       child: const AutoTestApp(),
     ),
