@@ -31,6 +31,7 @@ import 'package:provider/provider.dart';
 import '../models/question.dart';
 import '../providers/language_provider.dart';
 import '../providers/subscription_provider.dart';
+import '../services/question_answers_service.dart';
 import '../services/app_strings.dart';
 import '../services/question_service.dart';
 import '../services/test_results_service.dart';
@@ -307,6 +308,18 @@ class _RealExamScreenState extends State<RealExamScreen> {
       final answers = q.getOptions(_lang).where((o) => o.isCorrect);
       return answers.isNotEmpty && answers.first.id == picked;
     }).length;
+
+    // Every answered question, to the server — as the website does.
+    unawaited(
+      QuestionAnswersService.record([
+        for (final q in _questions)
+          if (_selected[q.globalId] case final picked?)
+            (
+              q.globalId,
+              q.getOptions(_lang).any((o) => o.id == picked && o.isCorrect),
+            ),
+      ]),
+    );
 
     final result = TestResult(
       type: 'exam',

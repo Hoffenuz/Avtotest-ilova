@@ -7,6 +7,7 @@ import '../models/question.dart';
 import '../providers/language_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../providers/settings_provider.dart';
+import '../services/question_answers_service.dart';
 import '../services/app_strings.dart';
 import '../services/storage_service.dart';
 import '../services/test_results_service.dart';
@@ -328,6 +329,19 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
     }).length;
 
     final answeredAll = _selectedAnswers.length >= _questions.length;
+
+    // Every answered question, to the server — what the website records after
+    // each test; it feeds coverage, mastery and the questions to review.
+    unawaited(
+      QuestionAnswersService.record([
+        for (final q in _questions)
+          if (_selectedAnswers[q.globalId] case final picked?)
+            (
+              q.globalId,
+              q.getOptions(lang).any((o) => o.id == picked && o.isCorrect),
+            ),
+      ]),
+    );
     final result = TestResult(
       type: widget.testType,
       testKey: widget.testKey,
