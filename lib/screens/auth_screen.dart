@@ -287,11 +287,21 @@ class _AuthScreenState extends State<AuthScreen> {
                     const SizedBox(height: 18),
                   ],
                   if (_isSignUp)
-                    _PhoneField(
-                      controller: _phoneController,
-                      label: s('phone_number'),
-                      enabled: !_isLoading,
-                      validator: (v) => _validatePhone(v, lang),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _PhoneField(
+                          controller: _phoneController,
+                          label: s('phone_number'),
+                          enabled: !_isLoading,
+                          validator: (v) => _validatePhone(v, lang),
+                        ),
+                        ValueListenableBuilder<TextEditingValue>(
+                          valueListenable: _phoneController,
+                          builder: (context, value, _) =>
+                              _FullNumber(typed: value.text),
+                        ),
+                      ],
                     )
                   else ...[
                     _LabeledField(
@@ -307,7 +317,14 @@ class _AuthScreenState extends State<AuthScreen> {
                     ),
                     // Says out loud how the entry will be used, so a phone
                     // number is never silently treated as an email.
-                    _IdentifierHint(kind: _identifierKind, lang: lang),
+                    ValueListenableBuilder<TextEditingValue>(
+                      valueListenable: _identifierController,
+                      builder: (context, value, _) => _IdentifierHint(
+                        kind: _identifierKind,
+                        lang: lang,
+                        typed: value.text,
+                      ),
+                    ),
                   ],
                   const SizedBox(height: 14),
                   _LabeledField(
@@ -513,7 +530,14 @@ class _IdentifierHint extends StatelessWidget {
   final IdentifierKind kind;
   final String lang;
 
-  const _IdentifierHint({required this.kind, required this.lang});
+  /// What is in the field, so a phone number can be shown back in full.
+  final String typed;
+
+  const _IdentifierHint({
+    required this.kind,
+    required this.lang,
+    this.typed = '',
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -538,6 +562,15 @@ class _IdentifierHint extends StatelessWidget {
 
     if (icon == null || key == null || color == null) {
       return const SizedBox(height: 6);
+    }
+
+    // "887778877" → "+998 88 777 88 77", so the user sees exactly which
+    // number they are signing in with.
+    final normalized = kind == IdentifierKind.phone
+        ? UzPhone.normalize(typed)
+        : null;
+    if (normalized != null) {
+      return _FullNumber(typed: typed, note: AppStrings.get(key, lang));
     }
 
     return Padding(
@@ -748,6 +781,51 @@ class _LabeledField extends StatelessWidget {
         hintText: label,
         prefixIcon: Icon(icon, size: 20, color: AppTheme.textM(context)),
         suffixIcon: suffix,
+      ),
+    );
+  }
+}
+
+/// The typed phone number in full international form, in green, once it is
+/// a valid Uzbek mobile: "887778877" → "+998 88 777 88 77". Nothing while it
+/// is still incomplete.
+class _FullNumber extends StatelessWidget {
+  final String typed;
+  final String? note;
+
+  const _FullNumber({required this.typed, this.note});
+
+  @override
+  Widget build(BuildContext context) {
+    final normalized = UzPhone.normalize(typed);
+    if (normalized == null) return const SizedBox(height: 6);
+    final green = AppTheme.isDark(context)
+        ? AppTheme.success
+        : const Color(0xFF15803D);
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, left: 4),
+      child: Row(
+        children: [
+          Icon(Icons.check_circle_rounded, size: 15, color: green),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: UzPhone.displayFromNormalized(normalized),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontFeatures: [FontFeature.tabularFigures()],
+                    ),
+                  ),
+                  if (note != null) TextSpan(text: ' · $note'),
+                ],
+              ),
+              style: TextStyle(fontSize: 13, color: green),
+            ),
+          ),
+        ],
       ),
     );
   }
