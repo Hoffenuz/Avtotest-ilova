@@ -205,15 +205,20 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Google sign-in. The browser returns to the app through the deep link
-  /// registered in AndroidManifest.xml; `supabase_flutter` picks the session
-  /// up from there and [_onAuthStateChange] fires.
+  /// Google sign-in. Google's page opens in a Custom Tab on top of the app
+  /// (the phone's own Chrome, signed-in accounts included — Google refuses a
+  /// WebView), and the deep link registered in AndroidManifest.xml brings the
+  /// user back; `supabase_flutter` exchanges the code and
+  /// [_onAuthStateChange] fires.
+  ///
+  /// It used to open the separate browser app: slower, and the way back to
+  /// the app depended on that browser letting the link through.
   Future<String?> signInWithGoogle() async {
     try {
       final started = await SupabaseService.auth.signInWithOAuth(
         OAuthProvider.google,
         redirectTo: SupabaseConfig.authRedirectUrl,
-        authScreenLaunchMode: LaunchMode.externalApplication,
+        authScreenLaunchMode: LaunchMode.inAppBrowserView,
       );
       return started ? null : 'auth_error_generic';
     } on AuthException catch (e) {

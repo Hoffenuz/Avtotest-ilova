@@ -49,8 +49,33 @@ class _AuthScreenState extends State<AuthScreen> {
   /// Whether what has been typed reads as a phone number or an email.
   IdentifierKind _identifierKind = IdentifierKind.empty;
 
+  late final AuthProvider _auth = context.read<AuthProvider>();
+  bool _closed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // A Google sign-in finishes OUTSIDE this screen: the session arrives
+    // through the deep link while the user is back here. Opened as a modal
+    // (from PRO, Settings…), the screen used to stay up as if nothing had
+    // happened; now it closes the moment the session exists.
+    _auth.addListener(_onAuthChanged);
+  }
+
+  void _onAuthChanged() {
+    if (_auth.isLoggedIn) _close();
+  }
+
+  /// Leaves the screen once, however sign-in finished.
+  void _close() {
+    if (_closed || !mounted || !widget.isModal) return;
+    _closed = true;
+    Navigator.pop(context, true);
+  }
+
   @override
   void dispose() {
+    _auth.removeListener(_onAuthChanged);
     _identifierController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
@@ -176,7 +201,7 @@ class _AuthScreenState extends State<AuthScreen> {
 
     if (errKey == null) {
       if (widget.isModal) {
-        Navigator.pop(context, true);
+        _close();
         return;
       }
       setState(() => _isLoading = false);

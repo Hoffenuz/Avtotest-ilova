@@ -15,7 +15,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:launchMode="singleTop"
+            android:launchMode="singleTask"
             android:taskAffinity=""
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
@@ -34,7 +34,12 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
             <!-- Google sign-in returns here. The same URL must be listed in
-                 Supabase → Authentication → URL Configuration → Redirect URLs. -->
+                 Supabase → Authentication → URL Configuration → Redirect URLs
+                 (it is: uz.avtotestu.app://auth-callback, no trailing slash).
+                 launchMode="singleTask" is what makes the return reach the
+                 app that is waiting for it: with singleTop and an empty
+                 taskAffinity Android started a SECOND copy of the app for the
+                 link, and the first one sat on the sign-in screen for ever. -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
