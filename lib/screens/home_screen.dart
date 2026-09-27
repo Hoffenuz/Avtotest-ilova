@@ -60,110 +60,137 @@ class HomeScreen extends StatelessWidget {
             actions: const [LanguageMenu()],
           ),
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 28, 16, 28),
-              children: [
-                // A new version waiting on Play is worth interrupting for —
-                // practising on an outdated question bank forever is worse.
-                const UpdateBanner(),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: _Badge(text: s('home_badge')),
-                ),
-                const SizedBox(height: 18),
-                Text(
-                  s('home_title'),
-                  style: TextStyle(
-                    fontSize: 29,
-                    fontWeight: FontWeight.w800,
-                    height: 1.22,
-                    letterSpacing: -0.3,
-                    color: AppTheme.textP(context),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  s('home_subtitle').replaceAll(
-                    '{variants}',
-                    AppStrings.variantsPhrase(
-                      QuestionService.variantCount,
-                      lang,
+            child: LayoutBuilder(
+              builder: (context, box) => ListView(
+                padding: const EdgeInsets.fromLTRB(16, 28, 16, 28),
+                children: [
+                  // THE BUTTONS SIT LOW, where the thumb is. The hero fills
+                  // the first screen — text at its top, the three buttons at
+                  // its bottom — and the quick sections begin just below the
+                  // fold, a sliver of the first one showing there is more.
+                  ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: box.maxHeight - 72),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            // A new version waiting on Play is worth interrupting for —
+                            // practising on an outdated question bank forever is worse.
+                            const UpdateBanner(),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: _Badge(text: s('home_badge')),
+                            ),
+                            const SizedBox(height: 18),
+                            Text(
+                              s('home_title'),
+                              style: TextStyle(
+                                fontSize: 29,
+                                fontWeight: FontWeight.w800,
+                                height: 1.22,
+                                letterSpacing: -0.3,
+                                color: AppTheme.textP(context),
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            Text(
+                              s('home_subtitle').replaceAll(
+                                '{variants}',
+                                AppStrings.variantsPhrase(
+                                  QuestionService.variantCount,
+                                  lang,
+                                ),
+                              ),
+                              style: TextStyle(
+                                fontSize: 16,
+                                height: 1.55,
+                                color: AppTheme.mutedText(context),
+                              ),
+                            ),
+                            const SizedBox(height: 32),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            BrandButton(
+                              label: s('home_btn_test'),
+                              icon: const Icon(Icons.play_arrow_rounded),
+                              minHeight: 60,
+                              // The practice tab, not a second copy of it on top.
+                              onPressed: () => context
+                                  .findAncestorStateOfType<MainShellState>()
+                                  ?.switchTab(MainShellState.practiceTab),
+                            ),
+                            const SizedBox(height: 12),
+                            BrandButton(
+                              label: s('home_btn_variants'),
+                              icon: isPro
+                                  ? crown
+                                  : const Icon(Icons.grid_view_rounded),
+                              kind: secondaryKind,
+                              minHeight: 60,
+                              onPressed: () => push(const VariantListScreen()),
+                            ),
+                            const SizedBox(height: 12),
+                            BrandButton(
+                              label: s('home_btn_topics'),
+                              icon: isPro
+                                  ? crown
+                                  : const Icon(Icons.menu_book_rounded),
+                              kind: secondaryKind,
+                              minHeight: 60,
+                              proTag: needsPro,
+                              onPressed: () => push(const TopicListScreen()),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
-                  style: TextStyle(
-                    fontSize: 16,
-                    height: 1.55,
-                    color: AppTheme.mutedText(context),
-                  ),
-                ),
-                // A little air above the buttons, so the eye finishes the
-                // heading before it reaches them.
-                const SizedBox(height: 44),
-                BrandButton(
-                  label: s('home_btn_test'),
-                  icon: const Icon(Icons.play_arrow_rounded),
-                  minHeight: 60,
-                  // The practice tab, not a second copy of it on top.
-                  onPressed: () => context
-                      .findAncestorStateOfType<MainShellState>()
-                      ?.switchTab(MainShellState.practiceTab),
-                ),
-                const SizedBox(height: 12),
-                BrandButton(
-                  label: s('home_btn_variants'),
-                  icon: isPro ? crown : const Icon(Icons.grid_view_rounded),
-                  kind: secondaryKind,
-                  minHeight: 60,
-                  onPressed: () => push(const VariantListScreen()),
-                ),
-                const SizedBox(height: 12),
-                BrandButton(
-                  label: s('home_btn_topics'),
-                  icon: isPro ? crown : const Icon(Icons.menu_book_rounded),
-                  kind: secondaryKind,
-                  minHeight: 60,
-                  proTag: needsPro,
-                  onPressed: () => push(const TopicListScreen()),
-                ),
-                const SizedBox(height: 32),
-                SectionTile(
-                  icon: Icons.timer_outlined,
-                  color: AppTheme.error,
-                  title: s('real_exam'),
-                  onTap: () => push(const RealExamScreen(), fade: true),
-                ),
-                const SizedBox(height: 10),
-                SectionTile(
-                  icon: Icons.psychology_outlined,
-                  color: AppTheme.orange,
-                  title: s('section_errors_drill'),
-                  corner: needsPro ? const ProTag() : null,
-                  onTap: () => push(const ErrorsScreen()),
-                ),
-                const SizedBox(height: 10),
-                SectionTile(
-                  icon: Icons.warning_amber_rounded,
-                  color: AppTheme.violet,
-                  title: s('difficult_questions'),
-                  corner: needsPro ? const ProTag() : null,
-                  onTap: () => push(const DifficultQuestionsScreen()),
-                ),
-                if (needsPro) ...[
                   const SizedBox(height: 24),
-                  ProUpsellCard(
-                    title: s('pro_card_title'),
-                    description: s('pro_card_desc').replaceAll(
-                      '{variants}',
-                      AppStrings.variantsPhrase(
-                        QuestionService.variantCount,
-                        lang,
-                      ),
-                    ),
-                    action: s('get_pro'),
-                    onTap: () => push(const ProScreen()),
+                  SectionTile(
+                    icon: Icons.timer_outlined,
+                    color: AppTheme.error,
+                    title: s('real_exam'),
+                    onTap: () => push(const RealExamScreen(), fade: true),
                   ),
+                  const SizedBox(height: 10),
+                  SectionTile(
+                    icon: Icons.psychology_outlined,
+                    color: AppTheme.orange,
+                    title: s('section_errors_drill'),
+                    corner: needsPro ? const ProTag() : null,
+                    onTap: () => push(const ErrorsScreen()),
+                  ),
+                  const SizedBox(height: 10),
+                  SectionTile(
+                    icon: Icons.warning_amber_rounded,
+                    color: AppTheme.violet,
+                    title: s('difficult_questions'),
+                    corner: needsPro ? const ProTag() : null,
+                    onTap: () => push(const DifficultQuestionsScreen()),
+                  ),
+                  if (needsPro) ...[
+                    const SizedBox(height: 24),
+                    ProUpsellCard(
+                      title: s('pro_card_title'),
+                      description: s('pro_card_desc').replaceAll(
+                        '{variants}',
+                        AppStrings.variantsPhrase(
+                          QuestionService.variantCount,
+                          lang,
+                        ),
+                      ),
+                      action: s('get_pro'),
+                      onTap: () => push(const ProScreen()),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ],

@@ -999,26 +999,33 @@ class _PlanCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          price,
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            color: selected ? accent : AppTheme.textP(context),
-                            letterSpacing: -0.3,
+                    // Price and currency on ONE line: "35 000 so'm". With
+                    // "so'm" on a line of its own it read as a second figure.
+                    Text.rich(
+                      TextSpan(
+                        children: [
+                          TextSpan(
+                            text: price,
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.3,
+                              color: selected
+                                  ? accent
+                                  : AppTheme.textP(context),
+                            ),
                           ),
-                        ),
-                        Text(
-                          currency,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: AppTheme.mutedText(context),
+                          TextSpan(
+                            text: ' $currency',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.mutedText(context),
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
+                      maxLines: 1,
                     ),
                   ],
                 ),
