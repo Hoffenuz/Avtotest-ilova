@@ -635,14 +635,14 @@ class ProUpsellCard extends StatelessWidget {
   }
 }
 
-/// Bosh ekran sarlavhasi — ilovadagi boshqa sahifalar bilan bir xil yorug'
-/// fonda (sayt kabi qora chiziq emas): chapda logotip, o'ngda til va PRO
-/// "tabletkalari". Status bar ikonkalari fonga mos.
+/// Bosh ekran sarlavhasi — ilovaning asl ko'rinishi: oq karta ichida
+/// logotip, o'ngda til va PRO tugmalari (burchagi yumaloq kvadrat).
+/// Status bar ikonkalari fonga mos.
 class BrandHeader extends StatelessWidget {
   final VoidCallback? onPro;
   final String proLabel;
 
-  /// Shown before the PRO chip (e.g. [LanguageMenu]).
+  /// Shown before the PRO button (e.g. [LanguageMenu]).
   final List<Widget> actions;
 
   const BrandHeader({
@@ -662,15 +662,28 @@ class BrandHeader extends StatelessWidget {
         statusBarIconBrightness: dark ? Brightness.light : Brightness.dark,
         statusBarBrightness: dark ? Brightness.dark : Brightness.light,
       ),
-      child: Container(
-        padding: EdgeInsets.fromLTRB(16, top, 12, 0),
-        color: dark ? AppTheme.scaffoldBg : AppTheme.lightScaffoldBg,
-        child: SizedBox(
-          height: 60,
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(16, top + 8, 16, 0),
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(16, 11, 11, 11),
+          decoration: BoxDecoration(
+            color: AppTheme.card(context),
+            borderRadius: BorderRadius.circular(AppTheme.radiusLg),
+            border: Border.all(color: AppTheme.border(context)),
+            boxShadow: dark
+                ? null
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.03),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+          ),
           child: Row(
             children: [
               // The logo gives way first on a narrow phone or a wide font, so
-              // the language and PRO pills never overflow.
+              // the two buttons never overflow.
               const Expanded(
                 child: Align(
                   alignment: Alignment.centerLeft,
@@ -692,7 +705,7 @@ class BrandHeader extends StatelessWidget {
   }
 }
 
-/// Oltin "PRO" tabletkasi — header'dagi yagona rangli dog'.
+/// Oltin "PRO" tugmasi — sarlavhadagi yagona rangli dog'.
 class _ProPill extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
@@ -701,15 +714,15 @@ class _ProPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const brown = Color(0xFF78350F);
-    final radius = BorderRadius.circular(20);
+    final radius = BorderRadius.circular(AppTheme.radiusMd);
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: radius,
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
+            color: const Color(0xFFF59E0B).withValues(alpha: 0.25),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -725,9 +738,9 @@ class _ProPill extends StatelessWidget {
           child: InkWell(
             onTap: onTap,
             child: ConstrainedBox(
-              constraints: const BoxConstraints(minHeight: 40),
+              constraints: const BoxConstraints(minHeight: 38),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -753,7 +766,7 @@ class _ProPill extends StatelessWidget {
   }
 }
 
-/// "UZ ▾" — the site header's language switch, as a pill.
+/// "UZ ▾" — the site header's language switch, as a rounded square.
 class LanguageMenu extends StatelessWidget {
   const LanguageMenu({super.key});
 
@@ -793,12 +806,12 @@ class LanguageMenu extends StatelessWidget {
           ),
       ],
       child: Container(
-        constraints: const BoxConstraints(minHeight: 40, minWidth: 44),
-        padding: const EdgeInsets.only(left: 12, right: 8),
+        constraints: const BoxConstraints(minHeight: 38, minWidth: 44),
+        padding: const EdgeInsets.only(left: 11, right: 7),
         decoration: BoxDecoration(
-          color: AppTheme.card(context),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppTheme.hairline(context)),
+          color: AppTheme.surface(context),
+          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          border: Border.all(color: AppTheme.border(context)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

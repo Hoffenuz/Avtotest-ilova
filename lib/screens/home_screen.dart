@@ -61,7 +61,7 @@ class HomeScreen extends StatelessWidget {
           ),
           Expanded(
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 24, 16, 28),
+              padding: const EdgeInsets.fromLTRB(16, 28, 16, 28),
               children: [
                 // A new version waiting on Play is worth interrupting for —
                 // practising on an outdated question bank forever is worse.
@@ -70,18 +70,18 @@ class HomeScreen extends StatelessWidget {
                   alignment: Alignment.centerLeft,
                   child: _Badge(text: s('home_badge')),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 18),
                 Text(
                   s('home_title'),
                   style: TextStyle(
-                    fontSize: 26,
+                    fontSize: 29,
                     fontWeight: FontWeight.w800,
-                    height: 1.2,
+                    height: 1.22,
                     letterSpacing: -0.3,
                     color: AppTheme.textP(context),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 Text(
                   s('home_subtitle').replaceAll(
                     '{variants}',
@@ -91,14 +91,14 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                   style: TextStyle(
-                    fontSize: 15,
+                    fontSize: 16,
                     height: 1.55,
                     color: AppTheme.mutedText(context),
                   ),
                 ),
                 // A little air above the buttons, so the eye finishes the
                 // heading before it reaches them.
-                const SizedBox(height: 40),
+                const SizedBox(height: 44),
                 BrandButton(
                   label: s('home_btn_test'),
                   icon: const Icon(Icons.play_arrow_rounded),
