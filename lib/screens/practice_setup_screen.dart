@@ -82,7 +82,9 @@ class _PracticeSetupScreenState extends State<PracticeSetupScreen> {
               builder: (context, box) => SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
                 child: ConstrainedBox(
-                  constraints: BoxConstraints(minHeight: box.maxHeight - 32),
+                  constraints: BoxConstraints(
+                    minHeight: (box.maxHeight - 32).clamp(0.0, double.infinity),
+                  ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
