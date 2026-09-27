@@ -36,7 +36,13 @@ class ProScreen extends StatefulWidget {
 }
 
 class _ProScreenState extends State<ProScreen> with WidgetsBindingObserver {
-  late Future<List<PaymePlan>> _plansFuture;
+  /// Tariffs on screen: the cached copy at once, then the server's.
+  List<PaymePlan>? _plans;
+  bool _plansFailed = false;
+
+  /// The server read in flight. A purchase waits for it, so it always pays
+  /// today's price even if the cached one was older.
+  Future<List<PaymePlan>>? _freshPlans;
 
   /// Guards against a second checkout being opened while one is running.
   bool _purchasing = false;
@@ -68,13 +74,36 @@ class _ProScreenState extends State<ProScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    _plansFuture = ProScreen.plansLoader();
+    _loadPlans();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) => _refreshIfVisible());
   }
 
+  Future<void> _loadPlans() async {
+    final fresh = ProScreen.plansLoader();
+    _freshPlans = fresh;
+    final cached = await PaymeService.cachedPlans();
+    if (mounted && _plans == null && cached != null && cached.isNotEmpty) {
+      setState(() => _plans = cached);
+    }
+    try {
+      final plans = await fresh;
+      if (!mounted) return;
+      setState(() {
+        if (plans.isNotEmpty) {
+          _plans = plans;
+        } else if (_plans == null) {
+          _plansFailed = true;
+        }
+      });
+    } catch (_) {
+      if (mounted && _plans == null) setState(() => _plansFailed = true);
+    }
+  }
+
   void _reloadPlans() {
-    setState(() => _plansFuture = ProScreen.plansLoader());
+    setState(() => _plansFailed = false);
+    _loadPlans();
   }
 
   /// Full purchase flow: sign-in check → Payme or Click checkout →
@@ -128,6 +157,20 @@ class _ProScreenState extends State<ProScreen> with WidgetsBindingObserver {
 
     _purchasing = true;
     try {
+      // Today's price: if the server read is still running, wait for it.
+      try {
+        final fresh = await _freshPlans;
+        if (fresh != null) {
+          plan = fresh.firstWhere(
+            (p) => p.planName == plan.planName,
+            orElse: () => plan,
+          );
+        }
+      } catch (_) {
+        // No fresh list: the shown one came from the server earlier.
+      }
+      if (!mounted) return;
+
       final String url;
       final String returnUrl;
       if (via == PayVia.click) {
@@ -410,19 +453,13 @@ class _ProScreenState extends State<ProScreen> with WidgetsBindingObserver {
                 // Prices come from `payme_plans`, never from the app: Payme
                 // rejects any amount its server didn't authorise (-31001), and
                 // a Click order takes its price from the same table.
-                FutureBuilder<List<PaymePlan>>(
-                  future: _plansFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState != ConnectionState.done) {
-                      return const _PlansPlaceholder();
-                    }
-                    if (snapshot.hasError) {
-                      return _PlansError(lang: lang, onRetry: _reloadPlans);
-                    }
-
-                    final plans = snapshot.data ?? const <PaymePlan>[];
-                    if (plans.isEmpty) {
-                      return _PlansError(lang: lang, onRetry: _reloadPlans);
+                Builder(
+                  builder: (context) {
+                    final plans = _plans;
+                    if (plans == null || plans.isEmpty) {
+                      return _plansFailed
+                          ? _PlansError(lang: lang, onRetry: _reloadPlans)
+                          : const _PlansPlaceholder();
                     }
                     final chosen = plans.firstWhere(
                       (p) => p.planName == (_selectedPlan ?? 'monthly'),

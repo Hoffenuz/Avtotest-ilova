@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../config/supabase_config.dart';
 import 'supabase_service.dart';
 
@@ -49,14 +51,56 @@ class PaymeService {
     final rows = await SupabaseService.client
         .from('payme_plans')
         .select('plan_name, amount_tiyin, tariff_days')
-        .eq('is_active', true);
+        .eq('is_active', true)
+        .timeout(const Duration(seconds: 15));
 
     final plans =
         (rows as List<dynamic>)
             .map((row) => PaymePlan.fromRow(row as Map<String, dynamic>))
             .toList()
           ..sort((a, b) => a.tariffDays.compareTo(b.tariffDays));
+    if (plans.isNotEmpty) await _remember(rows);
     return plans;
+  }
+
+  static const _cacheKey = 'payme_plans_cache';
+  static List<PaymePlan>? _last;
+
+  /// The tariffs the server last returned — for an instant first paint of the
+  /// price list while a fresh read runs (the network read took seconds). A
+  /// purchase always waits for the fresh read; see ProScreen.
+  static Future<List<PaymePlan>?> cachedPlans() async {
+    if (_last != null) return _last;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_cacheKey);
+      if (raw == null) return null;
+      final plans =
+          (jsonDecode(raw) as List<dynamic>)
+              .map(
+                (row) =>
+                    PaymePlan.fromRow(Map<String, dynamic>.from(row as Map)),
+              )
+              .toList()
+            ..sort((a, b) => a.tariffDays.compareTo(b.tariffDays));
+      return _last = plans;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  static Future<void> _remember(List<dynamic> rows) async {
+    try {
+      _last =
+          rows
+              .map((row) => PaymePlan.fromRow(row as Map<String, dynamic>))
+              .toList()
+            ..sort((a, b) => a.tariffDays.compareTo(b.tariffDays));
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_cacheKey, jsonEncode(rows));
+    } catch (_) {
+      // A cache is a convenience; failing to write one changes nothing.
+    }
   }
 
   /// Builds a Payme checkout link.

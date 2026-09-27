@@ -9,6 +9,7 @@ import 'providers/language_provider.dart';
 import 'providers/subscription_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/theme_provider.dart';
+import 'services/payme_service.dart';
 import 'services/daily_question_service.dart';
 import 'services/question_image_sizes.dart';
 import 'services/question_service.dart';
@@ -124,6 +125,8 @@ Future<void> _bootstrap(
   // an isolate spawn and a multi-megabyte decode directly against the frames
   // that decide the app's startup grade.
   Future<void>.delayed(const Duration(seconds: 5), () {
+    // Tariffs for the PRO page, so it opens with prices already on it.
+    PaymeService.fetchPlans().then((_) {}, onError: (_) {});
     DailyQuestionService.refreshOnLaunch(
       lang: langProvider.lang,
     ).catchError((_) {});
