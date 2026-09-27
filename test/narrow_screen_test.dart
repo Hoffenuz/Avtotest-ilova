@@ -109,19 +109,20 @@ void main() {
   testWidgets('Home fits a 320 dp phone and offers the quick actions', (
     tester,
   ) async {
-    await _pumpAt(
-      tester,
-      const HomeScreen(),
-      dark: true,
-      settle: false,
-      tall: true,
-    );
+    await _pumpAt(tester, const HomeScreen(), dark: true, settle: false);
     expect(tester.takeException(), isNull);
 
     // The two the exam-day routine is built around, on the home screen rather
-    // than a tab away — under the three main buttons, as on the site.
-    expect(find.text('Real imtihon'), findsOneWidget);
-    expect(find.text('Xatolar ustida ishlash'), findsOneWidget);
+    // than a tab away — just below the fold, under the three main buttons.
+    for (final title in ['Real imtihon', 'Xatolar ustida ishlash']) {
+      await tester.scrollUntilVisible(
+        find.text(title),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text(title), findsOneWidget);
+    }
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('the four-tab bar fits a 320 dp phone', (tester) async {
