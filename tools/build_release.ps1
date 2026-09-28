@@ -45,6 +45,28 @@ $versionName = $Matches[1]
 $versionCode = $Matches[2]
 Write-Host "Versiya: $versionName ($versionCode)" -ForegroundColor Green
 
+# --- 1b. local.properties versiyasini majburan moslash --------------------
+# android/local.properties dagi flutter.versionCode / flutter.versionName ni
+# faqat `flutter build` / `flutter run` yozadi — `pub get` tegmaydi. Bu skript
+# gradle'ni TO'G'RIDAN-TO'G'RI chaqiradi (bosqich 6 dagi izohga qarang), shuning
+# uchun oldingi bir `flutter build apk` dan qolgan ESKI versiya shu faylda
+# tiqilib qolishi mumkin va Gradle undan foydalanadi (build.gradle.kts:
+# `versionCode = flutter.versionCode`), pubspec.yaml dagi yangisidan emas.
+# Play Console buni "version code allaqachon ishlatilgan" deb rad etadi —
+# aab muvaffaqiyatli yig'ilgandan keyin ham. Shu ikki qatorni har build'da
+# pubspec.yaml bilan tenglab qo'yish shu xatoni butunlay yo'q qiladi.
+$localProps = 'android\local.properties'
+if (-not (Test-Path $localProps)) {
+    Fail "$localProps topilmadi. Avval bir marta 'flutter pub get' yoki 'flutter run' ishga tushiring."
+}
+$propLines = Get-Content $localProps | Where-Object {
+    $_ -notmatch '^flutter\.versionCode=' -and $_ -notmatch '^flutter\.versionName='
+}
+$propLines += "flutter.versionCode=$versionCode"
+$propLines += "flutter.versionName=$versionName"
+Set-Content -Path $localProps -Value $propLines
+Write-Host "local.properties -> flutter.versionCode=$versionCode, flutter.versionName=$versionName" -ForegroundColor DarkGray
+
 # --- 2. Tozalash (ixtiyoriy) ---------------------------------------------
 if ($Clean) {
     Step 'flutter clean'
@@ -88,6 +110,26 @@ if ($gradleExit -ne 0) { Fail 'Bundle yig''ilmadi.' }
 
 $aab = 'build\app\outputs\bundle\release\app-release.aab'
 if (-not (Test-Path $aab)) { Fail "Kutilgan fayl topilmadi: $aab" }
+
+# --- 7. AAB ichidagi versiyani tekshirish ----------------------------------
+# Play "Version code N has already been used" deb rad etadigan holat — fayl
+# yig'ilgan, lekin ichida eski versiya — shu yerda ushlanadi, yuklashdan oldin.
+# Manifest AAB ichida protobuf; `versionCode` atributidan keyin qiymat
+# 0x1A <uzunlik> <raqamlar> ko'rinishida turadi.
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+$zip = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path $aab).Path)
+try {
+    $entry = $zip.GetEntry('base/manifest/AndroidManifest.xml')
+    $ms = New-Object System.IO.MemoryStream
+    $stream = $entry.Open(); $stream.CopyTo($ms); $stream.Close()
+    $text = [System.Text.Encoding]::GetEncoding('ISO-8859-1').GetString($ms.ToArray())
+} finally { $zip.Dispose() }
+if ($text -notmatch 'versionCode\x1a.([0-9]+)') { Fail 'AAB manifestidan versionCode o''qib bo''lmadi.' }
+$builtCode = $Matches[1]
+if ($builtCode -ne $versionCode) {
+    Fail "AAB ichida versionCode=$builtCode, pubspec.yaml da $versionCode. Bu fayl Play'ga yuklanmasin."
+}
+Write-Host "AAB tekshirildi: versionCode=$builtCode" -ForegroundColor Green
 
 $sizeMb = [math]::Round((Get-Item $aab).Length / 1MB, 1)
 $full = (Resolve-Path $aab).Path
