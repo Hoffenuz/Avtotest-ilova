@@ -393,6 +393,69 @@ class SettingsRow extends StatelessWidget {
   }
 }
 
+/// A settings card that folds: one header row (icon, name, a line about
+/// what is inside, an arrow), the rows themselves one tap away. For groups
+/// people set once and rarely revisit.
+class CollapsibleSettingsGroup extends StatefulWidget {
+  final IconData icon;
+  final Color? color;
+  final String title;
+  final String? subtitle;
+  final List<Widget> children;
+  final bool initiallyExpanded;
+
+  const CollapsibleSettingsGroup({
+    super.key,
+    required this.icon,
+    required this.title,
+    required this.children,
+    this.color,
+    this.subtitle,
+    this.initiallyExpanded = false,
+  });
+
+  @override
+  State<CollapsibleSettingsGroup> createState() =>
+      _CollapsibleSettingsGroupState();
+}
+
+class _CollapsibleSettingsGroupState extends State<CollapsibleSettingsGroup> {
+  late bool _open = widget.initiallyExpanded;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSize(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+      alignment: Alignment.topCenter,
+      child: SettingsGroup(
+        children: [
+          Semantics(
+            expanded: _open,
+            child: SettingsRow(
+              icon: widget.icon,
+              color: widget.color,
+              title: widget.title,
+              subtitle: widget.subtitle,
+              showChevron: false,
+              trailing: AnimatedRotation(
+                turns: _open ? 0.5 : 0,
+                duration: const Duration(milliseconds: 200),
+                child: Icon(
+                  Icons.expand_more_rounded,
+                  color: AppTheme.mutedText(context),
+                ),
+              ),
+              onTap: () => setState(() => _open = !_open),
+            ),
+          ),
+          if (_open) ...widget.children,
+        ],
+      ),
+    );
+  }
+}
+
 /// Switch in the brand colours (ink track, white thumb) — as on the site.
 class BrandSwitch extends StatelessWidget {
   final bool value;

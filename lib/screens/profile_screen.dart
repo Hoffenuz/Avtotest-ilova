@@ -429,8 +429,12 @@ class _ProfileScreenState extends State<ProfileScreen>
           // name, current value, and a chevron or a switch. Results used to sit
           // in the middle of it as big cards; they have a page of their own
           // now, behind one row below.
-          _SectionLabel(text: s('section_study')),
-          SettingsGroup(
+          // Set once, rarely revisited: folded, one tap to open.
+          CollapsibleSettingsGroup(
+            icon: Icons.tune_rounded,
+            color: AppTheme.violet,
+            title: s('section_study'),
+            subtitle: s('section_study_sub'),
             children: [
               SettingsRow(
                 icon: Icons.skip_next_rounded,

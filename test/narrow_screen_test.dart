@@ -207,8 +207,13 @@ void main() {
     );
     expect(tester.takeException(), isNull);
 
-    // Nothing to expand any more: every setting is on screen, one tap from
-    // being changed, and each of these is a row of the same shape.
+    // "Mashq sozlamalari" is folded: its rows appear after one tap on it.
+    expect(find.text('Xatodan keyin izoh'), findsNothing);
+    await tester.tap(find.text('Mashq sozlamalari'));
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(tester.takeException(), isNull);
+
+    // Every row is the same shape: icon, name, value, chevron or switch.
     expect(find.text('Til'), findsOneWidget);
     expect(find.text('Mavzu'), findsOneWidget);
     expect(find.text("Savol matni o'lchami"), findsOneWidget);
@@ -230,6 +235,8 @@ void main() {
       settle: false,
       tall: true,
     );
+    await tester.tap(find.text('Mashq sozlamalari'));
+    await tester.pump(const Duration(milliseconds: 300));
 
     final row = find.ancestor(
       of: find.text('Xatodan keyin izoh'),
