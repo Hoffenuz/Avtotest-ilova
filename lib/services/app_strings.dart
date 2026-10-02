@@ -761,6 +761,27 @@ class AppStrings {
       'uz_cyr': 'Google орқали кириш якунланмади. Қайта уриниб кўринг.',
       'ru': 'Вход через Google не завершён. Попробуйте ещё раз.',
     },
+    // Home (mobile): the hero card and the topics card.
+    'home_hero_title': {
+      'uz_lat': 'Haydovchilik imtihoniga tayyorlaning',
+      'uz_cyr': 'Ҳайдовчилик имтиҳонига тайёрланинг',
+      'ru': 'Подготовьтесь к экзамену на права',
+    },
+    'home_hero_sub': {
+      'uz_lat': '1250+ savol va {variants}',
+      'uz_cyr': '1250+ савол ва {variants}',
+      'ru': '1250+ вопросов и {variants}',
+    },
+    'home_topics_sub': {
+      'uz_lat': "Mavzular bo'yicha testlar",
+      'uz_cyr': 'Мавзулар бўйича тестлар',
+      'ru': 'Тесты по темам',
+    },
+    'section_study_sub': {
+      'uz_lat': "Avtomatik o'tish, izoh, kunlik savol, matn o'lchami",
+      'uz_cyr': 'Автоматик ўтиш, изоҳ, кунлик савол, матн ўлчами',
+      'ru': 'Автопереход, пояснения, вопрос дня, размер текста',
+    },
     'version_label': {'uz_lat': 'Versiya', 'uz_cyr': 'Версия', 'ru': 'Версия'},
     'my_results': {
       'uz_lat': 'Natijalarim',
