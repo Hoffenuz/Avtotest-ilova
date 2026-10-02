@@ -261,18 +261,43 @@ class AuthProvider extends ChangeNotifier {
       );
       return null;
     } on GoogleSignInException catch (e) {
-      if (e.code == GoogleSignInExceptionCode.canceled) return null;
-      // Not set up for this build (no Android OAuth client / SHA-1), no Play
-      // services, or the sheet could not be shown: the browser still works.
-      debugPrint('AuthProvider: native Google unavailable: ${e.code} $e');
+      if (isUserCancel(e.code, e.description)) return null;
+      // Not set up for this build (no Android OAuth client / SHA-1 in Google
+      // Cloud), no Play services, or the sheet could not be shown. A missing
+      // SHA-1 also comes back as "canceled" — but AFTER an account was
+      // picked, with Google's own reason in the description. Say it on the
+      // sign-in screen, then try the browser.
+      _reportNativeGoogleError('${e.code.name}: ${e.description ?? ''}');
       return _useBrowser;
     } on AuthException catch (e) {
-      debugPrint('AuthProvider: Supabase refused the Google token: $e');
+      _reportNativeGoogleError('Supabase: ${e.message}');
       return _useBrowser;
     } catch (e) {
       debugPrint('AuthProvider: native Google failed: $e');
       return _useBrowser;
     }
+  }
+
+  /// A real "the user closed the sheet", as opposed to Google refusing the
+  /// app after an account was picked, which Credential Manager also reports
+  /// as canceled ("[16] Account reauth failed", "[28444] Developer console is
+  /// not set up correctly").
+  @visibleForTesting
+  static bool isUserCancel(
+    GoogleSignInExceptionCode code,
+    String? description,
+  ) {
+    if (code != GoogleSignInExceptionCode.canceled) return false;
+    final text = (description ?? '').toLowerCase();
+    return !RegExp(r'\[\d+\]').hasMatch(text) &&
+        !text.contains('developer') &&
+        !text.contains('reauth');
+  }
+
+  void _reportNativeGoogleError(String reason) {
+    debugPrint('AuthProvider: native Google failed: $reason');
+    _oauthError = reason.trim();
+    notifyListeners();
   }
 
   static String _randomNonce() {

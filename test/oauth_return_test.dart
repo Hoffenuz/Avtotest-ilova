@@ -1,5 +1,6 @@
 import 'package:avtotest_app/providers/auth_provider.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 /// The Google return link (`uz.avtotestu.app://auth-callback…`) is read by
 /// the app itself, so a failed sign-in can say why.
@@ -41,5 +42,36 @@ void main() {
       ),
       isNull,
     );
+  });
+
+  group('Google sheet: cancel vs. refused', () {
+    test('closing the sheet is a cancel', () {
+      expect(
+        AuthProvider.isUserCancel(
+          GoogleSignInExceptionCode.canceled,
+          'activity is cancelled by the user.',
+        ),
+        isTrue,
+      );
+    });
+    test('a missing SHA-1 / client is NOT a cancel', () {
+      for (final d in [
+        '[16] Account reauth failed.',
+        '[28444] Developer console is not set up correctly.',
+      ]) {
+        expect(
+          AuthProvider.isUserCancel(GoogleSignInExceptionCode.canceled, d),
+          isFalse,
+          reason: d,
+        );
+      }
+      expect(
+        AuthProvider.isUserCancel(
+          GoogleSignInExceptionCode.clientConfigurationError,
+          null,
+        ),
+        isFalse,
+      );
+    });
   });
 }
