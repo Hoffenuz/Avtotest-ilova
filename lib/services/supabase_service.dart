@@ -22,7 +22,13 @@ class SupabaseService {
     await Supabase.initialize(
       url: SupabaseConfig.url,
       publishableKey: SupabaseConfig.anonKey,
-      authOptions: const FlutterAuthClientOptions(autoRefreshToken: true),
+      // detectSessionInUri off: the Google return link is handled by
+      // AuthProvider, which can show WHY a sign-in failed — the built-in
+      // handler swallowed every error and the screen simply did nothing.
+      authOptions: const FlutterAuthClientOptions(
+        autoRefreshToken: true,
+        detectSessionInUri: false,
+      ),
       debug: false,
     );
 

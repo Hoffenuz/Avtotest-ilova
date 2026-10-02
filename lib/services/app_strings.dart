@@ -751,6 +751,16 @@ class AppStrings {
       'uz_cyr': 'Тайёргарлик маълумоти ҳозирча юкланмади.',
       'ru': 'Данные о готовности пока не загрузились.',
     },
+    'auth_google_progress': {
+      'uz_lat': 'Google orqali kirilmoqda…',
+      'uz_cyr': 'Google орқали кирилмоқда…',
+      'ru': 'Вход через Google…',
+    },
+    'auth_google_failed': {
+      'uz_lat': "Google orqali kirish yakunlanmadi. Qayta urinib ko'ring.",
+      'uz_cyr': 'Google орқали кириш якунланмади. Қайта уриниб кўринг.',
+      'ru': 'Вход через Google не завершён. Попробуйте ещё раз.',
+    },
     'version_label': {'uz_lat': 'Versiya', 'uz_cyr': 'Версия', 'ru': 'Версия'},
     'my_results': {
       'uz_lat': 'Natijalarim',

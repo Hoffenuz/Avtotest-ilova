@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:app_links/app_links.dart';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -69,6 +70,7 @@ class AuthProvider extends ChangeNotifier {
           debugPrint('AuthProvider: auth stream error: $e');
         },
       );
+      unawaited(_listenForOAuthReturn());
     } catch (e) {
       debugPrint(
         'AuthProvider.init: auth unavailable, continuing as guest: $e',
@@ -409,9 +411,96 @@ class AuthProvider extends ChangeNotifier {
     return 'auth_error_generic';
   }
 
+  // ───────────────────────── Google return ─────────────────────────
+
+  /// Google sign-in comes back as `uz.avtotestu.app://auth-callback?code=…`.
+  /// The app handles that link itself (supabase_flutter's own handler is off,
+  /// see SupabaseService): it swaps the code for a session, and when that
+  /// fails it keeps the reason for the sign-in screen to show — the earlier
+  /// "Google does nothing" reports had no error message to go on at all.
+  StreamSubscription<Uri>? _linkSub;
+  final Set<String> _handledCodes = {};
+
+  String? _oauthError;
+  bool _oauthInProgress = false;
+
+  /// Why the last Google sign-in did not finish (server text), or null.
+  String? get oauthError => _oauthError;
+
+  /// The code from Google is being exchanged for a session.
+  bool get oauthInProgress => _oauthInProgress;
+
+  void clearOAuthError() {
+    if (_oauthError == null) return;
+    _oauthError = null;
+    notifyListeners();
+  }
+
+  Future<void> _listenForOAuthReturn() async {
+    try {
+      final links = AppLinks();
+      _linkSub = links.uriLinkStream.listen(
+        _handleOAuthReturn,
+        onError: (Object e) => debugPrint('AuthProvider: link stream: $e'),
+      );
+      // The app was closed while the user was on Google's page: the link is
+      // the one it was started with.
+      final initial = await links.getInitialLink();
+      if (initial != null) await _handleOAuthReturn(initial);
+    } catch (e) {
+      debugPrint('AuthProvider: deep links unavailable: $e');
+    }
+  }
+
+  /// The code or the error carried by a Google return link; null for any
+  /// other link. Errors may come in the query or in the fragment.
+  static ({String? code, String? error})? parseOAuthReturn(Uri uri) {
+    final expected = Uri.parse(SupabaseConfig.authRedirectUrl);
+    if (uri.scheme != expected.scheme || uri.host != expected.host) {
+      return null;
+    }
+    final params = {
+      ...uri.queryParameters,
+      if (uri.fragment.isNotEmpty) ...Uri.splitQueryString(uri.fragment),
+    };
+    final error = params['error_description'] ?? params['error'];
+    return (code: params['code'], error: error?.replaceAll('+', ' '));
+  }
+
+  Future<void> _handleOAuthReturn(Uri uri) async {
+    final result = parseOAuthReturn(uri);
+    if (result == null) return;
+    if (result.error != null) {
+      _oauthError = result.error;
+      notifyListeners();
+      return;
+    }
+    final code = result.code;
+    if (code == null || !_handledCodes.add(code)) return;
+
+    _oauthInProgress = true;
+    _oauthError = null;
+    notifyListeners();
+    try {
+      // The session then arrives through onAuthStateChange.
+      await SupabaseService.auth
+          .exchangeCodeForSession(code)
+          .timeout(const Duration(seconds: 20));
+    } on AuthException catch (e) {
+      _oauthError = e.message;
+    } on TimeoutException {
+      _oauthError = 'timeout';
+    } catch (e) {
+      _oauthError = '$e';
+    }
+    _oauthInProgress = false;
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     _authSub?.cancel();
+    _linkSub?.cancel();
     super.dispose();
   }
 }

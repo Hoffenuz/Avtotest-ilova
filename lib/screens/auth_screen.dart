@@ -221,7 +221,8 @@ class _AuthScreenState extends State<AuthScreen> {
       _errorMessage = null;
     });
 
-    final errKey = await context.read<AuthProvider>().signInWithGoogle();
+    final auth = context.read<AuthProvider>()..clearOAuthError();
+    final errKey = await auth.signInWithGoogle();
     if (!mounted) return;
 
     setState(() {
@@ -297,6 +298,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       enabled: !_isLoading,
                       onTap: _handleGoogle,
                     ),
+                    _GoogleStatus(lang: lang),
                     const SizedBox(height: 6),
                     Text(
                       s('google_hint'),
@@ -479,6 +481,7 @@ class _AuthScreenState extends State<AuthScreen> {
                       enabled: !_isLoading,
                       onTap: _handleGoogle,
                     ),
+                    _GoogleStatus(lang: lang),
                   ],
                   const SizedBox(height: 10),
                   Center(
@@ -851,6 +854,48 @@ class _FullNumber extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// What happened after Google sent the user back: "signing in…" while the
+/// code is exchanged, or the server's reason when it failed — never silence.
+class _GoogleStatus extends StatelessWidget {
+  final String lang;
+  const _GoogleStatus({required this.lang});
+
+  @override
+  Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    if (auth.oauthInProgress) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 10),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              AppStrings.get('auth_google_progress', lang),
+              style: TextStyle(fontSize: 13, color: AppTheme.textS(context)),
+            ),
+          ],
+        ),
+      );
+    }
+    final error = auth.oauthError;
+    if (error == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: _InlineMessage(
+        text: '${AppStrings.get('auth_google_failed', lang)}\n($error)',
+        color: AppTheme.error,
+        icon: Icons.error_outline,
       ),
     );
   }
