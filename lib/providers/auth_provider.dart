@@ -1,7 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:math';
 
 import 'package:app_links/app_links.dart';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../config/supabase_config.dart';
@@ -207,15 +211,76 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Google sign-in. Google's page opens in a Custom Tab on top of the app
-  /// (the phone's own Chrome, signed-in accounts included — Google refuses a
-  /// WebView), and the deep link registered in AndroidManifest.xml brings the
-  /// user back; `supabase_flutter` exchanges the code and
-  /// [_onAuthStateChange] fires.
+  /// Google sign-in.
   ///
-  /// It used to open the separate browser app: slower, and the way back to
-  /// the app depended on that browser letting the link through.
+  /// FIRST the phone's own Google account sheet (Credential Manager): no
+  /// browser and no return link — one tap on an account, and the ID token
+  /// goes straight to Supabase. The browser round trip it replaces failed on
+  /// real phones: Google answered, but the link back to the app never
+  /// arrived (Supabase logs: /callback 302, no /token afterwards).
+  ///
+  /// THEN, only if that is not possible on this phone or not set up yet, the
+  /// browser flow: Google's page in a Custom Tab, back through the deep link
+  /// handled in [_handleOAuthReturn].
   Future<String?> signInWithGoogle() async {
+    final native = await _signInWithGoogleNative();
+    if (native != _useBrowser) return native;
+    return _signInWithGoogleBrowser();
+  }
+
+  static const String _useBrowser = '_use_browser';
+  static bool _googleReady = false;
+  static String? _rawNonce;
+
+  /// null on success or when the user closed the sheet; [_useBrowser] when
+  /// the browser flow should take over.
+  Future<String?> _signInWithGoogleNative() async {
+    try {
+      final google = GoogleSignIn.instance;
+      if (!_googleReady) {
+        // One nonce per app run (initialize may only be called once): Google
+        // puts its hash in the token, Supabase checks it against this value.
+        _rawNonce = _randomNonce();
+        await google.initialize(
+          serverClientId: SupabaseConfig.googleWebClientId,
+          nonce: sha256.convert(utf8.encode(_rawNonce!)).toString(),
+        );
+        _googleReady = true;
+      }
+      if (!google.supportsAuthenticate()) return _useBrowser;
+
+      final account = await google.authenticate();
+      final idToken = account.authentication.idToken;
+      if (idToken == null) return _useBrowser;
+
+      // The session then arrives through onAuthStateChange.
+      await SupabaseService.auth.signInWithIdToken(
+        provider: OAuthProvider.google,
+        idToken: idToken,
+        nonce: _rawNonce,
+      );
+      return null;
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) return null;
+      // Not set up for this build (no Android OAuth client / SHA-1), no Play
+      // services, or the sheet could not be shown: the browser still works.
+      debugPrint('AuthProvider: native Google unavailable: ${e.code} $e');
+      return _useBrowser;
+    } on AuthException catch (e) {
+      debugPrint('AuthProvider: Supabase refused the Google token: $e');
+      return _useBrowser;
+    } catch (e) {
+      debugPrint('AuthProvider: native Google failed: $e');
+      return _useBrowser;
+    }
+  }
+
+  static String _randomNonce() {
+    final random = Random.secure();
+    return base64Url.encode(List<int>.generate(32, (_) => random.nextInt(256)));
+  }
+
+  Future<String?> _signInWithGoogleBrowser() async {
     try {
       final started = await SupabaseService.auth.signInWithOAuth(
         OAuthProvider.google,
@@ -276,6 +341,14 @@ class AuthProvider extends ChangeNotifier {
       await SupabaseService.auth.signOut();
     } catch (e) {
       debugPrint('AuthProvider.signOut: $e');
+    }
+    // Next time the account sheet asks again instead of reusing this one.
+    if (_googleReady) {
+      try {
+        await GoogleSignIn.instance.signOut();
+      } catch (e) {
+        debugPrint('AuthProvider.signOut (google): $e');
+      }
     }
     // The cached cloud history belongs to the account that just left — on a
     // shared device the next person must not see it.

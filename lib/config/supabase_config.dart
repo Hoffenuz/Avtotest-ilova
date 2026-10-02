@@ -38,4 +38,13 @@ class SupabaseConfig {
   /// Deep link registered in AndroidManifest.xml and in the Supabase
   /// dashboard's redirect URL list; used by Google sign-in.
   static const String authRedirectUrl = 'uz.avtotestu.app://auth-callback';
+
+  /// The Google "Web application" OAuth client Supabase's Google provider is
+  /// configured with (public — it is in every Google sign-in URL). Native
+  /// sign-in asks Google for an ID token issued to THIS client, which is the
+  /// audience Supabase accepts. Android also needs its own OAuth client
+  /// (package + SHA-1) in the same Google Cloud project — see
+  /// docs/GOOGLE-SIGNIN-ANDROID.md.
+  static const String googleWebClientId =
+      '272991925832-vithrtfh5iobm30fqkeb9dldvfvdnsvn.apps.googleusercontent.com';
 }
