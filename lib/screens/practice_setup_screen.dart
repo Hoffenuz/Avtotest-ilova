@@ -156,6 +156,7 @@ class _PracticeSetupScreenState extends State<PracticeSetupScreen> {
               // In the shell the tab bar already clears the system inset.
               bottom: !widget.embedded,
               child: BrandButton(
+                kind: BrandButtonKind.success,
                 label: s('start_test'),
                 icon: const Icon(Icons.play_arrow_rounded),
                 minHeight: 56,

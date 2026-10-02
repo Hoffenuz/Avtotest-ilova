@@ -76,7 +76,9 @@ class ProTag extends StatelessWidget {
   }
 }
 
-enum BrandButtonKind { primary, secondary }
+/// primary — blue; success — green, for starting a test; secondary — a
+/// soft tinted button that stays calm on a dark background.
+enum BrandButtonKind { primary, success, secondary }
 
 /// Asosiy — ko'k gradient, oq matn, yumshoq soya; ikkilamchi — oq fon, ko'k
 /// chegara va ko'k matn. Burchak 12 dp (saytdagi rounded-lg bilan bir xil).
@@ -106,9 +108,10 @@ class BrandButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dark = AppTheme.isDark(context);
-    final primary = kind == BrandButtonKind.primary;
+    final filled = kind != BrandButtonKind.secondary;
+    final success = kind == BrandButtonKind.success;
     final accent = AppTheme.brandAccent(context);
-    final foreground = primary ? Colors.white : accent;
+    final foreground = filled ? Colors.white : accent;
     final radius = BorderRadius.circular(AppTheme.radiusMd);
 
     final content = ConstrainedBox(
@@ -158,13 +161,14 @@ class BrandButton extends StatelessWidget {
       ),
     );
 
-    final Widget button = primary
+    final Widget button = filled
         ? DecoratedBox(
             decoration: BoxDecoration(
               borderRadius: radius,
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.blueDark.withValues(alpha: dark ? 0.4 : 0.28),
+                  color: (success ? AppTheme.successDark : AppTheme.blueDark)
+                      .withValues(alpha: dark ? 0.35 : 0.28),
                   blurRadius: 14,
                   offset: const Offset(0, 6),
                 ),
@@ -176,18 +180,24 @@ class BrandButton extends StatelessWidget {
               clipBehavior: Clip.antiAlias,
               child: Ink(
                 decoration: BoxDecoration(
-                  gradient: AppTheme.primaryGradient,
+                  gradient: success
+                      ? AppTheme.successGradient
+                      : AppTheme.primaryGradient,
                   borderRadius: radius,
                 ),
                 child: InkWell(onTap: onPressed, child: content),
               ),
             ),
           )
+        // Tinted, not outlined: a bright 1.5 dp outline on a dark ground
+        // read as harsh; a soft fill with a faint edge sits calmly in both.
         : Material(
-            color: dark ? Colors.transparent : AppTheme.lightCardBg,
+            color: accent.withValues(alpha: dark ? 0.14 : 0.07),
             shape: RoundedRectangleBorder(
               borderRadius: radius,
-              side: BorderSide(color: accent, width: 1.5),
+              side: BorderSide(
+                color: accent.withValues(alpha: dark ? 0.32 : 0.28),
+              ),
             ),
             clipBehavior: Clip.antiAlias,
             child: InkWell(onTap: onPressed, child: content),

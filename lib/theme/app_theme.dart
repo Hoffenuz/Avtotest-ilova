@@ -135,6 +135,15 @@ class AppTheme {
     end: Alignment.bottomRight,
   );
 
+  /// "Test ishlash" — yashil: test boshlash tugmasi. Oq matn bilan 3.3:1+
+  /// (katta qalin matn uchun yetarli).
+  static const Color successDark = Color(0xFF15803D);
+  static const LinearGradient successGradient = LinearGradient(
+    colors: [Color(0xFF16A34A), successDark],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
   /// PRO — oltin (amber-300 → amber-500), jigarrang matn bilan 6:1.
   static const LinearGradient goldGradient = LinearGradient(
     colors: [Color(0xFFFCD34D), Color(0xFFF59E0B)],
