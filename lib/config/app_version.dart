@@ -8,10 +8,10 @@ class AppVersion {
   AppVersion._();
 
   /// `version:` in pubspec.yaml, before the `+`.
-  static const String name = '1.0.11';
+  static const String name = '1.0.12';
 
   /// `version:` in pubspec.yaml, after the `+` — Android's versionCode.
-  static const int code = 11;
+  static const int code = 12;
 
   static String get displayVersion => 'v$name';
 
