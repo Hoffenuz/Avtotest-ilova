@@ -876,9 +876,11 @@ class AppStrings {
     },
     'no_saved_sub': {
       'uz_lat':
-          'Test ishlashda X tugmasi yonidagi belgi orqali savolni saqlang',
-      'uz_cyr': 'Тест ишлашда X тугмаси ёнидаги белги орқали саволни сақланг',
-      'ru': 'Сохраняйте вопросы кнопкой рядом с ✕ во время теста',
+          'Test ishlayotganda yuqoridagi saqlash belgisini bosing — savol shu yerda paydo bo\'ladi',
+      'uz_cyr':
+          'Тест ишлаётганда юқоридаги сақлаш белгисини босинг — савол шу ерда пайдо бўлади',
+      'ru':
+          'Во время теста нажмите значок закладки вверху — вопрос появится здесь',
     },
     'saved_count': {
       'uz_lat': 'ta saqlangan savol',

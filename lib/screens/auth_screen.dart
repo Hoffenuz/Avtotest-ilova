@@ -688,7 +688,7 @@ class _GoogleButton extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           padding: const EdgeInsets.symmetric(vertical: 14),
           foregroundColor: AppTheme.textP(context),
-          side: BorderSide(color: AppTheme.border(context)),
+          side: BorderSide(color: AppTheme.hairline(context)),
         ),
         icon: const _GoogleGlyph(),
         label: Text(

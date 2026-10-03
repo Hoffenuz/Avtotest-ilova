@@ -225,6 +225,8 @@ class _ResultScreenState extends State<ResultScreen>
                   BrandButton(
                     label: s('retake_test'),
                     icon: const Icon(Icons.replay_rounded),
+                    // Starting a test is green everywhere in the app.
+                    kind: BrandButtonKind.success,
                     onPressed:
                         widget.onRetake ??
                         () {

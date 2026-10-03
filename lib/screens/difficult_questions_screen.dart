@@ -5,6 +5,7 @@ import '../providers/language_provider.dart';
 import '../services/app_strings.dart';
 import '../services/difficult_questions_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/brand.dart';
 import '../widgets/guarded_test_launcher.dart';
 import '../widgets/premium_access_gate.dart';
 import 'test_screen.dart';
@@ -138,41 +139,13 @@ class _DifficultQuestionsContent extends StatelessWidget {
               label: s('difficulty_cat_long'),
             ),
             const SizedBox(height: 28),
-            SizedBox(
-              width: double.infinity,
-              child: Container(
-                decoration: BoxDecoration(
-                  gradient: AppTheme.orangeGradient,
-                  borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.orange.withValues(alpha: 0.3),
-                      blurRadius: 16,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(AppTheme.radiusLg),
-                    onTap: () => _start(context, lang),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      child: Center(
-                        child: Text(
-                          s('start_test'),
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+            // Green, as every other "start the test" button in the app.
+            BrandButton(
+              kind: BrandButtonKind.success,
+              label: s('start_test'),
+              icon: const Icon(Icons.play_arrow_rounded),
+              minHeight: 56,
+              onPressed: () => _start(context, lang),
             ),
           ],
         ),

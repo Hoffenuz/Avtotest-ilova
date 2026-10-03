@@ -86,6 +86,7 @@ class _PremiumAccessGateState extends State<PremiumAccessGate>
       return ProPaywallScreen(
         title: widget.featureTitle,
         onRetry: () => _openAuth(signUp: false),
+        showRefresh: false,
         primaryAction: ProPaywallAction(
           label: s('create_account_for_pro'),
           icon: Icons.person_add_alt_1_rounded,

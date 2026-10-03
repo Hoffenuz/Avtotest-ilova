@@ -30,7 +30,7 @@ class AppTheme {
   /// [inkMutedText] (5.3:1, WCAG AA).
   static const Color inkMuted = Color(0xFF7C87AE);
   static const Color inkMutedText = Color(0xFF5F6A92);
-  static const Color darkMutedText = Color(0xFF94A3B8);
+  static const Color darkMutedText = Color(0xFF9DAAB8);
 
   // PRO — yumshoq oltin (sayt amber-50/300/600/800), to'q sariq gradient emas.
   static const Color proBg = Color(0xFFFFFBEB);
@@ -41,10 +41,12 @@ class AppTheme {
   static const Color proTextDark = Color(0xFFFDE68A);
 
   // ──── DARK PALETTE ────
-  static const Color scaffoldBg = Color(0xFF0B1120);
-  static const Color cardBg = Color(0xFF15202E);
-  static const Color cardBgLight = Color(0xFF1C2A3D);
-  static const Color surfaceBg = Color(0xFF101B2C);
+  // Telegram'ning tungi temasiga yaqin ko'k-kulrang: qora emas, ko'zni
+  // charchatmaydi, kartalar fondan aniq ajralib turadi.
+  static const Color scaffoldBg = Color(0xFF17212B);
+  static const Color cardBg = Color(0xFF212D3B);
+  static const Color cardBgLight = Color(0xFF2A3848);
+  static const Color surfaceBg = Color(0xFF1C2733);
 
   // ──── LIGHT PALETTE ────
   static const Color lightScaffoldBg = Color(0xFFF5F7FA);
@@ -64,7 +66,7 @@ class AppTheme {
   // Text
   static const Color textPrimary = Color(0xFFFFFFFF);
   static const Color textSecondary = Color(0xFFB0BFCF);
-  static const Color textMuted = Color(0xFF6B7B8F);
+  static const Color textMuted = Color(0xFF7F8E9E);
   static const Color lightTextPrimary = Color(0xFF111827);
   static const Color lightTextSecondary = Color(0xFF4B5563);
   static const Color lightTextMuted = Color(0xFF9CA3AF);
@@ -113,7 +115,7 @@ class AppTheme {
       isDark(context) ? textMuted : lightTextMuted;
 
   static Color border(BuildContext context) => isDark(context)
-      ? Colors.white.withValues(alpha: 0.06)
+      ? Colors.white.withValues(alpha: 0.08)
       : Colors.black.withValues(alpha: 0.06);
 
   static Color primary(BuildContext context) => blue;
@@ -156,7 +158,7 @@ class AppTheme {
       isDark(context) ? darkMutedText : const Color(0xFF6B7280);
 
   static Color hairline(BuildContext context) =>
-      isDark(context) ? const Color(0xFF243044) : const Color(0xFFE5E7EB);
+      isDark(context) ? const Color(0xFF2F3E50) : const Color(0xFFE5E7EB);
 
   static Color accent(BuildContext context) => orange;
 

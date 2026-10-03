@@ -69,10 +69,21 @@ class HomeScreen extends StatelessWidget {
             onPro: () => push(const ProScreen()),
             actions: const [LanguageMenu()],
           ),
+          // Readiness sits right under the header and stays there while the
+          // page scrolls — signed-in users only; the same height in every
+          // state, so nothing below moves when the score arrives.
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+            child: ReadinessStripSlot(
+              gap: 0,
+              onOpen: () => push(MyResultsScreen(onStartTest: startTest)),
+              onStart: startTest,
+            ),
+          ),
           Expanded(
             child: LayoutBuilder(
               builder: (context, box) => ListView(
-                padding: const EdgeInsets.fromLTRB(16, 28, 16, 28),
+                padding: const EdgeInsets.fromLTRB(16, 20, 16, 28),
                 children: [
                   // THE HERO FILLS THE FIRST SCREEN. Its spare height is
                   // shared evenly above the text, between text and buttons and
@@ -82,7 +93,7 @@ class HomeScreen extends StatelessWidget {
                   ConstrainedBox(
                     constraints: BoxConstraints(
                       // Never negative, even in a tiny split-screen window.
-                      minHeight: (box.maxHeight - 72).clamp(
+                      minHeight: (box.maxHeight - 64).clamp(
                         0.0,
                         double.infinity,
                       ),
@@ -97,14 +108,6 @@ class HomeScreen extends StatelessWidget {
                             // A new version waiting on Play is worth interrupting for —
                             // practising on an outdated question bank forever is worse.
                             const UpdateBanner(),
-                            // Readiness, as on the website's home — signed-in
-                            // users only; the same height in every state, so
-                            // nothing below moves when the score arrives.
-                            ReadinessStripSlot(
-                              onOpen: () =>
-                                  push(MyResultsScreen(onStartTest: startTest)),
-                              onStart: startTest,
-                            ),
                             Align(
                               alignment: Alignment.centerLeft,
                               child: _Badge(text: s('home_badge')),

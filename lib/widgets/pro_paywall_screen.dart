@@ -5,6 +5,7 @@ import '../providers/language_provider.dart';
 import '../screens/pro_screen.dart';
 import '../services/app_strings.dart';
 import '../theme/app_theme.dart';
+import 'brand.dart';
 
 /// PRO subscription paywall shown when a user cannot access premium sections.
 class ProPaywallAction {
@@ -13,12 +14,16 @@ class ProPaywallAction {
 
   /// Filled gradient button when set, outlined button when null.
   final LinearGradient? gradient;
+
+  /// Label and icon colour on a [gradient] button.
+  final Color foreground;
   final VoidCallback onTap;
 
   const ProPaywallAction({
     required this.label,
     required this.icon,
     this.gradient,
+    this.foreground = Colors.white,
     required this.onTap,
   });
 }
@@ -30,6 +35,10 @@ class ProPaywallScreen extends StatelessWidget {
   final ProPaywallAction? primaryAction;
   final ProPaywallAction? secondaryAction;
 
+  /// "Statusni yangilash" — only means something to a signed-in user whose
+  /// subscription may have just been paid; a guest has no status to refresh.
+  final bool showRefresh;
+
   const ProPaywallScreen({
     super.key,
     required this.title,
@@ -37,6 +46,7 @@ class ProPaywallScreen extends StatelessWidget {
     required this.onRetry,
     this.primaryAction,
     this.secondaryAction,
+    this.showRefresh = true,
   });
 
   @override
@@ -55,25 +65,23 @@ class ProPaywallScreen extends StatelessWidget {
           child: Column(
             children: [
               const SizedBox(height: 24),
+              // The same gold crown as the PRO button in the header.
               Container(
-                width: 96,
-                height: 96,
+                width: 88,
+                height: 88,
+                alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  gradient: AppTheme.orangeGradient,
+                  gradient: AppTheme.goldGradient,
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.orange.withValues(alpha: 0.35),
+                      color: AppTheme.warning.withValues(alpha: 0.3),
                       blurRadius: 20,
                       offset: const Offset(0, 8),
                     ),
                   ],
                 ),
-                child: const Icon(
-                  Icons.workspace_premium_rounded,
-                  size: 48,
-                  color: Colors.white,
-                ),
+                child: const CrownIcon(size: 44, color: AppTheme.proText),
               ),
               const SizedBox(height: 20),
               Text(
@@ -94,16 +102,17 @@ class ProPaywallScreen extends StatelessWidget {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
-                    color: AppTheme.textM(context),
+                    color: AppTheme.mutedText(context),
                     height: 1.5,
                   ),
                 ),
               ),
               const SizedBox(height: 24),
-              _PerkRow(text: s('pro_perk_questions')),
-              _PerkRow(text: s('pro_perk_exams')),
-              _PerkRow(text: s('pro_perk_videos')),
-              _PerkRow(text: s('pro_perk_unlimited')),
+              // The same promises as the PRO page — nothing the app lacks.
+              _PerkRow(text: s('pro_perk_1')),
+              _PerkRow(text: s('pro_perk_2')),
+              _PerkRow(text: s('pro_perk_3')),
+              _PerkRow(text: s('pro_perk_5')),
               const SizedBox(height: 24),
               if (error != null) ...[
                 Container(
@@ -150,16 +159,19 @@ class ProPaywallScreen extends StatelessWidget {
                 action: ProPaywallAction(
                   label: s('subscribe_pro'),
                   icon: Icons.workspace_premium_rounded,
-                  gradient: AppTheme.orangeGradient,
+                  gradient: AppTheme.goldGradient,
+                  foreground: AppTheme.proText,
                   onTap: () => _openProTab(context),
                 ),
               ),
-              const SizedBox(height: 12),
-              TextButton.icon(
-                onPressed: onRetry,
-                icon: const Icon(Icons.refresh_rounded, size: 18),
-                label: Text(s('refresh_status')),
-              ),
+              if (showRefresh) ...[
+                const SizedBox(height: 12),
+                TextButton.icon(
+                  onPressed: onRetry,
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                  label: Text(s('refresh_status')),
+                ),
+              ],
             ],
           ),
         ),
@@ -193,7 +205,7 @@ class _ActionButton extends StatelessWidget {
           ),
           style: OutlinedButton.styleFrom(
             minimumSize: const Size(0, 50),
-            side: BorderSide(color: AppTheme.border(context)),
+            side: BorderSide(color: AppTheme.hairline(context)),
             foregroundColor: AppTheme.textP(context),
           ),
         ),
@@ -224,12 +236,12 @@ class _ActionButton extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(action.icon, color: Colors.white),
+                  Icon(action.icon, color: action.foreground),
                   const SizedBox(width: 8),
                   Text(
                     action.label,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: action.foreground,
                       fontSize: 15,
                       fontWeight: FontWeight.bold,
                     ),

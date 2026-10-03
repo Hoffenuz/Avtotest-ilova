@@ -190,7 +190,8 @@ class _AutoTestAppState extends State<AutoTestApp> with WidgetsBindingObserver {
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: dark ? Brightness.light : Brightness.dark,
       statusBarBrightness: dark ? Brightness.dark : Brightness.light,
-      systemNavigationBarColor: dark ? AppTheme.surfaceBg : Colors.white,
+      // The same colour as the tab bar above it, so the two read as one.
+      systemNavigationBarColor: dark ? AppTheme.cardBg : Colors.white,
       systemNavigationBarIconBrightness: dark
           ? Brightness.light
           : Brightness.dark,
