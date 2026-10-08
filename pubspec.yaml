@@ -10,7 +10,7 @@ publish_to: 'none'
 #
 # DIQQAT: lib/config/app_version.dart shu bilan mos bo'lishi shart —
 # test/app_version_test.dart mos kelmasa qurilishni to'xtatadi.
-version: 1.0.13+13
+version: 1.0.14+14
 
 environment:
 
