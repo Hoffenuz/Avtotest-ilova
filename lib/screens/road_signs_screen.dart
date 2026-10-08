@@ -8,6 +8,7 @@ import '../providers/language_provider.dart';
 import '../services/app_strings.dart';
 import '../services/road_sign_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/sources_note.dart';
 import '../utils/text_search.dart';
 
 /// Free, ungated illustrated gallery of road signs and their meanings —
@@ -151,7 +152,12 @@ class _RoadSignsScreenState extends State<RoadSignsScreen> {
                         ),
                       ),
                     ],
-                    const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                    const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.fromLTRB(16, 12, 16, 24),
+                        child: SourcesNote(),
+                      ),
+                    ),
                   ],
                 );
               },

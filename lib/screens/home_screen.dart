@@ -13,6 +13,7 @@ import 'difficult_questions_screen.dart';
 import 'errors_screen.dart';
 import 'main_shell.dart';
 import 'pro_screen.dart';
+import '../widgets/sources_note.dart';
 import 'real_exam_screen.dart';
 import 'profile_screen.dart';
 import 'topic_list_screen.dart';
@@ -218,6 +219,8 @@ class HomeScreen extends StatelessWidget {
                       onTap: () => push(const ProScreen()),
                     ),
                   ],
+                  const SizedBox(height: 16),
+                  const SourcesNote(),
                 ],
               ),
             ),

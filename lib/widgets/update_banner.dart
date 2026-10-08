@@ -9,6 +9,7 @@ import '../services/app_strings.dart';
 import '../services/app_update_service.dart';
 import '../services/review_prompt_service.dart';
 import '../theme/app_theme.dart';
+import '../screens/sources_screen.dart';
 import 'brand.dart';
 
 /// "A new version is available — install it" strip.
@@ -239,6 +240,16 @@ class _AboutGroupState extends State<AboutGroup> {
           showChevron: false,
           trailing: const _OutIcon(),
           onTap: _openSite,
+        ),
+        SettingsRow(
+          icon: Icons.gavel_rounded,
+          color: AppTheme.blueDark,
+          title: s('sources_title'),
+          subtitle: s('sources_not_gov_title'),
+          onTap: () => Navigator.push(
+            context,
+            AppTheme.slideRoute(const SourcesScreen()),
+          ),
         ),
         SettingsRow(
           icon: Icons.telegram_rounded,

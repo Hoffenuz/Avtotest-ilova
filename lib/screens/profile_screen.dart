@@ -17,6 +17,7 @@ import '../widgets/brand.dart';
 import '../widgets/update_banner.dart';
 import '../utils/phone.dart';
 import '../widgets/ha_yo_dialog.dart';
+import '../widgets/sources_note.dart';
 import '../providers/readiness_provider.dart';
 import '../widgets/readiness_widgets.dart';
 import 'errors_screen.dart';
@@ -533,6 +534,8 @@ class _ProfileScreenState extends State<ProfileScreen>
           const SizedBox(height: 20),
 
           const AboutGroup(),
+          const SizedBox(height: 8),
+          const SourcesNote(),
         ],
       ),
     );

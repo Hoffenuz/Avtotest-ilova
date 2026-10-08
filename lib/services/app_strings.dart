@@ -962,11 +962,108 @@ class AppStrings {
     },
     'average': {'uz_lat': "O'rtacha", 'uz_cyr': "Ўртача", 'ru': 'Среднее'},
 
+    // ── Sources and notice (Google Play: government information) ──
+    'sources_title': {
+      "uz_lat": "Manbalar va ogohlantirish",
+      "uz_cyr": "Манбалар ва огоҳлантириш",
+      "ru": "Источники и уведомление",
+    },
+    'sources_not_gov_title': {
+      "uz_lat": "Davlat organi emas",
+      "uz_cyr": "Давлат органи эмас",
+      "ru": "Не государственный орган",
+    },
+    'sources_not_gov': {
+      "uz_lat": "AvtoSmart — mustaqil o'quv ilovasi. U davlat organi, Ichki ishlar vazirligi, Yo'l harakati xavfsizligi xizmati yoki boshqa davlat tashkiloti nomidan ish yuritmaydi, ularga tegishli emas va davlat xizmatlarini ko'rsatmaydi. Ilova faqat tayyorgarlik uchun: rasmiy imtihon, ro'yxatdan o'tish va guvohnoma berish faqat davlat organlari orqali amalga oshiriladi.",
+      "uz_cyr": "AvtoSmart — мустақил ўқув иловаси. У давлат органи, Ички ишлар вазирлиги, Йўл ҳаракати хавфсизлиги хизмати ёки бошқа давлат ташкилоти номидан иш юритмайди, уларга тегишли эмас ва давлат хизматларини кўрсатмайди. Илова фақат тайёргарлик учун: расмий имтиҳон, рўйхатдан ўтиш ва гувоҳнома бериш фақат давлат органлари орқали амалга оширилади.",
+      "ru": "AvtoSmart — независимое учебное приложение. Оно не является государственным органом, не действует от имени Министерства внутренних дел, Службы безопасности дорожного движения или иной государственной организации, не связано с ними и не оказывает государственных услуг. Приложение предназначено только для подготовки: официальный экзамен, регистрация и выдача удостоверения проходят только через государственные органы.",
+    },
+    'sources_intro': {
+      "uz_lat": "Savollar, yo'l belgilari va izohlar quyidagi rasmiy hujjatlar va saytlar asosida tayyorlangan. Havolani bossangiz, asl manba ochiladi.",
+      "uz_cyr": "Саволлар, йўл белгилари ва изоҳлар қуйидаги расмий ҳужжатлар ва сайтлар асосида тайёрланган. Ҳаволани боссангиз, асл манба очилади.",
+      "ru": "Вопросы, дорожные знаки и пояснения подготовлены на основе следующих официальных документов и сайтов. Нажмите на ссылку, чтобы открыть первоисточник.",
+    },
+    'sources_footer': {
+      "uz_lat": "Ilovadagi savollar, izohlar va tarjimalarni AvtoSmart jamoasi tayyorlagan; ular rasmiy hujjat o'rnini bosmaydi. Qoidalar o'zgarishi mumkin — shubha tug'ilsa, yuqoridagi asl manbaga qarang.",
+      "uz_cyr": "Иловадаги саволлар, изоҳлар ва таржималарни AvtoSmart жамоаси тайёрлаган; улар расмий ҳужжат ўрнини босмайди. Қоидалар ўзгариши мумкин — шубҳа туғилса, юқоридаги асл манбага қаранг.",
+      "ru": "Вопросы, пояснения и переводы в приложении подготовлены командой AvtoSmart и не заменяют официальный документ. Правила могут меняться — при сомнениях обращайтесь к первоисточнику выше.",
+    },
+    'sources_note': {
+      "uz_lat": "AvtoSmart — davlat organi emas, mustaqil o'quv ilovasi. Qoidalar manbasi: lex.uz.",
+      "uz_cyr": "AvtoSmart — давлат органи эмас, мустақил ўқув иловаси. Қоидалар манбаси: lex.uz.",
+      "ru": "AvtoSmart — не государственный орган, а независимое учебное приложение. Источник правил: lex.uz.",
+    },
+    'sources_link': {
+      "uz_lat": "Manbalar",
+      "uz_cyr": "Манбалар",
+      "ru": "Источники",
+    },
+    'src_yhq_title': {
+      "uz_lat": "Yo'l harakati qoidalari",
+      "uz_cyr": "Йўл ҳаракати қоидалари",
+      "ru": "Правила дорожного движения",
+    },
+    'src_yhq_sub': {
+      "uz_lat": "Vazirlar Mahkamasining 2022-yil 12-apreldagi 172-son qarori (1-ilova — qoidalar, 2-ilova — yo'l chiziqlari)",
+      "uz_cyr": "Вазирлар Маҳкамасининг 2022 йил 12 апрелдаги 172-сон қарори (1-илова — қоидалар, 2-илова — йўл чизиқлари)",
+      "ru": "Постановление Кабинета Министров № 172 от 12 апреля 2022 года (приложение 1 — правила, приложение 2 — дорожная разметка)",
+    },
+    'src_law_title': {
+      "uz_lat": "«Yo'l harakati to'g'risida» qonuni",
+      "uz_cyr": "«Йўл ҳаракати тўғрисида» қонуни",
+      "ru": "Закон «О дорожном движении»",
+    },
+    'src_law_sub': {
+      "uz_lat": "O'zbekiston Respublikasining O'RQ-900-son Qonuni, 2024-yil 19-yanvar",
+      "uz_cyr": "Ўзбекистон Республикасининг ЎРҚ-900-сон Қонуни, 2024 йил 19 январь",
+      "ru": "Закон Республики Узбекистан № ЗРУ-900 от 19 января 2024 года",
+    },
+    'src_exam_title': {
+      "uz_lat": "Transport vositalarini boshqarish tizimi",
+      "uz_cyr": "Транспорт воситаларини бошқариш тизими",
+      "ru": "Система управления транспортными средствами",
+    },
+    'src_exam_sub': {
+      "uz_lat": "Vazirlar Mahkamasining 2025-yil 25-oktyabrdagi 676-son qarori — imtihon va tayyorgarlik tartibi",
+      "uz_cyr": "Вазирлар Маҳкамасининг 2025 йил 25 октябрдаги 676-сон қарори — имтиҳон ва тайёргарлик тартиби",
+      "ru": "Постановление Кабинета Министров № 676 от 25 октября 2025 года — порядок подготовки и экзаменов",
+    },
+    'src_license_title': {
+      "uz_lat": "Haydovchilik guvohnomasini berish",
+      "uz_cyr": "Ҳайдовчилик гувоҳномасини бериш",
+      "ru": "Выдача водительского удостоверения",
+    },
+    'src_license_sub': {
+      "uz_lat": "Imtihon topshirish va guvohnoma olish tartibi (lex.uz)",
+      "uz_cyr": "Имтиҳон топшириш ва гувоҳнома олиш тартиби (lex.uz)",
+      "ru": "Порядок сдачи экзамена и получения удостоверения (lex.uz)",
+    },
+    'src_yhxx_title': {
+      "uz_lat": "Yo'l harakati xavfsizligi xizmati (YHXX)",
+      "uz_cyr": "Йўл ҳаракати хавфсизлиги хизмати (ЙҲХХ)",
+      "ru": "Служба безопасности дорожного движения (СБДД)",
+    },
+    'src_yhxx_sub': {
+      "uz_lat": "Davlat xizmatining rasmiy sayti",
+      "uz_cyr": "Давлат хизматининг расмий сайти",
+      "ru": "Официальный сайт государственной службы",
+    },
+    'src_avtotalim_title': {
+      "uz_lat": "e-avtotalim",
+      "uz_cyr": "e-avtotalim",
+      "ru": "e-avtotalim",
+    },
+    'src_avtotalim_sub': {
+      "uz_lat": "Elektron avtomaktab tizimi (rasmiy sayt)",
+      "uz_cyr": "Электрон автомактаб тизими (расмий сайт)",
+      "ru": "Электронная автошкола (официальный сайт)",
+    },
+
     // ── Website screen ──
     'visit_website': {
-      'uz_lat': 'Rasmiy veb-saytimizga tashrif buyuring',
-      'uz_cyr': 'Расмий веб-сайтимизга ташриф буюринг',
-      'ru': 'Посетите наш официальный сайт',
+      'uz_lat': 'Veb-saytimiz: avtotestu.uz',
+      'uz_cyr': 'Веб-сайтимиз: avtotestu.uz',
+      'ru': 'Наш сайт: avtotestu.uz',
     },
     'rate_app': {
       'uz_lat': 'Ilovani baholash',
@@ -1659,20 +1756,20 @@ class AppStrings {
       'ru': 'Реальный экзамен',
     },
     'real_exam_sub': {
-      'uz_lat': 'Rasmiy imtihon shartlarida: 20 savol, 25 daqiqa, izohsiz',
-      'uz_cyr': 'Расмий имтиҳон шартларида: 20 савол, 25 дақиқа, изоҳсиз',
+      'uz_lat': 'Imtihonga o\'xshash mashq: 20 savol, 25 daqiqa, izohsiz',
+      'uz_cyr': 'Имтиҳонга ўхшаш машқ: 20 савол, 25 дақиқа, изоҳсиз',
       'ru':
-          'В условиях официального экзамена: 20 вопросов, 25 минут, без пояснений',
+          'Тренировка в формате экзамена: 20 вопросов, 25 минут, без пояснений',
     },
     'real_exam_intro': {
       'uz_lat':
-          'Imtihon rasmiy dastur ko\'rinishida ochiladi. Til imtihon ichida '
+          'Mashq imtihon dasturiga o\'xshash ko\'rinishda ochiladi. Til imtihon ichida '
           'almashtirilmaydi, izoh ko\'rsatilmaydi.',
       'uz_cyr':
-          'Имтиҳон расмий дастур кўринишида очилади. Тил имтиҳон ичида '
+          'Машқ имтиҳон дастурига ўхшаш кўринишда очилади. Тил имтиҳон ичида '
           'алмаштирилмайди, изоҳ кўрсатилмайди.',
       'ru':
-          'Экзамен открывается в виде официальной программы. Язык внутри '
+          'Тренировка открывается в виде, похожем на экзаменационную программу. Язык внутри '
           'экзамена не меняется, пояснения не показываются.',
     },
     'real_exam_start': {

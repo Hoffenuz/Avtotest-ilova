@@ -11,6 +11,8 @@ import 'package:avtotest_app/screens/memorize_screen.dart';
 import 'package:avtotest_app/screens/profile_screen.dart';
 import 'package:avtotest_app/screens/result_screen.dart';
 import 'package:avtotest_app/screens/sections_screen.dart';
+import 'package:avtotest_app/screens/sources_screen.dart';
+import 'package:avtotest_app/services/app_strings.dart';
 import 'package:avtotest_app/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -114,7 +116,9 @@ void main() {
 
     // The two the exam-day routine is built around, on the home screen rather
     // than a tab away — just below the fold, under the three main buttons.
-    for (final title in ['Real imtihon', 'Xatolar ustida ishlash']) {
+    // Top to bottom: scrollUntilVisible only ever scrolls down, so asking
+    // for the lower one first leaves the higher one behind it.
+    for (final title in ['Xatolar ustida ishlash', 'Real imtihon']) {
       await tester.scrollUntilVisible(
         find.text(title),
         200,
@@ -195,6 +199,40 @@ void main() {
     // The review prompt waits 2.2 s; let its timer fire before teardown.
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump(const Duration(seconds: 3));
+  });
+
+  testWidgets('Sources screen fits 320 dp, says it is not a government app '
+      'and links every original source', (tester) async {
+    await _pumpAt(tester, const SourcesScreen(), dark: false, tall: true);
+    expect(tester.takeException(), isNull);
+
+    expect(find.text('Davlat organi emas'), findsOneWidget);
+    // Every source shows its address, and the Play Store reviewer's .gov-style
+    // origin (lex.uz) is among them.
+    for (final src in kOfficialSources) {
+      await tester.scrollUntilVisible(find.text(src.shown), 200);
+      expect(find.text(src.shown), findsOneWidget);
+    }
+    expect(
+      kOfficialSources.where((s) => s.url.contains('lex.uz')).length,
+      greaterThanOrEqualTo(3),
+    );
+
+    // All three languages have every string (a missing key shows the key).
+    for (final lang in ['uz_lat', 'uz_cyr', 'ru']) {
+      for (final k in [
+        'sources_title',
+        'sources_not_gov_title',
+        'sources_not_gov',
+        'sources_intro',
+        'sources_footer',
+        'sources_note',
+        'sources_link',
+        for (final src in kOfficialSources) ...[src.titleKey, src.subKey],
+      ]) {
+        expect(AppStrings.get(k, lang), isNot(k), reason: '$k / $lang');
+      }
+    }
   });
 
   testWidgets('Settings is one flat list of uniform rows', (tester) async {

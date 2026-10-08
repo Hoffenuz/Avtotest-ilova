@@ -6,6 +6,7 @@ import '../providers/language_provider.dart';
 import '../services/app_strings.dart';
 import '../services/site_content_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/sources_note.dart';
 
 /// "Avtodrom" — the penalty-point table of the practical exam, graded into
 /// minor / medium / gross mistakes.
@@ -93,6 +94,7 @@ class _AvtodromScreenState extends State<AvtodromScreen> {
                   ),
                 const SizedBox(height: 12),
               ],
+              const SourcesNote(),
             ],
           );
         },
