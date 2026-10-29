@@ -43,7 +43,7 @@ class ReviewPromptService {
 
   /// Nothing is asked again inside this window, even if every other condition
   /// is met.
-  static const Duration promptInterval = Duration(days: 60);
+  static const Duration promptInterval = Duration(days: 30);
 
   /// A user who has said nothing after three asks is not going to.
   static const int maxPrompts = 3;

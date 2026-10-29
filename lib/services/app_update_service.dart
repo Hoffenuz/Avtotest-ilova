@@ -76,20 +76,19 @@ class AppUpdateService {
     return _status;
   }
 
-  /// Runs Play's immediate-update flow: a full-screen Play dialog that
-  /// downloads and installs, then restarts the app.
+  /// Play'ning MOSLASHUVCHAN (flexible) yangilanishi: yuklab olish fonda,
+  /// foydalanuvchi ilovada ishlayveradi; tugagach banner «O'rnatish»ga
+  /// aylanadi va [complete] ilovani qayta ishga tushiradi. Majburiy emas —
+  /// to'liq ekranli Play oynasi testni bo'lib qo'ymaydi.
   ///
-  /// Immediate rather than flexible because a stale question bank is the whole
-  /// point of updating this app — a user who defers keeps practising on
-  /// outdated answers without knowing it.
-  ///
-  /// Returns true when the update was started successfully. A cancelled or
-  /// failed flow falls back to opening the Play Store listing, so the user is
-  /// never left with a button that does nothing.
+  /// Returns true when the download was started (or finished) successfully.
+  /// A cancelled or failed flow falls back to opening the Play Store listing,
+  /// so the user is never left with a button that does nothing.
   static Future<bool> start() async {
     if (!isSupported) return openStorePage();
+    if (_status == UpdateStatus.readyToInstall) return complete();
     try {
-      final result = await InAppUpdate.performImmediateUpdate();
+      final result = await InAppUpdate.startFlexibleUpdate();
       if (result == AppUpdateResult.success) {
         _set(UpdateStatus.readyToInstall);
         return true;
@@ -99,6 +98,17 @@ class AppUpdateService {
       return openStorePage();
     } catch (e) {
       debugPrint('AppUpdateService.start: $e');
+      return openStorePage();
+    }
+  }
+
+  /// Yuklab olingan yangilanishni o'rnatadi (ilova qayta ishga tushadi).
+  static Future<bool> complete() async {
+    try {
+      await InAppUpdate.completeFlexibleUpdate();
+      return true;
+    } catch (e) {
+      debugPrint('AppUpdateService.complete: $e');
       return openStorePage();
     }
   }
