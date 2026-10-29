@@ -194,7 +194,8 @@ class _ResultScreenState extends State<ResultScreen>
                       color: color?.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(AppTheme.radiusMd),
                       border: Border.all(
-                        color: color?.withValues(alpha: 0.5) ??
+                        color:
+                            color?.withValues(alpha: 0.5) ??
                             AppTheme.border(ctx),
                       ),
                     ),
@@ -277,10 +278,10 @@ class _ResultScreenState extends State<ResultScreen>
         body: SafeArea(
           child: SingleChildScrollView(
             physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
             child: Column(
               children: [
-                const SizedBox(height: 24),
+                const SizedBox(height: 6),
                 // Animated circle
                 AnimatedBuilder(
                   animation: _scoreAnimation,
@@ -295,12 +296,12 @@ class _ResultScreenState extends State<ResultScreen>
                     );
                   },
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 14),
                 // Status badge
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
+                    horizontal: 20,
+                    vertical: 9,
                   ),
                   decoration: BoxDecoration(
                     color: widget.result.isPassed
@@ -316,7 +317,7 @@ class _ResultScreenState extends State<ResultScreen>
                   child: Text(
                     widget.result.isPassed ? s('congrats') : s('failed'),
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: widget.result.isPassed
                           ? AppTheme.success
@@ -333,7 +334,7 @@ class _ResultScreenState extends State<ResultScreen>
                     color: AppTheme.textM(context),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 14),
 
                 // Stats row
                 Row(
@@ -389,7 +390,8 @@ class _ResultScreenState extends State<ResultScreen>
                   ),
                 ),
 
-                // Xatolar: ro'yxatdan savolga o'tish va «Xatolar testi»
+                // Xatolar: ro'yxatdan savolga o'tish (amallar pastdagi
+                // doimiy panelda — ro'yxatni aylantirmasdan ham ko'rinadi)
                 if (wrong.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   _MistakesCard(
@@ -399,64 +401,137 @@ class _ResultScreenState extends State<ResultScreen>
                     questionLang: qLang,
                     onTap: (q) => _showMistake(q, lang, qLang),
                   ),
-                  const SizedBox(height: 12),
-                  BrandButton(
-                    label: s('mistakes_test'),
-                    icon: const Icon(Icons.rule_rounded),
-                    kind: BrandButtonKind.success,
-                    onPressed: () => _startMistakesTest(wrong, lang, qLang),
-                  ),
                 ],
-                const SizedBox(height: 20),
-
-                // Retake button
-                if (widget.onRetake != null ||
-                    widget.retakeLoadQuestions != null) ...[
-                  BrandButton(
-                    label: s('retake_test'),
-                    icon: const Icon(Icons.replay_rounded),
-                    // Starting a test is green everywhere in the app.
-                    kind: BrandButtonKind.success,
-                    onPressed:
-                        widget.onRetake ??
-                        () {
-                          Navigator.pushReplacement(
-                            context,
-                            AppTheme.fadeRoute(
-                              TestScreen(
-                                title: widget.testTitle ?? widget.result.label,
-                                loadQuestions: widget.retakeLoadQuestions!,
-                                testType:
-                                    widget.retakeTestType ?? widget.result.type,
-                                testLabel:
-                                    widget.retakeTestLabel ??
-                                    widget.result.label,
-                                testKey:
-                                    widget.retakeTestKey ??
-                                    widget.result.testKey,
-                                timeLimitMinutes:
-                                    widget.retakeTimeLimitMinutes ?? 60,
-                                countUp: widget.retakeCountUp,
-                                questionLang: widget.retakeQuestionLang,
-                              ),
-                            ),
-                          );
-                        },
-                  ),
-                  const SizedBox(height: 12),
-                ],
-
-                // Home button
-                BrandButton(
-                  label: s('go_home'),
-                  icon: const Icon(Icons.home_rounded),
-                  kind: BrandButtonKind.secondary,
-                  onPressed: () =>
-                      Navigator.of(context).popUntil((route) => route.isFirst),
-                ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 8),
               ],
             ),
+          ),
+        ),
+        bottomNavigationBar: _ResultActions(
+          hasMistakes: wrong.isNotEmpty,
+          canRetake:
+              widget.onRetake != null || widget.retakeLoadQuestions != null,
+          mistakesLabel: s('mistakes_test'),
+          retakeLabel: s('retake_test'),
+          homeLabel: s('go_home'),
+          onMistakes: () => _startMistakesTest(wrong, lang, qLang),
+          onRetake: _retake,
+          onHome: () =>
+              Navigator.of(context).popUntil((route) => route.isFirst),
+        ),
+      ),
+    );
+  }
+
+  void _retake() {
+    final custom = widget.onRetake;
+    if (custom != null) {
+      custom();
+      return;
+    }
+    Navigator.pushReplacement(
+      context,
+      AppTheme.fadeRoute(
+        TestScreen(
+          title: widget.testTitle ?? widget.result.label,
+          loadQuestions: widget.retakeLoadQuestions!,
+          testType: widget.retakeTestType ?? widget.result.type,
+          testLabel: widget.retakeTestLabel ?? widget.result.label,
+          testKey: widget.retakeTestKey ?? widget.result.testKey,
+          timeLimitMinutes: widget.retakeTimeLimitMinutes ?? 60,
+          countUp: widget.retakeCountUp,
+          questionLang: widget.retakeQuestionLang,
+        ),
+      ),
+    );
+  }
+}
+
+/// Pastdagi doimiy amallar paneli. Ilgari tugmalar ro'yxat oxirida edi —
+/// xatolar ro'yxati uzun bo'lsa ularga yetish uchun aylantirish kerak edi.
+/// Asosiy amal (yashil) — xatolar testi, u bo'lmasa qayta ishlash; ikkilamchi
+/// qatorda qayta ishlash va bosh sahifa.
+class _ResultActions extends StatelessWidget {
+  final bool hasMistakes;
+  final bool canRetake;
+  final String mistakesLabel;
+  final String retakeLabel;
+  final String homeLabel;
+  final VoidCallback onMistakes;
+  final VoidCallback onRetake;
+  final VoidCallback onHome;
+
+  const _ResultActions({
+    required this.hasMistakes,
+    required this.canRetake,
+    required this.mistakesLabel,
+    required this.retakeLabel,
+    required this.homeLabel,
+    required this.onMistakes,
+    required this.onRetake,
+    required this.onHome,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final primaryIsMistakes = hasMistakes;
+    final showRetakeSecondary = hasMistakes && canRetake;
+    return Container(
+      decoration: BoxDecoration(
+        color: AppTheme.card(context),
+        border: Border(top: BorderSide(color: AppTheme.hairline(context))),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              if (primaryIsMistakes)
+                BrandButton(
+                  label: mistakesLabel,
+                  icon: const Icon(Icons.rule_rounded),
+                  kind: BrandButtonKind.success,
+                  onPressed: onMistakes,
+                )
+              else if (canRetake)
+                BrandButton(
+                  label: retakeLabel,
+                  icon: const Icon(Icons.replay_rounded),
+                  kind: BrandButtonKind.success,
+                  onPressed: onRetake,
+                ),
+              if (primaryIsMistakes || canRetake) const SizedBox(height: 8),
+              Row(
+                children: [
+                  if (showRetakeSecondary) ...[
+                    Expanded(
+                      child: BrandButton(
+                        label: retakeLabel,
+                        icon: const Icon(Icons.replay_rounded),
+                        kind: BrandButtonKind.secondary,
+                        dense: true,
+                        minHeight: 48,
+                        onPressed: onRetake,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                  ],
+                  Expanded(
+                    child: BrandButton(
+                      label: homeLabel,
+                      icon: const Icon(Icons.home_rounded),
+                      kind: BrandButtonKind.secondary,
+                      dense: true,
+                      minHeight: 48,
+                      onPressed: onHome,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
@@ -593,8 +668,8 @@ class _ResultCircle extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = isPassed ? AppTheme.success : AppTheme.error;
     return SizedBox(
-      width: 170,
-      height: 170,
+      width: 136,
+      height: 136,
       child: Stack(
         fit: StackFit.expand,
         children: [
@@ -612,7 +687,7 @@ class _ResultCircle extends StatelessWidget {
                 Text(
                   '$percentage%',
                   style: TextStyle(
-                    fontSize: 40,
+                    fontSize: 34,
                     fontWeight: FontWeight.bold,
                     color: color,
                   ),
@@ -646,16 +721,16 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 12),
         decoration: AppTheme.cardDeco(context),
         child: Column(
           children: [
-            Icon(icon, color: color, size: 22),
-            const SizedBox(height: 6),
+            Icon(icon, color: color, size: 20),
+            const SizedBox(height: 4),
             Text(
               value,
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 22,
                 fontWeight: FontWeight.bold,
                 color: color,
               ),

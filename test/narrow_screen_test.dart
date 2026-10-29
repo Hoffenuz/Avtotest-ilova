@@ -1,3 +1,4 @@
+import 'package:avtotest_app/widgets/settings_tiles.dart';
 import 'package:avtotest_app/models/question.dart';
 import 'package:avtotest_app/providers/auth_provider.dart';
 import 'package:avtotest_app/providers/language_provider.dart';
@@ -245,17 +246,14 @@ void main() {
     );
     expect(tester.takeException(), isNull);
 
-    // "Mashq sozlamalari" is folded: its rows appear after one tap on it.
-    expect(find.text('Xatodan keyin izoh'), findsNothing);
-    await tester.tap(find.text('Mashq sozlamalari'));
-    await tester.pump(const Duration(milliseconds: 300));
-    expect(tester.takeException(), isNull);
-
-    // Every row is the same shape: icon, name, value, chevron or switch.
-    expect(find.text('Til'), findsOneWidget);
-    expect(find.text('Mavzu'), findsOneWidget);
-    expect(find.text("Savol matni o'lchami"), findsOneWidget);
+    // Tezkor sozlamalar — to'rtta kafel; qolganlari bir xil shakldagi
+    // qatorlar: ikonka, nom, qiymat, o'q yoki switch.
+    expect(find.text('Tun rejimi'), findsOneWidget);
+    expect(find.text('Animatsiyalar'), findsOneWidget);
+    expect(find.text("Avto-o'tish"), findsOneWidget);
     expect(find.text('Xatodan keyin izoh'), findsOneWidget);
+    expect(find.text('Til'), findsOneWidget);
+    expect(find.text("Savol matni o'lchami"), findsOneWidget);
     expect(find.text('Kunlik savol'), findsOneWidget);
 
     // Account actions live behind the pencil on the identity card, not in a
@@ -273,18 +271,11 @@ void main() {
       settle: false,
       tall: true,
     );
-    await tester.tap(find.text('Mashq sozlamalari'));
-    await tester.pump(const Duration(milliseconds: 300));
-
-    final row = find.ancestor(
-      of: find.text('Xatodan keyin izoh'),
-      matching: find.byType(Row),
-    );
-    final toggle = tester.widget<Switch>(
-      find.descendant(of: row.first, matching: find.byType(Switch)),
+    final tile = tester.widget<QuickToggleTile>(
+      find.widgetWithText(QuickToggleTile, 'Xatodan keyin izoh'),
     );
     expect(
-      toggle.value,
+      tile.value,
       isFalse,
       reason: 'a sheet opening on every mistake must be opted into',
     );

@@ -93,11 +93,9 @@ class HomeScreen extends StatelessWidget {
               builder: (context, box) => ListView(
                 padding: const EdgeInsets.fromLTRB(16, 20, 16, 28),
                 children: [
-                  // THE HERO FILLS THE FIRST SCREEN. Its spare height is
-                  // shared evenly above the text, between text and buttons and
-                  // below the buttons — the buttons stay low, near the thumb,
-                  // without a hole in the middle — and the quick sections
-                  // begin just below the fold.
+                  // Hero ixcham: qisqa sarlavha, bir jumla izoh, uchta
+                  // ko'rsatkich va tugmalar — hammasi birinchi ekranda,
+                  // tugmalar pastga «itarilmaydi».
                   // Behind the hero: the website's faint grid and blue glow
                   // (src/pages/Home.tsx), so the first screen is not a flat
                   // sheet of text. Bleeds 16px past the list padding on each
@@ -112,118 +110,123 @@ class HomeScreen extends StatelessWidget {
                         bottom: 0,
                         child: HeroBackdrop(),
                       ),
-                      ConstrainedBox(
-                        constraints: BoxConstraints(
-                          // Never negative, even in a tiny split-screen window.
-                          minHeight: (box.maxHeight - 64).clamp(
-                            0.0,
-                            double.infinity,
+                      // Tabiiy oqim: tugmalar statistikadan keyin darhol,
+                      // ekran pastiga «itarilmaydi» — barmoqqa yaqinroq va
+                      // bosh ekranda ko'proq narsa ko'rinadi.
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // A new version waiting on Play is worth interrupting for —
+                              // practising on an outdated question bank forever is worse.
+                              const UpdateBanner(),
+                              // Badge left, three real road signs right: the
+                              // subject of the app said without a word.
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Expanded(
+                                    child: Align(
+                                      alignment: Alignment.centerLeft,
+                                      child: _Badge(text: s('home_badge')),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const HeroSignCluster(),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                s('home_title'),
+                                style: TextStyle(
+                                  fontSize: 25,
+                                  fontWeight: FontWeight.w800,
+                                  height: 1.2,
+                                  letterSpacing: -0.3,
+                                  color: AppTheme.textP(context),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                s('home_subtitle').replaceAll(
+                                  '{variants}',
+                                  AppStrings.variantsPhrase(
+                                    QuestionService.variantCount,
+                                    lang,
+                                  ),
+                                ),
+                                style: TextStyle(
+                                  fontSize: 14.5,
+                                  height: 1.4,
+                                  color: AppTheme.mutedText(context),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              // What is inside, in numbers read from the bank
+                              // itself — each one opens its section.
+                              HeroStatsRow(
+                                lang: lang,
+                                onQuestions: startTest,
+                                onVariants: () =>
+                                    push(const VariantListScreen()),
+                                onSigns: () => push(const RoadSignsScreen()),
+                              ),
+                              const SizedBox(height: 16),
+                            ],
                           ),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                // A new version waiting on Play is worth interrupting for —
-                                // practising on an outdated question bank forever is worse.
-                                const UpdateBanner(),
-                                // Badge left, three real road signs right: the
-                                // subject of the app said without a word.
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Expanded(
-                                      child: Align(
-                                        alignment: Alignment.centerLeft,
-                                        child: _Badge(text: s('home_badge')),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    const HeroSignCluster(),
-                                  ],
-                                ),
-                                const SizedBox(height: 14),
-                                Text(
-                                  s('home_title'),
-                                  style: TextStyle(
-                                    fontSize: 29,
-                                    fontWeight: FontWeight.w800,
-                                    height: 1.22,
-                                    letterSpacing: -0.3,
-                                    color: AppTheme.textP(context),
-                                  ),
-                                ),
-                                const SizedBox(height: 14),
-                                Text(
-                                  s('home_subtitle').replaceAll(
-                                    '{variants}',
-                                    AppStrings.variantsPhrase(
-                                      QuestionService.variantCount,
-                                      lang,
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              BrandButton(
+                                kind: BrandButtonKind.success,
+                                label: s('home_btn_test'),
+                                icon: const Icon(Icons.play_arrow_rounded),
+                                minHeight: 56,
+                                // The practice tab, not a second copy of it on top.
+                                onPressed: () => context
+                                    .findAncestorStateOfType<MainShellState>()
+                                    ?.switchTab(MainShellState.practiceTab),
+                              ),
+                              const SizedBox(height: 10),
+                              // Ikkita ikkilamchi tugma yonma-yon: bitta
+                              // qator kam joy oladi, ikkalasi ham ko'rinadi.
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: BrandButton(
+                                      label: s('home_btn_variants'),
+                                      icon: isPro
+                                          ? crown
+                                          : const Icon(Icons.grid_view_rounded),
+                                      kind: secondaryKind,
+                                      dense: true,
+                                      minHeight: 54,
+                                      onPressed: () =>
+                                          push(const VariantListScreen()),
                                     ),
                                   ),
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    height: 1.55,
-                                    color: AppTheme.mutedText(context),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: BrandButton(
+                                      label: s('home_btn_topics'),
+                                      icon: isPro
+                                          ? crown
+                                          : const Icon(Icons.menu_book_rounded),
+                                      kind: secondaryKind,
+                                      dense: true,
+                                      minHeight: 54,
+                                      proTag: needsPro,
+                                      onPressed: () =>
+                                          push(const TopicListScreen()),
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 20),
-                                // What is inside, in numbers read from the bank
-                                // itself — each one opens its section.
-                                HeroStatsRow(
-                                  lang: lang,
-                                  onQuestions: startTest,
-                                  onVariants: () =>
-                                      push(const VariantListScreen()),
-                                  onSigns: () => push(const RoadSignsScreen()),
-                                ),
-                                const SizedBox(height: 24),
-                              ],
-                            ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                BrandButton(
-                                  kind: BrandButtonKind.success,
-                                  label: s('home_btn_test'),
-                                  icon: const Icon(Icons.play_arrow_rounded),
-                                  minHeight: 60,
-                                  // The practice tab, not a second copy of it on top.
-                                  onPressed: () => context
-                                      .findAncestorStateOfType<MainShellState>()
-                                      ?.switchTab(MainShellState.practiceTab),
-                                ),
-                                const SizedBox(height: 12),
-                                BrandButton(
-                                  label: s('home_btn_variants'),
-                                  icon: isPro
-                                      ? crown
-                                      : const Icon(Icons.grid_view_rounded),
-                                  kind: secondaryKind,
-                                  minHeight: 60,
-                                  onPressed: () =>
-                                      push(const VariantListScreen()),
-                                ),
-                                const SizedBox(height: 12),
-                                BrandButton(
-                                  label: s('home_btn_topics'),
-                                  icon: isPro
-                                      ? crown
-                                      : const Icon(Icons.menu_book_rounded),
-                                  kind: secondaryKind,
-                                  minHeight: 60,
-                                  proTag: needsPro,
-                                  onPressed: () =>
-                                      push(const TopicListScreen()),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ],
                   ),

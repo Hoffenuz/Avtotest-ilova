@@ -111,7 +111,9 @@ class BrandButton extends StatelessWidget {
     final filled = kind != BrandButtonKind.secondary;
     final success = kind == BrandButtonKind.success;
     final accent = AppTheme.brandAccent(context);
-    final foreground = filled ? Colors.white : accent;
+    // Ikkilamchi: qora/oq matn (o'qiladi), ikonka brend rangida.
+    final foreground = filled ? Colors.white : AppTheme.textP(context);
+    final iconColor = filled ? Colors.white : accent;
     final radius = BorderRadius.circular(AppTheme.radiusMd);
 
     final content = ConstrainedBox(
@@ -125,7 +127,7 @@ class BrandButton extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             IconTheme(
-              data: IconThemeData(color: foreground, size: dense ? 20 : 22),
+              data: IconThemeData(color: iconColor, size: dense ? 20 : 22),
               child: icon,
             ),
             SizedBox(width: dense ? 8 : 10),
@@ -189,18 +191,33 @@ class BrandButton extends StatelessWidget {
               ),
             ),
           )
-        // Tinted, not outlined: a bright 1.5 dp outline on a dark ground
-        // read as harsh; a soft fill with a faint edge sits calmly in both.
-        : Material(
-            color: accent.withValues(alpha: dark ? 0.14 : 0.07),
-            shape: RoundedRectangleBorder(
+        // Karta fonida, aniq chegara, to'q matn: avvalgi och ko'k "tint"
+        // o'chirilgan tugmaga o'xshardi («meni bosma»). Yorug'da yengil soya.
+        : DecoratedBox(
+            decoration: BoxDecoration(
               borderRadius: radius,
-              side: BorderSide(
-                color: accent.withValues(alpha: dark ? 0.32 : 0.28),
-              ),
+              boxShadow: dark
+                  ? null
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.06),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
             ),
-            clipBehavior: Clip.antiAlias,
-            child: InkWell(onTap: onPressed, child: content),
+            child: Material(
+              color: dark ? AppTheme.cardBgLight : AppTheme.lightCardBg,
+              shape: RoundedRectangleBorder(
+                borderRadius: radius,
+                side: BorderSide(
+                  color: accent.withValues(alpha: dark ? 0.5 : 0.45),
+                  width: 1.5,
+                ),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: InkWell(onTap: onPressed, child: content),
+            ),
           );
 
     if (!proTag) return button;
@@ -288,7 +305,7 @@ class SettingsGroup extends StatelessWidget {
     return Material(
       color: AppTheme.card(context),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        borderRadius: BorderRadius.circular(AppTheme.radiusLg),
         side: BorderSide(color: AppTheme.hairline(context)),
       ),
       clipBehavior: Clip.antiAlias,
@@ -299,7 +316,8 @@ class SettingsGroup extends StatelessWidget {
               Divider(
                 height: 1,
                 thickness: 1,
-                indent: 62,
+                indent: 60,
+                endIndent: 14,
                 color: AppTheme.hairline(context),
               ),
             children[i],
@@ -342,22 +360,25 @@ class SettingsRow extends StatelessWidget {
     final iconFg = destructive
         ? AppTheme.error
         : (color ?? AppTheme.brandAccent(context));
+    // Ikonka to'la rangli kvadratda, oq belgi (iOS Sozlamalaridagidek) —
+    // avvalgi och tintli kvadrat eskirgan ko'rinardi.
+    final iconBg = dark ? Color.lerp(iconFg, Colors.black, 0.1)! : iconFg;
     return InkWell(
       onTap: onTap,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: 56),
+        constraints: const BoxConstraints(minHeight: 54),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
           child: Row(
             children: [
               Container(
-                width: 36,
-                height: 36,
+                width: 32,
+                height: 32,
                 decoration: BoxDecoration(
-                  color: iconFg.withValues(alpha: dark ? 0.18 : 0.12),
-                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(9),
                 ),
-                child: Icon(icon, size: 20, color: iconFg),
+                child: Icon(icon, size: 18, color: Colors.white),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -379,7 +400,7 @@ class SettingsRow extends StatelessWidget {
                       Text(
                         subtitle!,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 12.5,
                           height: 1.3,
                           color: AppTheme.mutedText(context),
                         ),
@@ -392,8 +413,8 @@ class SettingsRow extends StatelessWidget {
               if (showChevron)
                 Icon(
                   Icons.chevron_right_rounded,
-                  size: 22,
-                  color: AppTheme.mutedText(context),
+                  size: 20,
+                  color: AppTheme.mutedText(context).withValues(alpha: 0.7),
                 ),
             ],
           ),

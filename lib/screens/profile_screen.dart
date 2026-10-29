@@ -17,6 +17,7 @@ import '../widgets/brand.dart';
 import '../widgets/update_banner.dart';
 import '../utils/phone.dart';
 import '../widgets/ha_yo_dialog.dart';
+import '../widgets/settings_tiles.dart';
 import '../widgets/sources_note.dart';
 import '../providers/readiness_provider.dart';
 import 'main_shell.dart';
@@ -372,6 +373,7 @@ class _ProfileScreenState extends State<ProfileScreen>
     final auth = context.watch<AuthProvider>();
     final settings = context.watch<SettingsProvider>();
     final isDark = context.watch<ThemeProvider>().isDark;
+    final isPro = context.watch<SubscriptionProvider>().isPro;
     String s(String k) => AppStrings.get(k, lang);
 
     if (_loading) {
@@ -401,7 +403,7 @@ class _ProfileScreenState extends State<ProfileScreen>
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
         children: [
-          // ── 1. Account ──
+          // ── 1. Hisob ──
           if (auth.isLoggedIn)
             _AccountCard(
               auth: auth,
@@ -423,44 +425,58 @@ class _ProfileScreenState extends State<ProfileScreen>
           // One calm PRO card: the status for a subscriber, the offer for
           // everyone else. The only PRO message on this screen.
           _ProEntryCard(lang: lang),
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
 
-          // ONE FLAT LIST, SETTINGS ONLY. Every row is the same row — icon,
-          // name, current value, and a chevron or a switch. Results used to sit
-          // in the middle of it as big cards; they have a page of their own
-          // now, behind one row below.
-          // Set once, rarely revisited: folded, one tap to open.
-          CollapsibleSettingsGroup(
-            icon: Icons.tune_rounded,
-            color: AppTheme.violet,
-            title: s('section_study'),
-            subtitle: s('section_study_sub'),
-            children: [
-              SettingsRow(
-                icon: Icons.skip_next_rounded,
+          // ── 2. Tezkor sozlamalar — eng ko'p o'zgartiriladigan to'rttasi
+          // kafel ko'rinishida: bitta bosish, holati rang bilan ko'rinadi.
+          _SectionLabel(text: s('quick_settings')),
+          QuickToggleGrid(
+            tiles: [
+              QuickToggleTile(
+                icon: Icons.dark_mode_rounded,
+                color: AppTheme.indigo,
+                title: s('dark_mode'),
+                onLabel: s('state_on'),
+                offLabel: s('state_off'),
+                value: isDark,
+                onChanged: (_) => context.read<ThemeProvider>().toggle(),
+              ),
+              QuickToggleTile(
+                icon: Icons.movie_rounded,
                 color: AppTheme.violet,
-                title: s('auto_advance_setting'),
-                subtitle: s('auto_advance_sub'),
-                showChevron: false,
-                trailing: BrandSwitch(
-                  value: settings.autoAdvance,
-                  onChanged: settings.setAutoAdvance,
-                ),
-                onTap: () => settings.setAutoAdvance(!settings.autoAdvance),
+                title: s('anim_setting'),
+                onLabel: s('state_on'),
+                offLabel: s('state_off'),
+                proBadge: !isPro,
+                value: settings.animations,
+                onChanged: settings.setAnimations,
               ),
-              SettingsRow(
+              QuickToggleTile(
+                icon: Icons.skip_next_rounded,
+                color: AppTheme.teal,
+                title: s('auto_advance'),
+                onLabel: s('state_on'),
+                offLabel: s('state_off'),
+                value: settings.autoAdvance,
+                onChanged: settings.setAutoAdvance,
+              ),
+              QuickToggleTile(
                 icon: Icons.menu_book_rounded,
-                color: AppTheme.blueDark,
+                color: AppTheme.orange,
                 title: s('auto_explanation'),
-                subtitle: s('auto_explanation_sub'),
-                showChevron: false,
-                trailing: BrandSwitch(
-                  value: settings.autoExplanation,
-                  onChanged: settings.setAutoExplanation,
-                ),
-                onTap: () =>
-                    settings.setAutoExplanation(!settings.autoExplanation),
+                onLabel: s('state_on'),
+                offLabel: s('state_off'),
+                value: settings.autoExplanation,
+                onChanged: settings.setAutoExplanation,
               ),
+            ],
+          ),
+          const SizedBox(height: 22),
+
+          // ── 3. Mashq ──
+          _SectionLabel(text: s('section_study')),
+          SettingsGroup(
+            children: [
               _DailyQuestionTile(lang: lang),
               // The slider lives in a sheet so this row looks like its
               // neighbours; the sheet is also where the live preview belongs.
@@ -473,8 +489,9 @@ class _ProfileScreenState extends State<ProfileScreen>
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
 
+          // ── 4. Ilova ──
           _SectionLabel(text: s('section_preferences')),
           SettingsGroup(
             children: [
@@ -485,24 +502,11 @@ class _ProfileScreenState extends State<ProfileScreen>
                 subtitle: context.watch<LanguageProvider>().langLabel,
                 onTap: () => _showLanguageSheet(lang),
               ),
-              SettingsRow(
-                color: AppTheme.orange,
-                icon: isDark
-                    ? Icons.dark_mode_rounded
-                    : Icons.light_mode_rounded,
-                title: s('theme'),
-                subtitle: isDark ? s('dark_mode') : s('light_mode'),
-                showChevron: false,
-                trailing: BrandSwitch(
-                  value: isDark,
-                  onChanged: (_) => context.read<ThemeProvider>().toggle(),
-                ),
-                onTap: () => context.read<ThemeProvider>().toggle(),
-              ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
 
+          // ── 5. Natijalar ──
           _SectionLabel(text: s('section_results')),
           SettingsGroup(
             children: [
@@ -530,7 +534,7 @@ class _ProfileScreenState extends State<ProfileScreen>
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 22),
 
           const AboutGroup(),
           const SizedBox(height: 8),
@@ -767,9 +771,6 @@ class _AccountCard extends StatelessWidget {
   final String lang;
 
   /// Opens the whole account sheet — name, password, sign-out, deletion.
-  /// The pencil used to edit only the name while everything else lived in a
-  /// separate collapsible group further down, so the one obvious control for
-  /// "my account" did the least of the things people came for.
   final VoidCallback onEditAccount;
 
   const _AccountCard({
@@ -791,23 +792,21 @@ class _AccountCard extends StatelessWidget {
               ? null
               : auth.userEmail[0].toUpperCase());
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: AppTheme.cardDeco(context, radius: AppTheme.radiusMd),
+    return _GradientCard(
       child: Row(
         children: [
           Container(
             width: 54,
             height: 54,
-            decoration: BoxDecoration(
-              color: AppTheme.brandFill(context),
+            decoration: const BoxDecoration(
+              color: Colors.white,
               shape: BoxShape.circle,
             ),
             child: Center(
               child: avatarLetter == null
                   ? const Icon(
                       Icons.person_rounded,
-                      color: Colors.white,
+                      color: AppTheme.blueDark,
                       size: 26,
                     )
                   : Text(
@@ -815,7 +814,7 @@ class _AccountCard extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: AppTheme.blueDark,
                       ),
                     ),
             ),
@@ -827,10 +826,10 @@ class _AccountCard extends StatelessWidget {
               children: [
                 Text(
                   hasName ? name : s('user_default_name'),
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textP(context),
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -843,7 +842,7 @@ class _AccountCard extends StatelessWidget {
                           ? Icons.phone_iphone_rounded
                           : Icons.mail_outline_rounded,
                       size: 14,
-                      color: AppTheme.textM(context),
+                      color: Colors.white.withValues(alpha: 0.85),
                     ),
                     const SizedBox(width: 5),
                     Expanded(
@@ -851,7 +850,7 @@ class _AccountCard extends StatelessWidget {
                         auth.displayIdentity,
                         style: TextStyle(
                           fontSize: 13,
-                          color: AppTheme.textM(context),
+                          color: Colors.white.withValues(alpha: 0.85),
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -867,10 +866,8 @@ class _AccountCard extends StatelessWidget {
             onPressed: onEditAccount,
             tooltip: s('section_account'),
             style: IconButton.styleFrom(
-              backgroundColor: AppTheme.brandAccent(
-                context,
-              ).withValues(alpha: 0.1),
-              foregroundColor: AppTheme.brandAccent(context),
+              backgroundColor: Colors.white.withValues(alpha: 0.18),
+              foregroundColor: Colors.white,
             ),
             icon: const Icon(Icons.edit_rounded, size: 18),
           ),
@@ -895,19 +892,17 @@ class _GuestCard extends StatelessWidget {
   Widget build(BuildContext context) {
     String s(String k) => AppStrings.get(k, lang);
 
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: AppTheme.cardDeco(context, radius: AppTheme.radiusMd),
+    return _GradientCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
               Container(
-                width: 48,
-                height: 48,
+                width: 46,
+                height: 46,
                 decoration: BoxDecoration(
-                  color: AppTheme.brandFill(context),
+                  color: Colors.white.withValues(alpha: 0.2),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
@@ -923,10 +918,10 @@ class _GuestCard extends StatelessWidget {
                   children: [
                     Text(
                       s('guest_mode'),
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.textP(context),
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
                       ),
                     ),
                     const SizedBox(height: 3),
@@ -934,8 +929,8 @@ class _GuestCard extends StatelessWidget {
                       s('guest_mode_hint'),
                       style: TextStyle(
                         fontSize: 12.5,
-                        color: AppTheme.textM(context),
                         height: 1.35,
+                        color: Colors.white.withValues(alpha: 0.85),
                       ),
                     ),
                   ],
@@ -943,22 +938,106 @@ class _GuestCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
           // Creating an account is the primary path for a new user; signing in
           // is for people who already registered here or on the website.
-          BrandButton(
-            onPressed: onSignUp,
-            icon: const Icon(Icons.person_add_alt_1_rounded),
+          _OnGradientButton(
             label: s('create_account_cta'),
+            icon: Icons.person_add_alt_1_rounded,
+            filled: true,
+            onTap: onSignUp,
           ),
-          const SizedBox(height: 10),
-          BrandButton(
-            kind: BrandButtonKind.secondary,
-            onPressed: onSignIn,
-            icon: const Icon(Icons.login_rounded),
+          const SizedBox(height: 8),
+          _OnGradientButton(
             label: s('have_account_sign_in'),
+            icon: Icons.login_rounded,
+            filled: false,
+            onTap: onSignIn,
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Hisob kartasi — brend gradientida, oq matn: sahifaning boshida bitta
+/// aniq urg'u, qolgan kartalar tinch.
+class _GradientCard extends StatelessWidget {
+  final Widget child;
+  const _GradientCard({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = AppTheme.isDark(context);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: AppTheme.primaryGradient,
+        borderRadius: BorderRadius.circular(AppTheme.radiusXl),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.blueDark.withValues(alpha: dark ? 0.35 : 0.25),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+/// Gradient karta ustidagi tugma: to'la (oq fon, ko'k matn) yoki shaffof
+/// (oq chegara, oq matn).
+class _OnGradientButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool filled;
+  final VoidCallback onTap;
+
+  const _OnGradientButton({
+    required this.label,
+    required this.icon,
+    required this.filled,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fg = filled ? AppTheme.blueDark : Colors.white;
+    return Material(
+      color: filled ? Colors.white : Colors.white.withValues(alpha: 0.14),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        side: filled
+            ? BorderSide.none
+            : BorderSide(color: Colors.white.withValues(alpha: 0.55)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        child: SizedBox(
+          height: 48,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 20, color: fg),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 15.5,
+                    fontWeight: FontWeight.w700,
+                    color: fg,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

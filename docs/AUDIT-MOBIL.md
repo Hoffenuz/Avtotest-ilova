@@ -110,3 +110,19 @@ natija ekrani xatolar ro'yxati — yorug'/tun, 360×800. Test muhitida video pla
 shuning uchun PRO kadrida video o'rniga rasm ko'rinadi; haqiqiy video faqat telefonda.
 Barcha ekranlar (3 o'lcham × 2 tema): `flutter test test/screenshots/screens_capture_test.dart --dart-define=SHOT_PHASE=animatsiya`.
 
+## 12. Dizayn yangilanishi (2026-10-29, ikkinchi bosqich)
+
+Egasining fikri: natija ekranida tugmalarga yetish uchun aylantirish kerak edi; hero'dagi
+ikkilamchi tugmalar o'chirilgandek ko'rinardi va pastda qolgandi; sozlamalar eskicha edi.
+
+| Joy | O'zgarish |
+|---|---|
+| `result_screen.dart` | Amallar pastdagi doimiy panelda (Xatolar testi / Qayta ishlash / Bosh sahifa) — aylantirmasdan ko'rinadi; sarlavha ixcham (doira 136 px) |
+| `brand.dart` BrandButton | Ikkilamchi tugma: karta foni, 1,5 px brend chegara, to'q matn, yengil soya — tugmaga o'xshaydi |
+| `home_screen.dart` hero | Sarlavha 25 px, bir jumla izoh, tugmalar statistikadan keyin darhol (pastga itarilmaydi); Variantlar · Mavzular yonma-yon |
+| `profile_screen.dart` | Hisob kartasi brend gradientida; «Tezkor sozlamalar» 2×2 kafel (Tun rejimi, Animatsiyalar, Avto-o'tish, Xatodan keyin izoh); qolgani guruhlangan qatorlar |
+| `brand.dart` SettingsRow | Ikonka to'la rangli kvadratda oq belgi (iOS uslubi), guruh radiusi 16 |
+| Arxitektura | `my_results_screen.dart` — natijalar ekrani profile_screen'dan ajratildi (2 167 → 1 430 qator); `settings_tiles.dart` — qayta ishlatiladigan kafel |
+
+Skrinshotlar: `docs/screenshots/dizayn/` (bosh ekran, sozlamalar, natija — yorug'/tun).
+

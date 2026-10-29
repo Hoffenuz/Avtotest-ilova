@@ -92,14 +92,14 @@ class AppStrings {
     // Site: home.heroSubtitle, with the app's own variant count.
     'home_subtitle': {
       'uz_lat':
-          "AvtoSmart — avtotestlar, yo'l belgilari va {variants}. "
-          'Haydovchilik guvohnomasi imtihoniga tayyorgarlik.',
+          "Avtotestlar, yo'l belgilari va {variants}. "
+          'Guvohnoma imtihoniga tayyorgarlik.',
       'uz_cyr':
-          'AvtoSmart — автотестлар, йўл белгилари ва {variants}. '
-          'Ҳайдовчилик гувоҳномаси имтиҳонига тайёргарлик.',
+          'Автотестлар, йўл белгилари ва {variants}. '
+          'Гувоҳнома имтиҳонига тайёргарлик.',
       'ru':
-          'AvtoSmart — автотесты, дорожные знаки и {variants}. '
-          'Подготовка к экзамену на водительские права.',
+          'Автотесты, дорожные знаки и {variants}. '
+          'Подготовка к экзамену на права.',
     },
     'home_btn_test': {
       'uz_lat': 'Test ishlash',
@@ -2160,6 +2160,13 @@ class AppStrings {
       'uz_cyr': 'Машқ созламалари',
       'ru': 'Настройки практики',
     },
+    'quick_settings': {
+      'uz_lat': 'Tezkor sozlamalar',
+      'uz_cyr': 'Тезкор созламалар',
+      'ru': 'Быстрые настройки',
+    },
+    'state_on': {'uz_lat': 'Yoqiq', 'uz_cyr': 'Ёқиқ', 'ru': 'Вкл.'},
+    'state_off': {'uz_lat': "O'chiq", 'uz_cyr': 'Ўчиқ', 'ru': 'Выкл.'},
     'auto_explanation': {
       'uz_lat': 'Xatodan keyin izoh',
       'uz_cyr': 'Хатодан кейин изоҳ',
