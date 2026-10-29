@@ -16,7 +16,7 @@ import 'main_shell.dart';
 import 'pro_screen.dart';
 import '../widgets/sources_note.dart';
 import 'real_exam_screen.dart';
-import 'profile_screen.dart';
+import 'my_results_screen.dart';
 import 'road_signs_screen.dart';
 import 'topic_list_screen.dart';
 import 'variant_list_screen.dart';

@@ -13,7 +13,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui' as ui;
 
-import 'package:avtotest_app/screens/profile_screen.dart';
+import 'package:avtotest_app/screens/my_results_screen.dart';
 import 'package:avtotest_app/services/readiness_service.dart';
 import 'package:avtotest_app/providers/readiness_provider.dart';
 import 'package:avtotest_app/models/question.dart';
