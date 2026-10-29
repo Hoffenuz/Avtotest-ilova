@@ -475,9 +475,60 @@ class AppStrings {
       'ru': 'Да, завершить',
     },
     'auto_advance': {
-      'uz_lat': 'Avtomatik o\'tish',
-      'uz_cyr': 'Автоматик ўтиш',
+      'uz_lat': "Avto-o'tish",
+      'uz_cyr': 'Авто-ўтиш',
       'ru': 'Автопереход',
+    },
+    'auto_advance_hint': {
+      'uz_lat': "Javobdan keyin keyingi savolga o'tadi",
+      'uz_cyr': 'Жавобдан кейин кейинги саволга ўтади',
+      'ru': 'После ответа — следующий вопрос',
+    },
+    // ── Test ekrani ⚙ sozlamalari va savol animatsiyasi (sayt bilan bir xil) ──
+    'anim_setting': {
+      'uz_lat': 'Animatsiyalar',
+      'uz_cyr': 'Анимациялар',
+      'ru': 'Анимации',
+    },
+    'anim_setting_hint': {
+      'uz_lat': "Javobdan keyin vaziyat videosi o'zi o'ynaydi",
+      'uz_cyr': 'Жавобдан кейин вазият видеоси ўзи ўйнайди',
+      'ru': 'После ответа видео ситуации запускается само',
+    },
+    'anim_label': {
+      'uz_lat': 'Animatsiya',
+      'uz_cyr': 'Анимация',
+      'ru': 'Анимация',
+    },
+    'anim_replay': {
+      'uz_lat': "Qayta ko'rish",
+      'uz_cyr': 'Қайта кўриш',
+      'ru': 'Смотреть снова',
+    },
+    'anim_play': {
+      'uz_lat': 'Davom ettirish',
+      'uz_cyr': 'Давом эттириш',
+      'ru': 'Продолжить',
+    },
+    'anim_show_image': {
+      'uz_lat': "Rasmni ko'rish",
+      'uz_cyr': 'Расмни кўриш',
+      'ru': 'Показать картинку',
+    },
+    'anim_show_animation': {
+      'uz_lat': 'Animatsiya',
+      'uz_cyr': 'Анимация',
+      'ru': 'Анимация',
+    },
+    'anim_fullscreen': {
+      'uz_lat': 'Kattalashtirish',
+      'uz_cyr': 'Катталаштириш',
+      'ru': 'Развернуть',
+    },
+    'anim_demo': {
+      'uz_lat': 'Namuna {n}/{total}',
+      'uz_cyr': 'Намуна {n}/{total}',
+      'ru': 'Пример {n}/{total}',
     },
     'auto_advance_on': {
       'uz_lat': "Avtomatik o'tish yoqildi",
@@ -989,9 +1040,9 @@ class AppStrings {
     'language': {'uz_lat': 'Til', 'uz_cyr': 'Тил', 'ru': 'Язык'},
     'theme': {'uz_lat': 'Mavzu', 'uz_cyr': 'Мавзу', 'ru': 'Тема'},
     'dark_mode': {
-      'uz_lat': "Qorong'u rejim",
-      'uz_cyr': "Қоронғу режим",
-      'ru': 'Тёмный режим',
+      'uz_lat': 'Tun rejimi',
+      'uz_cyr': 'Тун режими',
+      'ru': 'Тёмная тема',
     },
     'light_mode': {
       'uz_lat': "Yorug' rejim",

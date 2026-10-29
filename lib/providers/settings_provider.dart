@@ -11,6 +11,7 @@ class SettingsProvider extends ChangeNotifier {
   static const _scaleKey = 'question_text_scale';
   static const _autoExplanationKey = 'auto_explanation_on_wrong';
   static const _autoAdvanceKey = 'auto_advance_next_question';
+  static const _animationsKey = 'question_animations';
 
   // ── Question text size ────────────────────────────────────────────────
   //
@@ -52,6 +53,17 @@ class SettingsProvider extends ChangeNotifier {
   bool _autoAdvance = false;
   bool get autoAdvance => _autoAdvance;
 
+  // ── Savol animatsiyalari ──────────────────────────────────────────────
+
+  /// Standart holatda YOQIQ.
+  ///
+  /// Javobdan keyin vaziyat videosi rasm o'rnida o'zi o'ynaydi (saytdagi
+  /// `useTestSettings.animations` bilan bir xil). O'chirilsa video umuman
+  /// yuklanmaydi — rasm qoladi. Bepul foydalanuvchida ham sozlama ko'rinadi
+  /// va o'zgartiriladi (namuna videolari shu sozlamaga bo'ysunadi).
+  bool _animations = true;
+  bool get animations => _animations;
+
   Future<void> init() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -59,6 +71,7 @@ class SettingsProvider extends ChangeNotifier {
       if (savedScale != null) _scale = savedScale.clamp(minScale, maxScale);
       _autoExplanation = prefs.getBool(_autoExplanationKey) ?? false;
       _autoAdvance = prefs.getBool(_autoAdvanceKey) ?? false;
+      _animations = prefs.getBool(_animationsKey) ?? true;
     } catch (e) {
       debugPrint('SettingsProvider.init: $e');
     }
@@ -87,6 +100,13 @@ class SettingsProvider extends ChangeNotifier {
     _autoAdvance = value;
     notifyListeners();
     await _write((prefs) => prefs.setBool(_autoAdvanceKey, value));
+  }
+
+  Future<void> setAnimations(bool value) async {
+    if (value == _animations) return;
+    _animations = value;
+    notifyListeners();
+    await _write((prefs) => prefs.setBool(_animationsKey, value));
   }
 
   /// The UI has already been updated by the time this runs; a failed write
