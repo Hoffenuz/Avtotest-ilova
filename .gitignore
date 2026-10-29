@@ -50,3 +50,6 @@ android/key.properties
 **/*.jks
 **/*.keystore
 android/keystore-backup/
+
+# Gradle hisobotlari — build artefakti, repoda bo'lmasin
+android/build/
