@@ -1428,7 +1428,8 @@ class _SettingSwitchRow extends StatelessWidget {
                     if (hint != null)
                       Text(
                         hint!,
-                        maxLines: 1,
+                        // 360 px ekranda bir qatorga sig'masa so'z kesilmasin
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
                           fontSize: 12.5,

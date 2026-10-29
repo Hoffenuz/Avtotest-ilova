@@ -64,7 +64,7 @@ Versiya raqami o'zgartirilmadi (egasi reliz qiladi).
 | 29 | `android/build/reports/problems/problems-report.html` | Gradle hisoboti repoda tracked | `git rm --cached`, `.gitignore` ga `android/build/` |
 | 30 | `_gen_phase3.py`, `_gen_ui.py`, `test/study_features_test.dart.bak` | Bir martalik «barcha Dart UI fayllarini qayta yozish» skriptlari va `.bak` — tasodifan ishga tushsa ilovani buzadi | Repodan olindi (git tarixida qoladi) |
 | 31 | `lib/main.dart` | Ilk ochilish: birinchi kadrdan oldin faqat til/tema/sozlama o'qiladi; Supabase/auth/savollar — keyin | OK (avvaldan). **O'lchanmadi**: Android qurilma ulanmagan — egasi `flutter run --profile` bilan tekshirsin (maqsad ≤ 2 s) |
-| 32 | APK (release, arm64, `flutter build apk --target-platform android-arm64`) | Oldin (df14e73, animatsiyasiz): **96,6 MB** | Keyin: hisobotda (`video_player`/ExoPlayer qo'shilgan, rasmlar kichraygan) |
+| 32 | APK (release, arm64, `flutter build apk --target-platform android-arm64`) | Oldin (df14e73, animatsiyasiz): **96,6 MB** | Keyin (9a8f8b6): **77,9 MB** (−18,7 MB; `video_player`/ExoPlayer qo'shilgan bo'lsa ham) |
 
 ## 7. Havoladan ochish (App Links)
 
@@ -101,3 +101,12 @@ Versiya raqami o'zgartirilmadi (egasi reliz qiladi).
 - [ ] Trafikni tejash yoqiq: javobdan oldin tarmoq so'rovi yo'q (Android Studio Network Profiler)
 - [ ] Natija ekrani: xatolar ro'yxati → savol oynasi; «Xatolar testi»; bepulda «Izohni ochish — PRO olish»
 - [ ] Havola: `https://avtotestu.uz/pro` (assetlinks qo'yilgandan keyin) ilovada PRO ekranini ochadi
+
+## 11. Skrinshotlar
+
+`docs/screenshots/animatsiya/` — widget-test render (`test/screenshots/screens_capture_test.dart`,
+`SHOT_PHASE=animatsiya`): test ekrani javobdan oldin/keyin (bepul «▶ PRO», PRO), ⚙ menyu,
+natija ekrani xatolar ro'yxati — yorug'/tun, 360×800. Test muhitida video platformasi yo'q,
+shuning uchun PRO kadrida video o'rniga rasm ko'rinadi; haqiqiy video faqat telefonda.
+Barcha ekranlar (3 o'lcham × 2 tema): `flutter test test/screenshots/screens_capture_test.dart --dart-define=SHOT_PHASE=animatsiya`.
+

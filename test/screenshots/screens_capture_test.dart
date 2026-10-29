@@ -38,6 +38,8 @@ import 'package:avtotest_app/screens/test_screen.dart';
 import 'package:avtotest_app/screens/topic_list_screen.dart';
 import 'package:avtotest_app/screens/topic_stats_screen.dart';
 import 'package:avtotest_app/screens/variant_list_screen.dart';
+import 'package:avtotest_app/services/anim_demo.dart';
+import 'package:avtotest_app/services/animation_index_service.dart';
 import 'package:avtotest_app/services/question_service.dart';
 import 'package:avtotest_app/theme/app_theme.dart';
 import 'package:avtotest_app/services/payme_service.dart';
@@ -206,7 +208,62 @@ Future<void> Function(WidgetTester) _tab(int index) => (tester) async {
   await tester.pump();
 };
 
+/// Rasmli savol birinchi — animatsiya holatlarini ko'rsatish uchun.
+List<Question> get _imageFirst => [
+  ..._variant.where((q) => (q.mediaUrl ?? '').isNotEmpty),
+  ..._variant.where((q) => (q.mediaUrl ?? '').isEmpty),
+];
+
+TestScreen _testScreen(List<Question> questions) => TestScreen(
+  title: '1-variant',
+  loadQuestions: () async => questions,
+  testType: 'variant',
+  testLabel: '1-variant',
+  testKey: 'v1',
+  timeLimitMinutes: 25,
+);
+
+/// Birinchi savolda «video bor» deb belgilab, F1 javobni bosadi. Test
+/// muhitida video platformasi yo'q: PRO'da 0,6 s qorayish (intro) ko'rinadi,
+/// bepulda (namuna tugagan) burchakdagi «▶ PRO» chipi.
+Future<void> Function(WidgetTester) _answerFirst({required bool demoUsed}) =>
+    (tester) async {
+      final q = _imageFirst.first;
+      AnimationIndexService.setForTest({
+        AnimationIndexService.keyFor(q.mediaUrl)!: 'shot.mp4',
+      });
+      AnimDemo.resetForTest();
+      await AnimDemo.load();
+      if (demoUsed) {
+        AnimDemo.consume('shot-a');
+        AnimDemo.consume('shot-b');
+      }
+      await tester.tap(find.text('F1').first);
+      await tester.pump(const Duration(milliseconds: 120));
+    };
+
+Future<void> _openTestSettings(WidgetTester tester) async {
+  await tester.tap(find.byIcon(Icons.tune_rounded));
+  await tester.pump(const Duration(milliseconds: 400));
+}
+
 List<_Shot> _shots() => [
+  _Shot(
+    '07b_test_answered_free',
+    () => _testScreen(_imageFirst),
+    after: _answerFirst(demoUsed: true),
+  ),
+  _Shot(
+    '07c_test_answered_pro',
+    () => _testScreen(_imageFirst),
+    pro: true,
+    after: _answerFirst(demoUsed: false),
+  ),
+  _Shot(
+    '07d_test_settings',
+    () => _testScreen(_imageFirst),
+    after: _openTestSettings,
+  ),
   _Shot('01_home', () => MainShell(key: _shellKey)),
   _Shot(
     '01c_home_readiness',
