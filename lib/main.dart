@@ -11,6 +11,7 @@ import 'providers/subscription_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/theme_provider.dart';
 import 'services/anim_demo.dart';
+import 'services/deep_link_service.dart';
 import 'services/animation_index_service.dart';
 import 'services/payme_service.dart';
 import 'services/daily_question_service.dart';
@@ -206,6 +207,8 @@ class _AutoTestAppState extends State<AutoTestApp> with WidgetsBindingObserver {
 
     return MaterialApp(
       title: 'AvtoSmart',
+      // Sayt havolalari (App Links) shu navigator orqali ekran ochadi.
+      navigatorKey: DeepLinkService.navigatorKey,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,

@@ -52,6 +52,22 @@
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:scheme="uz.avtotestu.app" android:host="auth-callback"/>
             </intent-filter>
+            <!-- Sayt havolalari ilovada ochiladi (DeepLinkService): /savol/…,
+                 /variant, /pro, /mavzuli, /belgilar. Android 12+ da buning
+                 uchun saytda /.well-known/assetlinks.json bo'lishi shart. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https"/>
+                <data android:host="avtotestu.uz"/>
+                <data android:host="www.avtotestu.uz"/>
+                <data android:pathPrefix="/savol/"/>
+                <data android:pathPrefix="/variant"/>
+                <data android:pathPrefix="/pro"/>
+                <data android:pathPrefix="/mavzuli"/>
+                <data android:pathPrefix="/belgilar"/>
+            </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->

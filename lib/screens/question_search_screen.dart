@@ -17,20 +17,24 @@ import '../widgets/question_image.dart';
 /// "Savol qidirish" — free-text search across the whole question bank.
 /// PRO only, matching the website's `/qidirish`.
 class QuestionSearchScreen extends StatelessWidget {
-  const QuestionSearchScreen({super.key});
+  /// Sayt havolasidan (avtotestu.uz/savol/`slug`) kelgan boshlang'ich so'rov.
+  final String? initialQuery;
+
+  const QuestionSearchScreen({super.key, this.initialQuery});
 
   @override
   Widget build(BuildContext context) {
     final lang = context.watch<LanguageProvider>().lang;
     return PremiumAccessGate(
       featureTitle: AppStrings.get('question_search', lang),
-      child: const _QuestionSearchBody(),
+      child: _QuestionSearchBody(initialQuery: initialQuery),
     );
   }
 }
 
 class _QuestionSearchBody extends StatefulWidget {
-  const _QuestionSearchBody();
+  final String? initialQuery;
+  const _QuestionSearchBody({this.initialQuery});
 
   @override
   State<_QuestionSearchBody> createState() => _QuestionSearchBodyState();
@@ -81,6 +85,12 @@ class _QuestionSearchBodyState extends State<_QuestionSearchBody> {
       _all = all;
       _loading = false;
     });
+    // Sayt havolasidan kelgan so'rov — maydon to'ldiriladi va qidiriladi.
+    final initial = widget.initialQuery?.trim() ?? '';
+    if (initial.isNotEmpty) {
+      _controller.text = initial;
+      _onChanged(initial);
+    }
   }
 
   void _ensureHaystack(String lang) {

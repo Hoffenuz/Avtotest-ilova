@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/language_provider.dart';
+import '../services/deep_link_service.dart';
 import '../services/app_strings.dart';
 import '../theme/app_theme.dart';
 import '../widgets/tab_visibility.dart';
@@ -34,6 +35,15 @@ class MainShellState extends State<MainShell> {
   /// initState work) before the first frame; unopened tabs are now a cheap
   /// placeholder until they are needed.
   final Set<int> _visited = {0};
+
+  @override
+  void initState() {
+    super.initState();
+    // Sovuq startda kelgan sayt havolasi — bosh ekran chiqqach ochiladi.
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => DeepLinkService.flushPending(),
+    );
+  }
 
   void switchTab(int index) {
     if (index < 0 || index >= _tabCount || index == _currentIndex) return;

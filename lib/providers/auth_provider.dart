@@ -11,6 +11,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../config/supabase_config.dart';
 import '../services/profile_service.dart';
 import '../services/storage_service.dart';
+import '../services/deep_link_service.dart';
 import '../services/supabase_service.dart';
 import '../utils/phone.dart';
 
@@ -127,10 +128,9 @@ class AuthProvider extends ChangeNotifier {
     if (email == null) return 'auth_error_identifier_invalid';
 
     try {
-      final response = await SupabaseService.auth.signInWithPassword(
-        email: email,
-        password: password,
-      );
+      final response = await SupabaseService.auth
+          .signInWithPassword(email: email, password: password)
+          .timeout(const Duration(seconds: 20));
       _session = response.session;
       notifyListeners();
       unawaited(_refreshProfile());
@@ -158,7 +158,7 @@ class AuthProvider extends ChangeNotifier {
     if (UzPhone.isPhoneAccount(email)) return 'auth_error_reset_phone_account';
 
     try {
-      await SupabaseService.auth.resetPasswordForEmail(email);
+      await SupabaseService.auth.resetPasswordForEmail(email).timeout(const Duration(seconds: 20));
       return null;
     } on AuthException catch (e) {
       return _mapAuthError(e);
@@ -191,10 +191,12 @@ class AuthProvider extends ChangeNotifier {
     }
 
     try {
-      final response = await SupabaseService.client.functions.invoke(
-        'phone-signup',
-        body: {'phone': normalized, 'password': password},
-      );
+      final response = await SupabaseService.client.functions
+          .invoke(
+            'phone-signup',
+            body: {'phone': normalized, 'password': password},
+          )
+          .timeout(const Duration(seconds: 20));
 
       final data = response.data;
       final email = data is Map && data['email'] is String
@@ -254,11 +256,13 @@ class AuthProvider extends ChangeNotifier {
       if (idToken == null) return _useBrowser;
 
       // The session then arrives through onAuthStateChange.
-      await SupabaseService.auth.signInWithIdToken(
-        provider: OAuthProvider.google,
-        idToken: idToken,
-        nonce: _rawNonce,
-      );
+      await SupabaseService.auth
+          .signInWithIdToken(
+            provider: OAuthProvider.google,
+            idToken: idToken,
+            nonce: _rawNonce,
+          )
+          .timeout(const Duration(seconds: 20));
       return null;
     } on GoogleSignInException catch (e) {
       if (isUserCancel(e.code, e.description)) return null;
@@ -337,10 +341,9 @@ class AuthProvider extends ChangeNotifier {
     try {
       // Re-authenticate first so a forgotten unlocked phone can't be used to
       // take over the account.
-      await SupabaseService.auth.signInWithPassword(
-        email: email,
-        password: currentPassword,
-      );
+      await SupabaseService.auth
+          .signInWithPassword(email: email, password: currentPassword)
+          .timeout(const Duration(seconds: 20));
     } on AuthException catch (_) {
       return 'auth_error_current_password';
     } catch (e) {
@@ -349,9 +352,9 @@ class AuthProvider extends ChangeNotifier {
     }
 
     try {
-      await SupabaseService.auth.updateUser(
-        UserAttributes(password: newPassword),
-      );
+      await SupabaseService.auth
+          .updateUser(UserAttributes(password: newPassword))
+          .timeout(const Duration(seconds: 20));
       return null;
     } on AuthException catch (e) {
       return _mapAuthError(e);
@@ -363,7 +366,9 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> signOut() async {
     try {
-      await SupabaseService.auth.signOut();
+      await SupabaseService.auth.signOut().timeout(
+        const Duration(seconds: 10),
+      );
     } catch (e) {
       debugPrint('AuthProvider.signOut: $e');
     }
@@ -398,10 +403,9 @@ class AuthProvider extends ChangeNotifier {
     if (_session == null) return 'auth_error_generic';
 
     try {
-      final response = await SupabaseService.client.functions.invoke(
-        'delete-account',
-        body: {'confirm': true},
-      );
+      final response = await SupabaseService.client.functions
+          .invoke('delete-account', body: {'confirm': true})
+          .timeout(const Duration(seconds: 20));
       final data = response.data;
       if (data is Map && data['ok'] != true) {
         debugPrint('AuthProvider.deleteAccount: ${data['error']}');
@@ -417,7 +421,9 @@ class AuthProvider extends ChangeNotifier {
 
     // The account is gone server-side; drop the local session and data too.
     try {
-      await SupabaseService.auth.signOut();
+      await SupabaseService.auth.signOut().timeout(
+        const Duration(seconds: 10),
+      );
     } catch (_) {
       /* Token is already invalid — nothing to revoke. */
     }
@@ -567,7 +573,11 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> _handleOAuthReturn(Uri uri) async {
     final result = parseOAuthReturn(uri);
-    if (result == null) return;
+    if (result == null) {
+      // Google qaytishi emas — sayt havolasi bo'lishi mumkin (App Links).
+      DeepLinkService.handle(uri);
+      return;
+    }
     if (result.error != null) {
       _oauthError = result.error;
       notifyListeners();
