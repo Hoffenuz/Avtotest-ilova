@@ -136,9 +136,9 @@ class AppStrings {
           'Полная база вопросов, все {variants} и пояснение к каждому вопросу.',
     },
     'get_pro': {
-      'uz_lat': 'Pro olish',
-      'uz_cyr': 'Pro олиш',
-      'ru': 'Получить Pro',
+      'uz_lat': 'PRO olish',
+      'uz_cyr': 'PRO олиш',
+      'ru': 'Получить PRO',
     },
 
     // ── Navigation ──
@@ -595,7 +595,7 @@ class AppStrings {
     },
     'clear_practice_results_msg': {
       'uz_lat': "Test ishlash bo'limidagi natijalar o'chirilsinmi?",
-      'uz_cyr': "Test ishlash bo'limidagi natijalar o'chirilsinmi?",
+      'uz_cyr': 'Тест ишлаш бўлимидаги натижалар ўчирилсинми?',
       'ru': 'Удалить результаты из раздела «Тесты»?',
     },
     'login_for_cloud_results': {
@@ -1225,6 +1225,27 @@ class AppStrings {
       'uz_cyr': 'Қайта текшириш',
       'ru': 'Проверить снова',
     },
+    'explanation_unlock': {
+      'uz_lat': 'Izohni ochish — PRO olish',
+      'uz_cyr': 'Изоҳни очиш — PRO олиш',
+      'ru': 'Открыть пояснение — получить PRO',
+    },
+    // ── Natija ekrani: xatolar ro'yxati ──
+    'result_mistakes': {
+      'uz_lat': 'Xatolar',
+      'uz_cyr': 'Хатолар',
+      'ru': 'Ошибки',
+    },
+    'result_mistakes_hint': {
+      'uz_lat': "Savolga bosing — to'g'ri javob va izoh",
+      'uz_cyr': 'Саволга босинг — тўғри жавоб ва изоҳ',
+      'ru': 'Нажмите на вопрос — верный ответ и пояснение',
+    },
+    'mistakes_test': {
+      'uz_lat': 'Xatolar testi',
+      'uz_cyr': 'Хатолар тести',
+      'ru': 'Тест по ошибкам',
+    },
     'explanation_pro_message': {
       'uz_lat': "Izohlarni ko'rish uchun PRO obuna kerak",
       'uz_cyr': 'Изоҳларни кўриш учун PRO обуна керак',
@@ -1424,9 +1445,9 @@ class AppStrings {
       'ru': 'Неограниченное время и попытки',
     },
     'subscribe_pro': {
-      'uz_lat': 'PRO ga obuna bo\'lish',
-      'uz_cyr': 'PRO га обуна бўлиш',
-      'ru': 'Оформить PRO',
+      'uz_lat': 'PRO olish',
+      'uz_cyr': 'PRO олиш',
+      'ru': 'Получить PRO',
     },
     'refresh_status': {
       'uz_lat': 'Statusni yangilash',

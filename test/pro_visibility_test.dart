@@ -160,7 +160,8 @@ void main() {
         findsNothing,
         reason: 'this is the spinner that never stopped',
       );
-      expect(find.text('PRO'), findsOneWidget);
+      // Qulf tugmasi: «Izohni ochish — PRO olish»
+      expect(find.textContaining('PRO olish'), findsOneWidget);
       expect(find.byIcon(Icons.workspace_premium_rounded), findsOneWidget);
     });
 

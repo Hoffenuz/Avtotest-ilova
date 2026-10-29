@@ -93,7 +93,7 @@ class _ExplanationPanelState extends State<ExplanationPanel> {
         icon: Icons.workspace_premium_rounded,
         color: AppTheme.orange,
         message: s('explanation_pro_message'),
-        actionLabel: s('pro_badge'),
+        actionLabel: s('explanation_unlock'),
         onAction: () =>
             Navigator.push(context, AppTheme.slideRoute(const ProScreen())),
       );
