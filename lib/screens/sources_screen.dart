@@ -40,17 +40,8 @@ const List<OfficialSource> kOfficialSources = [
     'src_exam_sub',
     'https://lex.uz/uz/docs/-7791514',
   ),
-  OfficialSource(
-    'src_license_title',
-    'src_license_sub',
-    'https://lex.uz/acts/-3765833',
-  ),
-  OfficialSource('src_yhxx_title', 'src_yhxx_sub', 'https://yhxx.uz'),
-  OfficialSource(
-    'src_avtotalim_title',
-    'src_avtotalim_sub',
-    'https://e-avtotalim.uz',
-  ),
+  OfficialSource('src_iiv_title', 'src_iiv_sub', 'https://gov.uz/uz/iiv'),
+  OfficialSource('src_mygov_title', 'src_mygov_sub', 'https://my.gov.uz'),
 ];
 
 /// "Sources and notice": says plainly that AvtoSmart is not a government

@@ -1,143 +1,214 @@
 # Google Play — do'kon tavsifi (Misleading Claims / davlat ma'lumoti uchun tuzatilgan)
 
-Play Console → **Do'kon ro'yxati → Asosiy do'kon ro'yxati** (va boshqa tillar). Pastdagi matnni
-**to'liq tavsif** maydoniga qo'ying. Hozirgi tavsifda `Full description (en-US)` maydoniga
-o'zbekcha matn kiritilgan — shu maydonga ham, `uz` maydoniga ham **bir xil o'zbekcha** matnni qo'ying,
-`ru` maydoniga ruscha variantni.
+## Nega ikkinchi marta rad etildi (2026-10-10)
 
-Rad etilish sababi: ilova davlat ma'lumotini (YHQ, imtihon tartibi) beradi, lekin tavsifda **asl
-manbaga havola** va **"davlat organi emas" ogohlantirishi** yo'q edi. Quyidagi matnda ikkalasi
-ham birinchi qatorlarda turibdi.
+Google'ning dalili — **`Full description (en-US)`** maydoni. U yerda hali ham ESKI matn turgan
+("updated in accordance with the requirements of the State Traffic Safety Administration",
+"2026 State Standards") — manba havolasi ham, ogohlantirish ham yo'q. Ya'ni yangi matn en-US
+maydoniga tushmagan (yoki o'zgarish ko'rib chiqishga yuborilmagan).
 
-## Qisqa tavsif (80 belgigacha)
+Bundan tashqari oldingi matndagi havolalarning uchtasi yaroqsiz edi ("valid and functional" sharti):
 
-uz: `YHQ avtotestlari, 63 variant va yo'l belgilari. Davlat ilovasi emas.`
+| Havola | Holat |
+|---|---|
+| `https://e-avtotalim.uz` | DNS'da yo'q — sayt ochilmaydi |
+| `https://yhxx.uz` | SSL sertifikat xatosi — brauzer ogohlantirish beradi |
+| `https://lex.uz/acts/-3765833` | Bu VM 408-son (2018) qarori — **avtomaktablarni litsenziyalash**, "guvohnoma berish tartibi" emas |
 
-ru: `Тесты ПДД, 63 варианта и знаки. Не государственное приложение.`
+Ular olib tashlandi, o'rniga ishlaydigan rasmiy manbalar qo'yildi: Hukumat portalidagi IIV sahifasi
+(`gov.uz`) va Yagona interaktiv davlat xizmatlari portali (`my.gov.uz`). Barcha havolalar
+2026-10-10 da tekshirildi (HTTP 200, sarlavha mos).
 
-## To'liq tavsif — o'zbekcha
+Raqamlar ham ilovaga moslandi: **64 variant** (eski matnda 63), **34 mavzu** (eski matnda 35).
+
+## Play Console'da qadamlar
+
+1. **Grow → Store presence → Main store listing**. Tepada til ro'yxatini oching:
+   - **English (United States) – en-US** (default) → pastdagi **inglizcha** matn. Eng muhimi shu.
+   - **Uzbek – uz** (bo'lsa) → o'zbekcha matn.
+   - **Russian – ru-RU** (bo'lsa) → ruscha matn.
+   - **Translations** bo'limida avtomatik (Google translated) tarjimalar bo'lsa — o'chiring yoki
+     qo'lda almashtiring, ularda eski matn qolib ketadi.
+2. Qisqa tavsifni ham har bir tilda almashtiring.
+3. Skrinshotlarni yangilang: `avtosmart-brand/play-store/tayyor-v2/` (rasmlarda "rasmiy shartlarda"
+   degan da'vo olib tashlangan, ostiga "davlat ilovasi emas" yozilgan).
+4. Yangi AAB (manbalar ro'yxati tuzatilgan versiya) ni yuklang.
+5. **Publishing overview → Send changes for review**. Saqlash yetmaydi — yuborish kerak.
+6. Agar **Policy → App content** da "Government apps" savoli chiqsa: davlat bilan aloqasi yo'q.
+
+---
+
+## Short description (en-US, ≤ 80)
 
 ```
-AvtoSmart — haydovchilik guvohnomasi (prava) imtihoniga tayyorgarlik uchun MUSTAQIL o'quv ilovasi.
+Avtotest practice: 64 exam-style variants and road signs. Not a government app.
+```
 
-❗ MUHIM: AvtoSmart davlat organi emas va hech qanday davlat tashkiloti (Ichki ishlar vazirligi, Yo'l harakati xavfsizligi xizmati va boshqalar) nomidan ish yuritmaydi, ularga tegishli emas va davlat xizmatlarini ko'rsatmaydi. Rasmiy imtihon, ro'yxatdan o'tish va guvohnoma berish faqat davlat organlari orqali amalga oshiriladi.
+## Full description — English (en-US)
 
-📚 MA'LUMOT MANBALARI (rasmiy):
-• Yo'l harakati qoidalari — Vazirlar Mahkamasining 2022-yil 12-apreldagi 172-son qarori: https://lex.uz/docs/-5953883
+```
+AvtoSmart is an INDEPENDENT study app for practicing for the Uzbekistan driving licence theory test (avtotest).
+
+DISCLAIMER: AvtoSmart is NOT a government app. It is not affiliated with, endorsed by, or acting on behalf of any government entity, including the Ministry of Internal Affairs of the Republic of Uzbekistan or its Road Traffic Safety Service, and it does not provide any government service. The official exam, registration and issuance of driving licences are carried out only by government authorities.
+
+SOURCES OF GOVERNMENT INFORMATION (official):
+• Road Traffic Rules — Cabinet of Ministers Resolution No. 172 of 12 April 2022 (National Database of Legislation): https://lex.uz/docs/-5953883
+• Law "On Road Traffic" No. ZRU-900 of 19 January 2024: https://lex.uz/docs/-6764454
+• Driver training and examination system — Cabinet of Ministers Resolution No. 676 of 25 October 2025: https://lex.uz/uz/docs/-7791514
+• Ministry of Internal Affairs (Government Portal of Uzbekistan): https://gov.uz/en/iiv
+• Exam application and driving licence services (Single Portal of Interactive Public Services): https://my.gov.uz
+The questions, explanations and translations in the app are written by the AvtoSmart team for practice and do not replace the official documents. Rules may change — always check the original source above.
+
+WHAT'S INSIDE
+More than 1,250 practice questions on the road traffic rules, 64 exam-style variants and a collection of road signs. Works offline.
+
+64 PRACTICE VARIANTS
+Each variant follows the format of the theory test: 20 questions and a time limit. Every attempt is saved so you can see your progress.
+
+34 TOPICS
+Road signs, intersections, overtaking, stopping and parking, traffic lights, speed limits, road markings, first aid and more — practice each topic separately and focus on your weak spots.
+
+ROAD SIGNS AND MARKINGS
+All road signs with pictures and meanings, grouped and searchable.
+
+MISTAKES REVIEW
+Questions you answered wrong are collected automatically so you can practice them again. You can also bookmark questions.
+
+DIFFICULT QUESTIONS
+A special practice set built from the topics where people make the most mistakes.
+
+EXPLANATIONS
+Each question has an explanation of why the answer is correct and which rule it is based on.
+
+THREE LANGUAGES
+Uzbek (Latin and Cyrillic) and Russian. Switch at any time, even during a test.
+
+PRO
+Topic tests, all 64 variants and explanations for every question are available with a PRO subscription.
+
+• No ads
+• No internet required
+• Results are linked to your account
+• Dark mode
+
+Questions and suggestions: Telegram @avtotestu_ad
+Website: https://www.avtotestu.uz
+```
+
+---
+
+## Qisqa tavsif — o'zbekcha (uz)
+
+```
+Avtotest: 64 variant, mavzuli testlar va yo'l belgilari. Davlat ilovasi emas.
+```
+
+## To'liq tavsif — o'zbekcha (uz)
+
+```
+AvtoSmart — haydovchilik guvohnomasi (prava) imtihoniga tayyorgarlik uchun MUSTAQIL avtotest ilovasi.
+
+❗ OGOHLANTIRISH: AvtoSmart davlat ilovasi emas. U hech qanday davlat organi (O'zbekiston Respublikasi Ichki ishlar vazirligi, Yo'l harakati xavfsizligi xizmati va boshqalar) nomidan ish yuritmaydi, ularga tegishli emas va davlat xizmatlarini ko'rsatmaydi. Rasmiy imtihon, ro'yxatdan o'tish va guvohnoma berish faqat davlat organlari orqali amalga oshiriladi.
+
+📚 DAVLAT MA'LUMOTI MANBALARI (rasmiy):
+• Yo'l harakati qoidalari — Vazirlar Mahkamasining 2022-yil 12-apreldagi 172-son qarori (Qonunchilik ma'lumotlari milliy bazasi): https://lex.uz/docs/-5953883
 • «Yo'l harakati to'g'risida» qonun (O'RQ-900, 2024-yil 19-yanvar): https://lex.uz/docs/-6764454
 • Transport vositalarini boshqarish tizimi — Vazirlar Mahkamasining 2025-yil 25-oktyabrdagi 676-son qarori: https://lex.uz/uz/docs/-7791514
-• Haydovchilik guvohnomasini berish tartibi: https://lex.uz/acts/-3765833
-• Yo'l harakati xavfsizligi xizmati: https://yhxx.uz
-• Elektron avtomaktab: https://e-avtotalim.uz
-Ilovadagi savollar, izohlar va tarjimalarni AvtoSmart jamoasi tayyorlagan; ular rasmiy hujjat o'rnini bosmaydi. Qoidalar o'zgarishi mumkin — shubha tug'ilsa, asl manbaga qarang.
+• Ichki ishlar vazirligi (Hukumat portali): https://gov.uz/uz/iiv
+• Imtihonga ariza va haydovchilik guvohnomasi xizmatlari (Yagona interaktiv davlat xizmatlari portali): https://my.gov.uz
+Ilovadagi savollar, izohlar va tarjimalarni AvtoSmart jamoasi mashq uchun tayyorlagan; ular rasmiy hujjat o'rnini bosmaydi. Qoidalar o'zgarishi mumkin — shubha tug'ilsa, asl manbaga qarang.
 
 ILOVADA NIMA BOR
-Yo'l harakati qoidalari bo'yicha 1250 dan ortiq savol, 63 ta imtihon varianti va yo'l belgilari to'plami. Savollar bazasi 2026-yil uchun YHQ asosida yangilangan, ilova internetsiz ham ishlaydi.
+Yo'l harakati qoidalari bo'yicha 1250 dan ortiq mashq savoli, 64 ta variant va yo'l belgilari to'plami. Ilova internetsiz ham ishlaydi.
 
-63 TA IMTIHON VARIANTI
-Har bir variant imtihon tartibiga o'xshash tuzilgan: 20 ta savol va vaqt chegarasi. Har bir urinish natijasi saqlanadi — tayyorgarligingiz qanday o'sayotganini raqamlarda ko'rasiz.
+64 TA VARIANT
+Har bir variant imtihon formatida: 20 ta savol va vaqt chegarasi. Har bir urinish natijasi saqlanadi — tayyorgarligingiz qanday o'sayotganini ko'rasiz.
 
-MAVZULI YHQ TESTLARI
-Yo'l belgilari, chorrahalar, quvib o'tish, to'xtash va to'xtab turish, svetofor ishoralari, tezlik rejimi, yo'l chiziqlari, birinchi tibbiy yordam — 35 ta mavzu bo'yicha alohida test. Zaif mavzuni topib, faqat shuni mashq qilasiz.
+34 TA MAVZU BO'YICHA AVTOTEST
+Yo'l belgilari, chorrahalar, quvib o'tish, to'xtash va to'xtab turish, svetofor ishoralari, tezlik, yo'l chiziqlari, birinchi tibbiy yordam va boshqalar. Zaif mavzuni topib, faqat shuni mashq qilasiz.
 
 YO'L BELGILARI VA CHIZIQLAR
-Barcha yo'l belgilari rasmi va ma'nosi bitta bo'limda, guruhlarga ajratilgan. Qidiruv orqali kerakli belgini bir necha soniyada topasiz.
+Barcha yo'l belgilari rasmi va ma'nosi bilan, guruhlarga ajratilgan, qidiruv bor.
 
 XATOLAR USTIDA ISHLASH
-Xato javob bergan savollaringiz avtomatik yig'iladi va alohida test sifatida qayta ishlanadi. Yoqtirgan yoki chalkash savollarni saqlab qo'yish ham mumkin.
+Xato javob bergan savollaringiz avtomatik yig'iladi va alohida qayta ishlanadi. Savollarni saqlab qo'yish ham mumkin.
 
 QIYIN SAVOLLAR
-Eng ko'p xato qilinadigan mavzulardan tuzilgan maxsus test: chorrahalardan o'tish tartibi, belgilar ma'nosi, birinchi tibbiy yordam.
+Eng ko'p xato qilinadigan mavzulardan tuzilgan maxsus test.
 
-BATAFSIL IZOHLAR
-Har bir savolga izoh biriktirilgan: javob nima uchun to'g'ri va qoidaning qaysi bandiga asoslanadi. Yodlash emas, tushunish.
+IZOHLAR
+Har bir savolga izoh: javob nima uchun to'g'ri va qoidaning qaysi bandiga asoslanadi.
 
 UCH TILDA
-O'zbekcha (lotin va kirill) hamda ruscha. Tilni istalgan paytda, hatto test ichida ham almashtirasiz. Kirill va rus tilidagi matnlar shu loyihada tarjima qilingan.
+O'zbekcha (lotin va kirill) hamda ruscha. Tilni istalgan paytda, hatto test ichida ham almashtirasiz.
 
-KIMLAR UCHUN
-• Avtomaktabda o'qiyotganlar
-• Imtihonga mustaqil tayyorlanayotganlar
-• Imtihondan o'ta olmay, qayta topshirayotganlar
-• Guvohnomasi bor, lekin YHQni takrorlamoqchi bo'lgan haydovchilar
+PRO
+Mavzuli testlar, barcha 64 variant va har bir savolga izoh PRO obuna bilan ochiladi.
 
-QANDAY TAYYORLANASIZ
-1. Mavzuli testlardan boshlang — qaysi mavzu bo'sh ekanini aniqlang
-2. Xatolaringizni alohida ishlang va izohlarni o'qing
-3. 63 ta variantni ketma-ket topshirib, imtihon tartibiga ko'nikasiz
-
-PRO IMKONIYATLARI
-Mavzuli testlar, 63 ta imtihon varianti va har bir savolga batafsil izoh PRO obuna bilan ochiladi.
-
-NEGA AVTOSMART
-• Reklama yo'q — testga hech narsa xalal bermaydi
+• Reklama yo'q
 • Internet shart emas
-• Natijalar hisobingizga bog'lanadi — telefon almashtirsangiz ham yo'qolmaydi
-• Qorong'i rejim va tez ishlaydigan yengil interfeys
+• Natijalar hisobingizga bog'lanadi
+• Tungi rejim
 
-Savol va takliflar: @avtotestu_ad
+Savol va takliflar: Telegram @avtotestu_ad
 Sayt: https://www.avtotestu.uz
 ```
 
-## To'liq tavsif — ruscha
+---
+
+## Краткое описание — ru-RU
 
 ```
-AvtoSmart — НЕЗАВИСИМОЕ учебное приложение для подготовки к экзамену на водительское удостоверение.
+Автотест: 64 варианта, тесты по темам и знаки. Не государственное приложение.
+```
 
-❗ ВАЖНО: AvtoSmart не является государственным органом и не действует от имени каких-либо государственных организаций (Министерства внутренних дел, Службы безопасности дорожного движения и др.), не связано с ними и не оказывает государственных услуг. Официальный экзамен, регистрация и выдача удостоверения проходят только через государственные органы.
+## Полное описание — ru-RU
 
-📚 ИСТОЧНИКИ ИНФОРМАЦИИ (официальные):
-• Правила дорожного движения — постановление Кабинета Министров № 172 от 12 апреля 2022 года: https://lex.uz/docs/-5953883
+```
+AvtoSmart — НЕЗАВИСИМОЕ приложение-автотест для подготовки к теоретическому экзамену на водительское удостоверение в Узбекистане.
+
+❗ ОГОВОРКА: AvtoSmart не является государственным приложением. Оно не связано с государственными органами (Министерством внутренних дел Республики Узбекистан, Службой безопасности дорожного движения и др.), не действует от их имени и не оказывает государственных услуг. Официальный экзамен, регистрация и выдача удостоверения проходят только через государственные органы.
+
+📚 ИСТОЧНИКИ ГОСУДАРСТВЕННОЙ ИНФОРМАЦИИ (официальные):
+• Правила дорожного движения — постановление Кабинета Министров № 172 от 12 апреля 2022 года (Национальная база данных законодательства): https://lex.uz/docs/-5953883
 • Закон «О дорожном движении» (ЗРУ-900 от 19 января 2024 года): https://lex.uz/docs/-6764454
-• Система управления транспортными средствами — постановление Кабинета Министров № 676 от 25 октября 2025 года: https://lex.uz/uz/docs/-7791514
-• Порядок выдачи водительского удостоверения: https://lex.uz/acts/-3765833
-• Служба безопасности дорожного движения: https://yhxx.uz
-• Электронная автошкола: https://e-avtotalim.uz
-Вопросы, пояснения и переводы в приложении подготовлены командой AvtoSmart и не заменяют официальный документ. Правила могут меняться — при сомнениях обращайтесь к первоисточнику.
+• Система подготовки водителей и экзаменов — постановление Кабинета Министров № 676 от 25 октября 2025 года: https://lex.uz/uz/docs/-7791514
+• Министерство внутренних дел (Правительственный портал): https://gov.uz/ru/iiv
+• Заявление на экзамен и услуги по водительскому удостоверению (Единый портал интерактивных государственных услуг): https://my.gov.uz
+Вопросы, пояснения и переводы в приложении подготовлены командой AvtoSmart для тренировки и не заменяют официальные документы. Правила могут меняться — при сомнениях обращайтесь к первоисточнику.
 
 ЧТО ВНУТРИ
-Более 1250 вопросов по ПДД, 63 экзаменационных варианта и полная подборка дорожных знаков. База вопросов обновлена на 2026 год на основе ПДД, приложение работает и без интернета.
+Более 1250 тренировочных вопросов по ПДД, 64 варианта и подборка дорожных знаков. Работает без интернета.
 
-63 ВАРИАНТА
-Каждый вариант составлен по образцу экзамена: 20 вопросов и ограничение по времени. Результат каждой попытки сохраняется — вы видите, как растёт ваша подготовка.
+64 ВАРИАНТА
+Каждый вариант в формате экзамена: 20 вопросов и ограничение по времени. Результаты сохраняются — вы видите свой прогресс.
 
-ТЕМАТИЧЕСКИЕ ТЕСТЫ ПДД
-Знаки, перекрёстки, обгон, остановка и стоянка, сигналы светофора, скоростной режим, дорожная разметка, первая помощь — 35 тем. Находите слабую тему и тренируйте только её.
+АВТОТЕСТ ПО 34 ТЕМАМ
+Знаки, перекрёстки, обгон, остановка и стоянка, светофор, скорость, разметка, первая помощь и другое. Находите слабую тему и тренируйте только её.
 
 ДОРОЖНЫЕ ЗНАКИ И РАЗМЕТКА
-Все знаки с картинкой и значением в одном разделе, по группам. Поиск находит нужный знак за секунды.
+Все знаки с картинкой и значением, по группам, с поиском.
 
 РАБОТА НАД ОШИБКАМИ
-Вопросы, на которые вы ответили неверно, собираются автоматически и проходятся отдельным тестом. Понравившиеся и запутавшие вопросы можно сохранить.
+Неверно отвеченные вопросы собираются автоматически. Вопросы можно сохранять.
 
 СЛОЖНЫЕ ВОПРОСЫ
-Особый тест из тем, где чаще всего ошибаются: порядок проезда перекрёстков, значения знаков, первая помощь.
+Отдельный тест из тем, где чаще всего ошибаются.
 
-ПОДРОБНЫЕ ПОЯСНЕНИЯ
-К каждому вопросу есть пояснение: почему ответ верный и на какой пункт правил он опирается. Не зубрёжка, а понимание.
+ПОЯСНЕНИЯ
+К каждому вопросу — почему ответ верный и на какой пункт правил он опирается.
 
 НА ТРЁХ ЯЗЫКАХ
-Узбекский (латиница и кириллица) и русский. Язык можно менять в любой момент, даже внутри теста. Тексты на кириллице и русском переведены в рамках этого проекта.
+Узбекский (латиница и кириллица) и русский. Язык можно сменить в любой момент.
 
 PRO
-Тематические тесты, 63 варианта и подробные пояснения открываются по подписке PRO.
+Тесты по темам, все 64 варианта и пояснения к каждому вопросу — по подписке PRO.
 
-ПОЧЕМУ AVTOSMART
 • Без рекламы
 • Интернет не обязателен
-• Результаты привязаны к аккаунту и не пропадут при смене телефона
-• Тёмная тема и лёгкий быстрый интерфейс
+• Результаты привязаны к аккаунту
+• Тёмная тема
 
-Вопросы и предложения: @avtotestu_ad
+Вопросы и предложения: Telegram @avtotestu_ad
 Сайт: https://www.avtotestu.uz
 ```
-
-## Play Console'da qo'lda bajariladigan qadamlar
-
-1. **Do'kon ro'yxati** → to'liq va qisqa tavsifni yuqoridagi bilan almashtiring (har til uchun).
-2. **Siyosat → Ilova kontenti → Davlat ilovalari (Government apps)**: «Ilova davlat organi nomidan emas» /
-   davlat bilan aloqasi yo'q deb belgilang (agar savol chiqsa).
-3. Yangi AAB (versiya 1.0.13) ni yuklang — ilovaning ichida ham **Sozlamalar → Manbalar va ogohlantirish**
-   bo'limi, Bosh ekran, Avtodrom va Yo'l belgilari ekranlari pastida ogohlantirish bor.
-4. Rad etilgan versiya uchun **«Resubmit / Yangilanishni yuborish»** qiling. Hujjat bilan davlat bilan
-   aloqa isbotlanmaydi (aloqa yo'q), shuning uchun apellyatsiya emas, **tuzatish** yo'li tanlanadi.

@@ -28,6 +28,49 @@ class AppStrings {
     }
   }
 
+  /// Bosh ekran ko'rsatkichlari ostidagi so'z: son bilan birga o'qiladi
+  /// ("1 275 savol", "1 275 вопросов"). O'zbekchada ot doim birlikda,
+  /// ruschada songa qarab uch shakl: 1 вопрос / 2 вопроса / 5 вопросов.
+  static String countNoun(String kind, int n, String lang) {
+    const forms = <String, Map<String, List<String>>>{
+      'questions': {
+        'uz_lat': ['savol'],
+        'uz_cyr': ['савол'],
+        'ru': ['вопрос', 'вопроса', 'вопросов'],
+      },
+      'variants': {
+        'uz_lat': ['variant'],
+        'uz_cyr': ['вариант'],
+        'ru': ['вариант', 'варианта', 'вариантов'],
+      },
+      'signs': {
+        'uz_lat': ["yo'l belgisi"],
+        'uz_cyr': ['йўл белгиси'],
+        // Kartochka tor: "дорожных знаков" kesilib qolardi, ikonka ma'noni beradi
+        'ru': ['знак', 'знака', 'знаков'],
+      },
+    };
+    final byLang = forms[kind];
+    if (byLang == null) return kind;
+    final f = byLang[lang] ?? byLang['uz_lat']!;
+    if (f.length < 3) return f.first;
+    final mod10 = n % 10, mod100 = n % 100;
+    if (mod10 == 1 && mod100 != 11) return f[0];
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return f[1];
+    return f[2];
+  }
+
+  /// 1275 → "1 275" (o'zbek va rus yozuvida minglik bo'shliq bilan).
+  static String groupDigits(int n) {
+    final s = n.abs().toString();
+    final b = StringBuffer(n < 0 ? '-' : '');
+    for (var i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) b.write(' ');
+      b.write(s[i]);
+    }
+    return b.toString();
+  }
+
   static const Map<String, Map<String, String>> _strings = {
     // ── App-level ──
     'app_title': {
@@ -37,25 +80,25 @@ class AppStrings {
     },
     // ── Bosh ekran — saytdagi matnlar (src/locales: home.*, sections.*) ──
     'home_badge': {
-      'uz_lat': '2026 YHQ savollari',
-      'uz_cyr': '2026 ЙҲҚ саволлари',
-      'ru': 'Вопросы ПДД 2026',
+      'uz_lat': '2026 avtotest savollari',
+      'uz_cyr': '2026 автотест саволлари',
+      'ru': 'Автотест 2026',
     },
     'home_title': {
-      'uz_lat': 'Avto test — Prava test va YHQ testlar 2026',
-      'uz_cyr': 'Avto test — Права тест ва ЙҲҚ тестлар 2026',
-      'ru': 'Avto test — Права и ПДД тесты 2026',
+      'uz_lat': 'Avtotest 2026 — prava testlari',
+      'uz_cyr': 'Автотест 2026 — права тестлари',
+      'ru': 'Автотест 2026 — тесты на права',
     },
     // Site: home.heroSubtitle, with the app's own variant count.
     'home_subtitle': {
       'uz_lat':
-          "AvtoSmart — YHQ testlari, yo'l belgilari va {variants}. "
+          "AvtoSmart — avtotestlar, yo'l belgilari va {variants}. "
           'Haydovchilik guvohnomasi imtihoniga tayyorgarlik.',
       'uz_cyr':
-          'AvtoSmart — ЙҲҚ тестлари, йўл белгилари ва {variants}. '
+          'AvtoSmart — автотестлар, йўл белгилари ва {variants}. '
           'Ҳайдовчилик гувоҳномаси имтиҳонига тайёргарлик.',
       'ru':
-          'AvtoSmart — тесты ПДД, дорожные знаки и {variants}. '
+          'AvtoSmart — автотесты, дорожные знаки и {variants}. '
           'Подготовка к экзамену на водительские права.',
     },
     'home_btn_test': {
@@ -1028,35 +1071,25 @@ class AppStrings {
       "uz_cyr": "Вазирлар Маҳкамасининг 2025 йил 25 октябрдаги 676-сон қарори — имтиҳон ва тайёргарлик тартиби",
       "ru": "Постановление Кабинета Министров № 676 от 25 октября 2025 года — порядок подготовки и экзаменов",
     },
-    'src_license_title': {
-      "uz_lat": "Haydovchilik guvohnomasini berish",
-      "uz_cyr": "Ҳайдовчилик гувоҳномасини бериш",
-      "ru": "Выдача водительского удостоверения",
+    'src_iiv_title': {
+      "uz_lat": "Ichki ishlar vazirligi",
+      "uz_cyr": "Ички ишлар вазирлиги",
+      "ru": "Министерство внутренних дел",
     },
-    'src_license_sub': {
-      "uz_lat": "Imtihon topshirish va guvohnoma olish tartibi (lex.uz)",
-      "uz_cyr": "Имтиҳон топшириш ва гувоҳнома олиш тартиби (lex.uz)",
-      "ru": "Порядок сдачи экзамена и получения удостоверения (lex.uz)",
+    'src_iiv_sub': {
+      "uz_lat": "Yo'l harakati xavfsizligi xizmati shu vazirlik tarkibida — Hukumat portali (gov.uz)",
+      "uz_cyr": "Йўл ҳаракати хавфсизлиги хизмати шу вазирлик таркибида — Ҳукумат портали (gov.uz)",
+      "ru": "Служба безопасности дорожного движения входит в это министерство — Правительственный портал (gov.uz)",
     },
-    'src_yhxx_title': {
-      "uz_lat": "Yo'l harakati xavfsizligi xizmati (YHXX)",
-      "uz_cyr": "Йўл ҳаракати хавфсизлиги хизмати (ЙҲХХ)",
-      "ru": "Служба безопасности дорожного движения (СБДД)",
+    'src_mygov_title': {
+      "uz_lat": "Yagona interaktiv davlat xizmatlari portali",
+      "uz_cyr": "Ягона интерактив давлат хизматлари портали",
+      "ru": "Единый портал интерактивных государственных услуг",
     },
-    'src_yhxx_sub': {
-      "uz_lat": "Davlat xizmatining rasmiy sayti",
-      "uz_cyr": "Давлат хизматининг расмий сайти",
-      "ru": "Официальный сайт государственной службы",
-    },
-    'src_avtotalim_title': {
-      "uz_lat": "e-avtotalim",
-      "uz_cyr": "e-avtotalim",
-      "ru": "e-avtotalim",
-    },
-    'src_avtotalim_sub': {
-      "uz_lat": "Elektron avtomaktab tizimi (rasmiy sayt)",
-      "uz_cyr": "Электрон автомактаб тизими (расмий сайт)",
-      "ru": "Электронная автошкола (официальный сайт)",
+    'src_mygov_sub': {
+      "uz_lat": "Imtihonga ariza topshirish va haydovchilik guvohnomasini olish shu yerda",
+      "uz_cyr": "Имтиҳонга ариза топшириш ва ҳайдовчилик гувоҳномасини олиш шу ерда",
+      "ru": "Здесь подаётся заявление на экзамен и оформляется водительское удостоверение",
     },
 
     // ── Website screen ──

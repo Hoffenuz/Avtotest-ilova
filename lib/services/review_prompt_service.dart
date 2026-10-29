@@ -98,10 +98,7 @@ class ReviewPromptService {
       // process dies while it is up, the ask still counts. Asking twice in a
       // row is worse than missing one ask.
       _askedThisSession = true;
-      await prefs.setInt(
-        _lastPromptKey,
-        DateTime.now().millisecondsSinceEpoch,
-      );
+      await prefs.setInt(_lastPromptKey, DateTime.now().millisecondsSinceEpoch);
       await prefs.setInt(_promptCountKey, shown + 1);
 
       await _review.requestReview();

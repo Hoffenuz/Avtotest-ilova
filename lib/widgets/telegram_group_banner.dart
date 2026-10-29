@@ -96,7 +96,10 @@ class TelegramGroupBanner extends StatelessWidget {
               ),
               child: Text(
                 s('telegram_group_join'),
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
           ],

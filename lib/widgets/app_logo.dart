@@ -62,6 +62,10 @@ class AppHeaderLogo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final asset = onBrand || AppTheme.isDark(context) ? _dark : _light;
-    return SvgPicture.asset(asset, height: height, alignment: Alignment.centerLeft);
+    return SvgPicture.asset(
+      asset,
+      height: height,
+      alignment: Alignment.centerLeft,
+    );
   }
 }
