@@ -44,7 +44,8 @@ class ProfileService {
           'id, username, email, full_name, avatar_url, tariff_days, tariff_end_date',
         )
         .eq('id', userId)
-        .maybeSingle();
+        .maybeSingle()
+        .timeout(const Duration(seconds: 15));
 
     if (row == null) return null;
     return UserProfile.fromMap(row);
@@ -61,7 +62,8 @@ class ProfileService {
           'updated_at': DateTime.now().toUtc().toIso8601String(),
         })
         .eq('id', userId)
-        .select('id');
+        .select('id')
+        .timeout(const Duration(seconds: 15));
 
     return (rows as List<dynamic>).isNotEmpty;
   }

@@ -80,10 +80,10 @@ class SubscriptionService {
   /// `auth.uid()` server-side and ignores the passed id, so this can only
   /// ever return the calling user's own access state.
   static Future<UserAccessState> fetchAccessState(String userId) async {
-    final raw = await SupabaseService.client.rpc(
-      'get_user_access_state',
-      params: {'user_id': userId},
-    );
+    // Chegaralangan: javob kelmasa ilova keshdagi holat bilan davom etadi.
+    final raw = await SupabaseService.client
+        .rpc('get_user_access_state', params: {'user_id': userId})
+        .timeout(const Duration(seconds: 15));
 
     if (raw is List && raw.isNotEmpty) {
       return UserAccessState.fromMap(raw.first as Map<String, dynamic>);

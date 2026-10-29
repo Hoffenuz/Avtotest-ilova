@@ -58,7 +58,7 @@ class TestResultsService {
           'p_total_questions': result.totalQuestions,
           'p_time_taken_seconds': result.timeSpentSeconds.clamp(0, 3659),
         },
-      );
+      ).timeout(const Duration(seconds: 15));
 
       final map = raw is Map<String, dynamic> ? raw : <String, dynamic>{};
       if (map['ok'] != true) return;
@@ -105,7 +105,8 @@ class TestResultsService {
         )
         .eq('user_id', userId)
         .order('created_at', ascending: false)
-        .limit(100);
+        .limit(100)
+        .timeout(const Duration(seconds: 15));
 
     final results = (rows as List<dynamic>)
         .map((row) => _fromSupabaseRow(row as Map<String, dynamic>))
