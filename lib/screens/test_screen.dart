@@ -7,6 +7,10 @@ import '../models/question.dart';
 import '../providers/language_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../providers/settings_provider.dart';
+import '../providers/theme_provider.dart';
+import '../services/anim_demo.dart';
+import '../services/animation_index_service.dart';
+import '../services/auto_advance_scheduler.dart';
 import '../services/question_answers_service.dart';
 import '../services/app_strings.dart';
 import '../services/storage_service.dart';
@@ -15,8 +19,10 @@ import '../theme/app_theme.dart';
 import '../widgets/brand.dart';
 import '../widgets/explanation_panel.dart';
 import '../widgets/ha_yo_dialog.dart';
-import '../widgets/image_lightbox.dart';
+import '../widgets/media_controls.dart';
 import '../widgets/question_image.dart';
+import '../widgets/question_media.dart';
+import 'pro_screen.dart';
 import 'result_screen.dart';
 
 class TestScreen extends StatefulWidget {
@@ -82,10 +88,13 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
   late PageController _pageController;
   final Set<String> _savedIds = {};
 
-  /// The pending move to the next question. Kept so it can be cancelled: the
-  /// user may move on by hand, or switch the feature off, inside the delay —
-  /// and a jump that fires anyway lands them somewhere they did not choose.
-  Timer? _advanceTimer;
+  /// Kutilayotgan avto-o'tish. Bekor qilinishi mumkin: foydalanuvchi o'zi
+  /// o'tadi yoki sozlamani o'chiradi. Video bor savolda video tugaguncha
+  /// kutadi (saytdagi useQuestionAnimation.schedule mantiqi).
+  final AutoAdvanceScheduler _advance = AutoAdvanceScheduler();
+
+  /// Izoh oynasi ochiq — savol videosi pauza, kutilayotgan avto-o'tish bekor.
+  bool _sheetOpen = false;
 
   @override
   void initState() {
@@ -97,6 +106,10 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
     _pageController = PageController();
     _loadSavedIds();
     _loadData();
+    // Odatda ilova ochilganda yuklangan bo'ladi; bu yerda — ehtiyot uchun
+    // (ikkalasi ham idempotent, tarmoqsiz jim o'tadi).
+    unawaited(AnimationIndexService.load());
+    unawaited(AnimDemo.load());
   }
 
   Future<void> _loadSavedIds() async {
@@ -202,7 +215,7 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
   @override
   void dispose() {
     _timer?.cancel();
-    _advanceTimer?.cancel();
+    _advance.dispose();
     _timeLeft.dispose();
     _pageController.dispose();
     super.dispose();
@@ -263,28 +276,42 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
     _scheduleAutoAdvance();
   }
 
+  /// Javobdan keyin shu savolda video o'ynaydimi — avto-o'tish video
+  /// tugashini kutadi, video ustidan «sakrab» ketmaydi.
+  bool _willPlayAnimation(Question question) {
+    return QuestionMedia.willPlay(
+      fileName: question.mediaUrl,
+      isPremium: context.read<SubscriptionProvider>().isPro,
+      animationsEnabled: context.read<SettingsProvider>().animations,
+    );
+  }
+
   /// Moves to the next unanswered question, or finishes when there is none.
   void _scheduleAutoAdvance({
     Duration delay = const Duration(milliseconds: 1200),
   }) {
-    _advanceTimer?.cancel();
+    _advance.cancel();
     if (!context.read<SettingsProvider>().autoAdvance) return;
     final answeredIndex = _currentIndex;
-    _advanceTimer = Timer(delay, () {
-      if (!mounted || _finished) return;
-      // Re-checked on firing: the user may have moved on by hand or switched
-      // the feature off while the delay ran.
-      if (_currentIndex != answeredIndex ||
-          !context.read<SettingsProvider>().autoAdvance) {
-        return;
-      }
-      final nextIndex = _findNextUnanswered(_currentIndex);
-      if (nextIndex == -1) {
-        _finishTest();
-      } else {
-        _goToQuestion(nextIndex);
-      }
-    });
+    _advance.schedule(
+      () {
+        if (!mounted || _finished) return;
+        // Re-checked on firing: the user may have moved on by hand or
+        // switched the feature off while the delay ran.
+        if (_currentIndex != answeredIndex ||
+            !context.read<SettingsProvider>().autoAdvance) {
+          return;
+        }
+        final nextIndex = _findNextUnanswered(_currentIndex);
+        if (nextIndex == -1) {
+          _finishTest();
+        } else {
+          _goToQuestion(nextIndex);
+        }
+      },
+      delay: delay,
+      waitForAnimation: _willPlayAnimation(_questions[answeredIndex]),
+    );
   }
 
   int _findNextUnanswered(int from) {
@@ -299,7 +326,7 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
 
   void _goToQuestion(int index) {
     if (index < 0 || index >= _questions.length) return;
-    _advanceTimer?.cancel();
+    _advance.cancel();
     setState(() => _currentIndex = index);
     _pageController.animateToPage(
       index,
@@ -390,9 +417,13 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
     required Question question,
     required String lang,
     required String uiLang,
-  }) {
+  }) async {
     String s(String k) => AppStrings.get(k, uiLang);
-    return showModalBottomSheet(
+    // Izoh ochilganda video to'xtaydi, kutilayotgan avto-o'tish bekor
+    // (saytdagidek). Yopilgach video davom etadi.
+    _advance.cancel();
+    if (mounted) setState(() => _sheetOpen = true);
+    await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: AppTheme.card(context),
@@ -455,6 +486,31 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
             ),
           ),
         ),
+      ),
+    );
+    if (mounted) setState(() => _sheetOpen = false);
+  }
+
+  /// Test sarlavhasidagi YAGONA ⚙ tugma (saytdagi TestSettingsMenu bilan bir
+  /// xil): Tun rejimi · Animatsiyalar · Avto-o'tish. Ilgari sarlavhada
+  /// avto-o'tish uchun alohida belgi bor edi — ma'nosi tushunarsiz edi.
+  Future<void> _showTestSettingsSheet(String uiLang) {
+    return showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppTheme.card(context),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => _TestSettingsSheet(
+        uiLang: uiLang,
+        onAnimationsChanged: (enabled) {
+          // Video o'ynab turganda animatsiya o'chirilsa — kutilayotgan
+          // avto-o'tish osilib qolmasin.
+          if (!enabled) _advance.onAnimationDone();
+        },
+        onAutoAdvanceChanged: (enabled) {
+          if (!enabled) _advance.cancel();
+        },
       ),
     );
   }
@@ -583,6 +639,8 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     final uiLang = context.watch<LanguageProvider>().lang;
     final qLang = _questionLang;
+    final isPro = context.watch<SubscriptionProvider>().isPro;
+    final animationsEnabled = context.watch<SettingsProvider>().animations;
     String s(String k) => AppStrings.get(k, uiLang);
 
     if (_loading) {
@@ -670,11 +728,10 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
               _TestToolbar(
                 timeLeft: _timeLeft,
                 countUp: widget.countUp,
-                autoAdvance: context.watch<SettingsProvider>().autoAdvance,
                 isCurrentSaved:
                     _questions.isNotEmpty &&
                     _savedIds.contains(_questions[_currentIndex].globalId),
-                autoAdvanceTooltip: s('auto_advance'),
+                settingsTooltip: s('settings'),
                 finishLabel: s('finish'),
                 exitTooltip: s('exit_test'),
                 saveTooltip:
@@ -683,29 +740,7 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
                     ? s('unsave_question')
                     : s('save_question'),
                 onToggleSave: () => _toggleSaveCurrent(uiLang),
-                onToggleAutoAdvance: () {
-                  final settings = context.read<SettingsProvider>();
-                  final enable = !settings.autoAdvance;
-                  // Remembered for every later test, not just this one.
-                  settings.setAutoAdvance(enable);
-                  if (!enable) _advanceTimer?.cancel();
-                  ScaffoldMessenger.of(context).clearSnackBars();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        s(enable ? 'auto_advance_on' : 'auto_advance_off'),
-                        style: const TextStyle(fontSize: 13),
-                      ),
-                      duration: const Duration(milliseconds: 1400),
-                      behavior: SnackBarBehavior.floating,
-                      margin: const EdgeInsets.fromLTRB(16, 0, 16, 72),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                    ),
-                  );
-                },
+                onSettings: () => _showTestSettingsSheet(uiLang),
                 onFinish: _showFinishDialog,
                 onExit: _showExitDialog,
               ),
@@ -733,19 +768,28 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
                     onPageChanged: (index) {
                       // A swipe away from an answered question cancels its
                       // pending auto-advance.
-                      _advanceTimer?.cancel();
+                      _advance.cancel();
                       setState(() => _currentIndex = index);
                       _precacheAround(index);
                     },
                     itemBuilder: (context, index) {
+                      final question = _questions[index];
                       return _QuestionCard(
-                        question: _questions[index],
+                        question: question,
                         uiLang: uiLang,
                         questionLang: qLang,
-                        selectedAnswer:
-                            _selectedAnswers[_questions[index].globalId],
+                        selectedAnswer: _selectedAnswers[question.globalId],
                         onSelect: (optionId) =>
-                            _selectAnswer(_questions[index], optionId, qLang),
+                            _selectAnswer(question, optionId, qLang),
+                        isActive: index == _currentIndex,
+                        suspended: _sheetOpen,
+                        isPremium: isPro,
+                        animationsEnabled: animationsEnabled,
+                        onAnimationDone: _advance.onAnimationDone,
+                        onOpenPro: () => Navigator.push(
+                          context,
+                          AppTheme.slideRoute(const ProScreen()),
+                        ),
                       );
                     },
                   ),
@@ -766,7 +810,7 @@ class _TestScreenState extends State<TestScreen> with TickerProviderStateMixin {
               : null,
           // A calm hint, not a pop-up: after a wrong answer, a free user sees
           // that the explanation is what PRO adds.
-          explanationIsPro: !context.watch<SubscriptionProvider>().isPro,
+          explanationIsPro: !isPro,
           explanationHighlighted: _incorrectIds.contains(
             _questions[_currentIndex].globalId,
           ),
@@ -791,12 +835,27 @@ class _QuestionCard extends StatelessWidget {
   final int? selectedAnswer;
   final ValueChanged<int> onSelect;
 
+  /// Savol animatsiyasi uchun (QuestionMedia): faqat joriy sahifada video
+  /// controller yaratiladi; izoh ochiq bo'lsa pauza.
+  final bool isActive;
+  final bool suspended;
+  final bool isPremium;
+  final bool animationsEnabled;
+  final VoidCallback onAnimationDone;
+  final VoidCallback onOpenPro;
+
   const _QuestionCard({
     required this.question,
     required this.uiLang,
     required this.questionLang,
     this.selectedAnswer,
     required this.onSelect,
+    required this.isActive,
+    required this.suspended,
+    required this.isPremium,
+    required this.animationsEnabled,
+    required this.onAnimationDone,
+    required this.onOpenPro,
   });
 
   @override
@@ -836,14 +895,17 @@ class _QuestionCard extends StatelessWidget {
           ),
           if (question.mediaUrl != null && question.mediaUrl!.isNotEmpty) ...[
             const SizedBox(height: 14),
-            QuestionImage(
+            // Rasm + (bor bo'lsa) javobdan keyin o'zi o'ynaydigan animatsiya.
+            QuestionMedia(
               fileName: question.mediaUrl!,
-              zoomLabel: AppStrings.get('zoom_image', uiLang),
-              onTap: () => ImageLightbox.show(
-                context,
-                fileName: question.mediaUrl!,
-                uiLang: uiLang,
-              ),
+              uiLang: uiLang,
+              revealed: isAnswered,
+              isPremium: isPremium,
+              animationsEnabled: animationsEnabled,
+              active: isActive,
+              suspended: suspended,
+              onAnimationDone: onAnimationDone,
+              onOpenPro: onOpenPro,
             ),
           ],
           const SizedBox(height: 16),
@@ -1075,13 +1137,12 @@ class _ToolbarButton extends StatelessWidget {
 class _TestToolbar extends StatelessWidget {
   final ValueListenable<int> timeLeft;
   final bool countUp;
-  final bool autoAdvance;
   final bool isCurrentSaved;
-  final String autoAdvanceTooltip;
+  final String settingsTooltip;
   final String finishLabel;
   final String exitTooltip;
   final String saveTooltip;
-  final VoidCallback onToggleAutoAdvance;
+  final VoidCallback onSettings;
   final VoidCallback onToggleSave;
   final VoidCallback onFinish;
   final VoidCallback onExit;
@@ -1089,13 +1150,12 @@ class _TestToolbar extends StatelessWidget {
   const _TestToolbar({
     required this.timeLeft,
     required this.countUp,
-    required this.autoAdvance,
     required this.isCurrentSaved,
-    required this.autoAdvanceTooltip,
+    required this.settingsTooltip,
     required this.finishLabel,
     required this.exitTooltip,
     required this.saveTooltip,
-    required this.onToggleAutoAdvance,
+    required this.onSettings,
     required this.onToggleSave,
     required this.onFinish,
     required this.onExit,
@@ -1172,11 +1232,11 @@ class _TestToolbar extends StatelessWidget {
             onTap: onToggleSave,
           ),
           const SizedBox(width: 6),
+          // Bitta ⚙: Tun rejimi · Animatsiyalar · Avto-o'tish (saytdagidek).
           _ToolbarButton(
-            icon: Icons.skip_next_rounded,
-            tooltip: autoAdvanceTooltip,
-            active: autoAdvance,
-            onTap: onToggleAutoAdvance,
+            icon: Icons.tune_rounded,
+            tooltip: settingsTooltip,
+            onTap: onSettings,
           ),
           const SizedBox(width: 6),
           // A word, not a bare tick: finishing ends the attempt, and an icon
@@ -1214,6 +1274,178 @@ class _TestToolbar extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// ⚙ menyusi: har qator — ikonka, nom, 1 qatorli izoh, switch. Bepulda
+/// «Animatsiyalar» yonida PRO belgisi turadi, lekin o'chirib/yoqib bo'ladi
+/// (namuna videolari shu sozlamaga bo'ysunadi).
+class _TestSettingsSheet extends StatelessWidget {
+  final String uiLang;
+  final ValueChanged<bool> onAnimationsChanged;
+  final ValueChanged<bool> onAutoAdvanceChanged;
+
+  const _TestSettingsSheet({
+    required this.uiLang,
+    required this.onAnimationsChanged,
+    required this.onAutoAdvanceChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    String s(String k) => AppStrings.get(k, uiLang);
+    final isPro = context.watch<SubscriptionProvider>().isPro;
+    final settings = context.watch<SettingsProvider>();
+    final theme = context.watch<ThemeProvider>();
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(8, 10, 8, 10),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  color: AppTheme.border(context),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 4),
+              child: Text(
+                s('settings').toUpperCase(),
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.6,
+                  color: AppTheme.textM(context),
+                ),
+              ),
+            ),
+            _SettingSwitchRow(
+              icon: Icons.dark_mode_rounded,
+              title: s('dark_mode'),
+              value: theme.isDark,
+              onChanged: (_) => theme.toggle(),
+            ),
+            _SettingSwitchRow(
+              icon: Icons.movie_rounded,
+              title: s('anim_setting'),
+              hint: s('anim_setting_hint'),
+              proBadge: !isPro,
+              value: settings.animations,
+              onChanged: (v) {
+                settings.setAnimations(v);
+                onAnimationsChanged(v);
+              },
+            ),
+            _SettingSwitchRow(
+              icon: Icons.skip_next_rounded,
+              title: s('auto_advance'),
+              hint: s('auto_advance_hint'),
+              value: settings.autoAdvance,
+              onChanged: (v) {
+                settings.setAutoAdvance(v);
+                onAutoAdvanceChanged(v);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingSwitchRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? hint;
+  final bool proBadge;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const _SettingSwitchRow({
+    required this.icon,
+    required this.title,
+    this.hint,
+    this.proBadge = false,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      toggled: value,
+      child: InkWell(
+        onTap: () => onChanged(!value),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: 22,
+                color: value
+                    ? AppTheme.brandAccent(context)
+                    : AppTheme.textM(context),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.textP(context),
+                            ),
+                          ),
+                        ),
+                        if (proBadge) ...[
+                          const SizedBox(width: 6),
+                          const ProBadge(),
+                        ],
+                      ],
+                    ),
+                    if (hint != null)
+                      Text(
+                        hint!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          height: 1.3,
+                          color: AppTheme.textS(context),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              ExcludeSemantics(
+                child: BrandSwitch(value: value, onChanged: onChanged),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

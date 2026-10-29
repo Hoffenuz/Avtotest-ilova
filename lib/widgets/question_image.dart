@@ -33,6 +33,16 @@ class QuestionImage extends StatelessWidget {
   /// Spoken instead of the picture when [onTap] is set.
   final String zoomLabel;
 
+  /// Rasm USTIDA chiziladigan qatlam (savol animatsiyasi, uning tugmalari).
+  /// Rasm bilan bir xil ramkada va bir xil o'lchamda — qatlam chiqqanda maket
+  /// siljimaydi. Semantika uchun qatlam rasmdan tashqarida qoladi (rasmning
+  /// o'zi ekran o'quvchiga aytilmaydi, tugmalar aytiladi).
+  final Widget? overlay;
+
+  /// Pastki o'ng burchakdagi «kattalashtirish» belgisi. Qatlam o'sha burchakda
+  /// o'z tugmalarini ko'rsatsa o'chiriladi — ikkita belgi ustma-ust tushmasin.
+  final bool showZoomHint;
+
   const QuestionImage({
     super.key,
     required this.fileName,
@@ -41,6 +51,8 @@ class QuestionImage extends StatelessWidget {
     this.borderColor,
     this.onTap,
     this.zoomLabel = '',
+    this.overlay,
+    this.showZoomHint = true,
   });
 
   /// Physical pixels this picture is decoded into.
@@ -74,6 +86,26 @@ class QuestionImage extends StatelessWidget {
     final ratio = QuestionImageSizes.aspectRatioFor(fileName);
     final radius = BorderRadius.circular(AppTheme.radiusLg);
 
+    final picture = ExcludeSemantics(
+      child: Image.asset(
+        'assets/tests-json/images/$fileName',
+        fit: BoxFit.contain,
+        // Decode at display resolution instead of full size — with ~736
+        // question images this is a large chunk of the memory the app used
+        // to hold while swiping through a test.
+        cacheWidth: decodeWidthFor(context, fileName, maxHeight: maxHeight),
+        // The frame keeps its reserved size on a decode failure rather than
+        // collapsing and shifting everything below it.
+        errorBuilder: (context, _, _) => Center(
+          child: Icon(
+            Icons.image_not_supported_outlined,
+            size: 28,
+            color: borderColor ?? AppTheme.textM(context),
+          ),
+        ),
+      ),
+    );
+
     final framed = Container(
       decoration: BoxDecoration(
         color: backgroundColor ?? AppTheme.surface(context),
@@ -83,23 +115,12 @@ class QuestionImage extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: AspectRatio(
         aspectRatio: ratio,
-        child: Image.asset(
-          'assets/tests-json/images/$fileName',
-          fit: BoxFit.contain,
-          // Decode at display resolution instead of full size — with ~736
-          // question images this is a large chunk of the memory the app used
-          // to hold while swiping through a test.
-          cacheWidth: decodeWidthFor(context, fileName, maxHeight: maxHeight),
-          // The frame keeps its reserved size on a decode failure rather than
-          // collapsing and shifting everything below it.
-          errorBuilder: (context, _, _) => Center(
-            child: Icon(
-              Icons.image_not_supported_outlined,
-              size: 28,
-              color: borderColor ?? AppTheme.textM(context),
-            ),
-          ),
-        ),
+        child: overlay == null
+            ? picture
+            : Stack(
+                fit: StackFit.expand,
+                children: [picture, overlay!],
+              ),
       ),
     );
 
@@ -112,7 +133,7 @@ class QuestionImage extends StatelessWidget {
       ),
     );
 
-    if (onTap == null) return ExcludeSemantics(child: sized);
+    if (onTap == null) return sized;
 
     return Semantics(
       button: true,
@@ -122,31 +143,32 @@ class QuestionImage extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           borderRadius: radius,
-          child: ExcludeSemantics(
-            child: Stack(
-              children: [
-                sized,
-                // Without this nothing suggests the picture can be opened
-                // larger, and on a small screen that is exactly the thing
-                // people need and never discover.
+          child: Stack(
+            children: [
+              sized,
+              // Without this nothing suggests the picture can be opened
+              // larger, and on a small screen that is exactly the thing
+              // people need and never discover.
+              if (showZoomHint)
                 Positioned(
                   right: 8,
                   bottom: 8,
-                  child: Container(
-                    padding: const EdgeInsets.all(5),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.45),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Icon(
-                      Icons.zoom_out_map_rounded,
-                      size: 15,
-                      color: Colors.white,
+                  child: ExcludeSemantics(
+                    child: Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.45),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.zoom_out_map_rounded,
+                        size: 15,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
-              ],
-            ),
+            ],
           ),
         ),
       ),

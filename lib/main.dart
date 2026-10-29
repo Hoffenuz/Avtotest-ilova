@@ -10,6 +10,8 @@ import 'providers/language_provider.dart';
 import 'providers/subscription_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/theme_provider.dart';
+import 'services/anim_demo.dart';
+import 'services/animation_index_service.dart';
 import 'services/payme_service.dart';
 import 'services/daily_question_service.dart';
 import 'services/question_image_sizes.dart';
@@ -119,6 +121,11 @@ Future<void> _bootstrap(
   // A 14 KB manifest that only matters once a question card is built, which
   // is several taps away. Loading it before the first frame bought nothing.
   unawaited(QuestionImageSizes.load());
+
+  // Savol animatsiyalari indeksi (24 soat keshlanadi) va bepul namuna hisobi.
+  // Tarmoq yo'q bo'lsa jim: eski indeks ishlaydi yoki funksiya o'chiq qoladi.
+  unawaited(AnimationIndexService.load());
+  unawaited(AnimDemo.load());
 
   // Parse the question bank while the user is still reading the home screen,
   // so the first test does not stall on it mid-transition. Deliberately after
