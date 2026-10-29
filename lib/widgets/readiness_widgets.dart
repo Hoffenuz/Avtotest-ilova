@@ -254,7 +254,7 @@ class _Chip extends StatelessWidget {
   }
 }
 
-Widget? _streakChip(Readiness data, String lang) {
+Widget? _streakChip(Readiness data, String lang, {required bool dark}) {
   if (data.streakDays <= 1) return null;
   return _Chip(
     text: AppStrings.get(
@@ -262,7 +262,8 @@ Widget? _streakChip(Readiness data, String lang) {
       lang,
     ).replaceAll('{n}', '${data.streakDays}'),
     color: AppTheme.orange,
-    textColor: const Color(0xFFC2410C),
+    // Tun rejimida to'q zarg'aldoq matn shaffof zarg'aldoq fonda o'qilmasdi
+    textColor: dark ? const Color(0xFFFDBA74) : const Color(0xFFC2410C),
     icon: Icons.local_fire_department_rounded,
   );
 }
@@ -463,7 +464,7 @@ class ReadinessStrip extends StatelessWidget {
         data.readinessPercent,
         dark: AppTheme.isDark(context),
       );
-      final streak = _streakChip(data, lang);
+      final streak = _streakChip(data, lang, dark: AppTheme.isDark(context));
       content = Row(
         children: [
           _Ring(
@@ -730,7 +731,7 @@ class ReadinessCard extends StatelessWidget {
 
     final dark = AppTheme.isDark(context);
     final tone = ReadinessTone.of(data.readinessPercent, dark: dark);
-    final streak = _streakChip(data, lang);
+    final streak = _streakChip(data, lang, dark: AppTheme.isDark(context));
     final measuredQuestions = data.questionsSeen > 0;
 
     return shell(
