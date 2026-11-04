@@ -6,6 +6,7 @@ import '../providers/subscription_provider.dart';
 import '../services/app_strings.dart';
 import '../services/question_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/avtodrom_card.dart';
 import '../widgets/brand.dart';
 import '../widgets/home_hero.dart';
 import '../widgets/update_banner.dart';
@@ -230,7 +231,10 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
+                  // Avtodrom simulyatori — hero'dan keyin, doimiy joyda.
+                  AvtodromCard(lang: lang),
+                  const SizedBox(height: 16),
                   SectionTile(
                     icon: Icons.timer_outlined,
                     color: AppTheme.error,

@@ -300,9 +300,9 @@ class AppStrings {
       'ru': 'Поддержка администратора и Premium-группа',
     },
     'pro_perk_5': {
-      'uz_lat': 'Cheksiz vaqt va urinishlar',
-      'uz_cyr': 'Чексиз вақт ва уринишлар',
-      'ru': 'Неограниченное время и попытки',
+      'uz_lat': '300+ savol animatsiyasi (mashinalar harakati)',
+      'uz_cyr': '300+ савол анимацияси (машиналар ҳаракати)',
+      'ru': '300+ анимаций к вопросам (движение машин)',
     },
     'pro_contact_subtitle': {
       'uz_lat': 'To\'lov va savollar uchun',
@@ -1918,6 +1918,34 @@ class AppStrings {
       'ru': 'Штрафные баллы практического экзамена',
     },
     'avtodrom_points': {'uz_lat': 'ball', 'uz_cyr': 'балл', 'ru': 'балл.'},
+    // ── Avtodrom simulyatori (avtodrom.avtotestu.uz, WebView) ──
+    'avtodrom_sim': {
+      'uz_lat': 'Avtodrom simulyatori',
+      'uz_cyr': 'Автодром симулятори',
+      'ru': 'Симулятор автодрома',
+    },
+    'avtodrom_sim_sub': {
+      'uz_lat': "3D amaliy imtihon — estakada, boks, ilon izi. Bepul",
+      'uz_cyr': '3D амалий имтиҳон — эстакада, бокс, илон изи. Бепул',
+      'ru': '3D практический экзамен — эстакада, бокс, змейка. Бесплатно',
+    },
+    'avtodrom_sim_new': {'uz_lat': 'YANGI', 'uz_cyr': 'ЯНГИ', 'ru': 'НОВОЕ'},
+    'avtodrom_sim_loading': {
+      'uz_lat': "Simulyator yuklanmoqda. Birinchi kirishda biroz kutasiz — keyingi safar ancha tez ochiladi.",
+      'uz_cyr': 'Симулятор юкланмоқда. Биринчи киришда бироз кутасиз — кейинги сафар анча тез очилади.',
+      'ru': 'Симулятор загружается. В первый раз это займёт немного времени — дальше будет быстрее.',
+    },
+    'avtodrom_sim_offline': {
+      'uz_lat': "Simulyator ochilmadi. Internet aloqasini tekshirib, qayta urinib ko'ring.",
+      'uz_cyr': 'Симулятор очилмади. Интернет алоқасини текшириб, қайта уриниб кўринг.',
+      'ru': 'Симулятор не открылся. Проверьте подключение к интернету и попробуйте снова.',
+    },
+    'avtodrom_sim_exit_q': {
+      'uz_lat': "Simulyatordan chiqasizmi? Boshlangan mashq saqlanmaydi.",
+      'uz_cyr': 'Симулятордан чиқасизми? Бошланган машқ сақланмайди.',
+      'ru': 'Выйти из симулятора? Начатое упражнение не сохранится.',
+    },
+    'avtodrom_sim_exit_yes': {'uz_lat': 'Chiqish', 'uz_cyr': 'Чиқиш', 'ru': 'Выйти'},
     // The website shows the same caveat: only the Latin text comes from the
     // official document, the other two are this project's translation.
     'avtodrom_translation_note': {

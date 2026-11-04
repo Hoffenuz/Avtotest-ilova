@@ -7,6 +7,7 @@ import '../theme/app_theme.dart';
 import '../widgets/brand.dart';
 import '../widgets/premium_access_gate.dart';
 import 'avtodrom_screen.dart';
+import 'avtodrom_sim_screen.dart';
 import 'difficult_questions_screen.dart';
 import 'errors_screen.dart';
 import 'memorize_screen.dart';
@@ -104,6 +105,14 @@ class SectionsScreen extends StatelessWidget {
             'road_signs',
             const RoadSignsScreen(),
             AppTheme.success,
+          ),
+          // Simulyator jarima jadvalidan OLDIN: amaliyot, keyin nazariya.
+          tile(
+            Icons.directions_car_rounded,
+            'avtodrom_sim',
+            const AvtodromSimScreen(),
+            AppTheme.blueDark,
+            fade: true,
           ),
           tile(
             Icons.traffic_outlined,
