@@ -123,46 +123,27 @@ class HomeScreen extends StatelessWidget {
                               // A new version waiting on Play is worth interrupting for —
                               // practising on an outdated question bank forever is worse.
                               const UpdateBanner(),
-                              // Badge left, three real road signs right: the
-                              // subject of the app said without a word.
+                              // Sarlavha chapda, uchta yo'l belgisi o'ngda — ilova
+                              // mavzusi bir qarashda. Yorliq va izoh olib tashlandi
+                              // (2026-11-05, egasi: hero'da yozuv ko'payib ketgan).
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   Expanded(
-                                    child: Align(
-                                      alignment: Alignment.centerLeft,
-                                      child: _Badge(text: s('home_badge')),
+                                    child: Text(
+                                      s('home_title'),
+                                      style: TextStyle(
+                                        fontSize: 25,
+                                        fontWeight: FontWeight.w800,
+                                        height: 1.2,
+                                        letterSpacing: -0.3,
+                                        color: AppTheme.textP(context),
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(width: 12),
                                   const HeroSignCluster(),
                                 ],
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                s('home_title'),
-                                style: TextStyle(
-                                  fontSize: 25,
-                                  fontWeight: FontWeight.w800,
-                                  height: 1.2,
-                                  letterSpacing: -0.3,
-                                  color: AppTheme.textP(context),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                s('home_subtitle').replaceAll(
-                                  '{variants}',
-                                  AppStrings.variantsPhrase(
-                                    QuestionService.variantCount,
-                                    lang,
-                                  ),
-                                ),
-                                style: TextStyle(
-                                  fontSize: 14.5,
-                                  height: 1.4,
-                                  color: AppTheme.mutedText(context),
-                                ),
                               ),
                               const SizedBox(height: 16),
                               // What is inside, in numbers read from the bank
@@ -275,48 +256,6 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   const SourcesNote(),
                 ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Saytdagi "2026 YHQ savollari" belgisi: chegarali kichik yorliq, ko'k nuqta.
-class _Badge extends StatelessWidget {
-  final String text;
-  const _Badge({required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: AppTheme.card(context),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: AppTheme.hairline(context)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 6,
-            height: 6,
-            decoration: const BoxDecoration(
-              color: AppTheme.blue600,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.mutedText(context),
               ),
             ),
           ),

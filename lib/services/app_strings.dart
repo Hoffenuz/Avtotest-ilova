@@ -85,9 +85,9 @@ class AppStrings {
       'ru': 'Автотест 2026',
     },
     'home_title': {
-      'uz_lat': 'Avtotest 2026 — prava testlari',
-      'uz_cyr': 'Автотест 2026 — права тестлари',
-      'ru': 'Автотест 2026 — тесты на права',
+      'uz_lat': 'YHQ testlari 2026',
+      'uz_cyr': 'ЙҲҚ тестлари 2026',
+      'ru': 'Тесты ПДД 2026',
     },
     // Site: home.heroSubtitle, with the app's own variant count.
     'home_subtitle': {
