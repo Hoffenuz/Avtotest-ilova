@@ -17,9 +17,9 @@ import '../widgets/ha_yo_dialog.dart';
 /// versiya esa brauzerda ishlaydi va saytda ham shu. Ilova to'liq funksiyali,
 /// shuning uchun «faqat WebView» siyosatiga tushmaydi.
 ///
-/// NEGA LANDSCAPE RUXSAT: boshqaruv (rul, pedallar) keng ekranga mo'ljallangan.
-/// Ilova portretga qulflangan (main.dart) — faqat shu ekranda burish mumkin,
-/// `video_zoom_screen.dart` bilan bir xil usul.
+/// NEGA LANDSCAPE: boshqaruv (rul, pedallar) keng ekranga mo'ljallangan.
+/// Ilova portretga qulflangan (main.dart) — shu ekran ochilganda tizim o'zi
+/// gorizontalga buradi, yopilganda portretga qaytaradi.
 class AvtodromSimScreen extends StatefulWidget {
   const AvtodromSimScreen({super.key});
 
@@ -39,7 +39,13 @@ class _AvtodromSimScreenState extends State<AvtodromSimScreen> {
   void initState() {
     super.initState();
     _lang = context.read<LanguageProvider>().lang;
-    SystemChrome.setPreferredOrientations(DeviceOrientation.values);
+    // Ekran ochilishi bilan GORIZONTAL: simulyator portretda «telefonni
+    // buring» deb turardi, foydalanuvchi o'zi burishi kerak edi. Endi faqat
+    // landscape ruxsat etiladi — tizim o'zi buradi; chiqishda portretga qaytadi.
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
     // Status bar va navigatsiya tugmalari yashirin — o'yin butun ekranda.
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
